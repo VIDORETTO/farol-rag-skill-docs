@@ -2,5 +2,5 @@
 # only the Python standard library; install this file when RAG is needed.
 knowledge-rag==4.8.5
 PyYAML==6.0.3
-pypdf==6.16.2
+pypdf==6.18.0
 python-docx==1.2.0
