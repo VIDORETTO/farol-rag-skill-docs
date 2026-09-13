@@ -33,6 +33,65 @@ Nenhuma implementação, commit, push, publicação, scheduler, captura de fonte
 reais ou alteração de corpus/índice ativo foi realizada. Métricas históricas,
 CVEs atuais, direitos comerciais e benchmark multilíngue não foram apresentados
 como evidência nova. O briefing e alterações anteriores em todo.md foram preservados.
+# Correção do checker documental executado como script — 2026-09-12
+
+Objetivo: corrigir no checkout upstream a falha de importação de
+`scripts/check_documentation.py` quando chamado como
+`python scripts/check_documentation.py` a partir da raiz, preservar o contrato
+do módulo e registrar uma regressão executável. Não alterar a raiz do projeto,
+conhecimento específico do Mercado Livre, corpus, índice, remoto, commit ou
+push.
+
+## Plano executável
+
+- [x] Reproduzir a falha direta e a falha do teste de candidata.
+- [x] Inspecionar os launchers equivalentes e escolher a menor correção
+      consistente com o padrão do kit.
+- [x] Adicionar teste de regressão para a invocação direta do checker.
+- [x] Aplicar a correção mínima no script, sem alterar o contrato do checker.
+- [x] Rodar o teste isolado e os testes relevantes: `test_check_documentation.py`,
+      `test_candidate_bundle.py` e `test_candidate_identity.py` — **12 passed**
+      em 127,25 s.
+- [x] Rodar o checker diretamente pela raiz:
+      `py -3.12 -B scripts/check_documentation.py` — exit code `0`, 76
+      Markdown verificados, 0 findings.
+- [x] Rodar o diagnóstico do operador:
+      `py -3.12 -B -m docops doctor --json` — exit code `0`; checkout,
+      configuração, lock, operador e backend RAG disponíveis; o backend está
+      disponível no `.venv` local, mas não foi indexado nem usado para alterar
+      corpus.
+- [x] Registrar resultados, arquivos alterados e limitações; confirmar que não
+      houve commit/push nem alteração fora do checkout.
+
+## Revisão
+
+### Resultados
+
+- A correção mínima em `scripts/check_documentation.py` adiciona a raiz do
+  checkout ao `sys.path` antes de importar `docops`, mantendo a invocação como
+  módulo intacta e permitindo `python scripts/check_documentation.py` a partir
+  da raiz.
+- A regressão em `tests/test_check_documentation.py` confirma o contrato JSON
+  (`ok: true`) e decodifica stdout explicitamente como UTF-8 no Windows.
+- O backend RAG local foi detectado pelo `docops doctor`, mas isso não muda o
+  estado do projeto Mercado Livre: o corpus real continua vazio e a
+  indexação segue opt-in.
+- Não foram adquiridas fontes, baixados vídeos, geradas transcrições,
+  confirmados direitos, alteradas skills ativas, indexado corpus, feito
+  commit, push ou publicação.
+- A formatação global do kit continua com o único finding preexistente em
+  `skills/vendor/knowledge-rag/mcp_server/server.py`; a correção e o teste
+  novos foram validados separadamente e não exigem tocar no vendor.
+
+### Revisão final
+
+Concluído em 2026-09-12. A falha de execução direta foi corrigida e coberta
+por teste. O diagnóstico `rag_model_provenance_missing` observado em uma
+candidata RAG permanece uma falha esperada: não existe snapshot de modelo
+fornecido para essa candidata e o gate deve continuar fail-closed. Não há
+base segura para contornar esse diagnóstico.
+
+---
 
 # Análise comparativa para consolidação da main — 2026-09-05
 
