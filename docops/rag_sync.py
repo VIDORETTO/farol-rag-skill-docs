@@ -1107,7 +1107,16 @@ class RagSynchronizer:
             environ=runtime_env,
         )
         try:
-            client = start_mcp_server(executable, root, env=runtime_env)
+            # A cold index is embedded before the server answers ``initialize``;
+            # give the handshake the same generous ceiling as the reindex call
+            # instead of the 120 s default, otherwise first indexing on a
+            # CPU-only host fails with a spurious ``mcp_timeout``.
+            client = start_mcp_server(
+                executable,
+                root,
+                env=runtime_env,
+                initialize_timeout=max(self.timeout_seconds, 120.0),
+            )
             server_info = getattr(client, "server_info", {})
             actual_version = server_info.get("version") if isinstance(server_info, dict) else None
             expected_version = expected_provenance.get("expected_version")
