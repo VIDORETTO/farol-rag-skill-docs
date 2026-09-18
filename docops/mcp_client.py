@@ -127,22 +127,8 @@ class JsonRpcMcpClient:
         return self._diagnostics.snapshot(status=status, process_exit_code=self.process.poll())
 
 
-def start_mcp_server(
-    python: Path | str,
-    root: Path | str,
-    *,
-    env: Mapping[str, str] | None = None,
-    initialize_timeout: float = 120.0,
-) -> JsonRpcMcpClient:
-    """Start a local MCP server and complete the initialization handshake.
-
-    ``initialize_timeout`` is configurable because a cold vector index makes
-    the server build/load embeddings *before* it answers ``initialize``.  On a
-    CPU-only host a multi-document corpus can exceed the old fixed 120 s
-    budget, which surfaced as a spurious ``mcp_timeout`` during first
-    indexing.  Callers that know the index may be cold raise this; the default
-    keeps the previous behavior.
-    """
+def start_mcp_server(python: Path | str, root: Path | str, *, env: Mapping[str, str] | None = None) -> JsonRpcMcpClient:
+    """Start a local MCP server and complete the initialization handshake."""
 
     project_root = Path(root).resolve()
     environment = dict(os.environ if env is None else env)
@@ -165,7 +151,6 @@ def start_mcp_server(
             protocolVersion="2024-11-05",
             capabilities={},
             clientInfo={"name": "docops", "version": __version__},
-            timeout=initialize_timeout,
         )
     except Exception:
         client.close()

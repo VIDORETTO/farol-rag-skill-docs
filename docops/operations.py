@@ -1310,6 +1310,8 @@ def _write_artifacts(stage: Path, plan_value: OperationPlan) -> None:
         ]
         write_skill(stage, selected.slug if selected else "documentation", accepted, source)
         write_router(stage, selected.slug if selected else "documentation")
+    harness_text = json.dumps(build_harness_manifest(stage), indent=2, ensure_ascii=False, sort_keys=True) + "\n"
+    _write_if_changed(stage / "harness.json", harness_text)
     if not preserve_conceptual:
         write_generated_artifact_inventory(stage)
 
@@ -1588,7 +1590,7 @@ def _build_stage(plan_value: OperationPlan, stage: Path) -> tuple[dict[str, Any]
         "artifacts",
         plan_value,
         stage,
-        ("skill", "router", ".docops/generated-artifacts.json"),
+        ("skill", "router", "harness.json", ".docops/generated-artifacts.json"),
         lambda: _write_artifacts(stage, plan_value),
     )
     index_payload: dict[str, Any] = {}
@@ -1603,25 +1605,7 @@ def _build_stage(plan_value: OperationPlan, stage: Path) -> tuple[dict[str, Any]
             index_payload = json.loads((stage / "rag" / "index.json").read_text(encoding="utf-8"))
         except (OSError, UnicodeError, json.JSONDecodeError) as exc:
             raise OperationFailure("invalid_rag_index", str(exc), phase="index") from exc
-    def state_callback() -> None:
-        _write_state(stage, plan_value)
-        # ``harness.json`` pins the exact generation the reader must resolve.
-        # It must be written AFTER the index is finalized, otherwise the
-        # composition it records lags ``rag/index.json`` and the package fails
-        # its own ``read_harness_manifest`` coherence check.
-        harness_text = (
-            json.dumps(build_harness_manifest(stage), indent=2, ensure_ascii=False, sort_keys=True) + "\n"
-        )
-        _write_if_changed(stage / "harness.json", harness_text)
-
-    _run_phase(
-        checkpoint,
-        "state",
-        plan_value,
-        stage,
-        (".docops/state.json", "harness.json"),
-        state_callback,
-    )
+    _run_phase(checkpoint, "state", plan_value, stage, (".docops/state.json",), lambda: _write_state(stage, plan_value))
     readiness = assess_readiness(stage)
     layers = {
         "updated": list(plan_value.request.options.layers),
