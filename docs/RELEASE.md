@@ -41,9 +41,7 @@ python scripts/run_release_gates.py --root . --profile full --json
 The final integration decision is recorded without promotion by:
 
 ```text
-python scripts/prepare_integration_candidate.py --root . \
-  --output artifacts/integration-candidate \
-  --gates-report artifacts/release-gates-final-20260907/release-gates.json --json
+python scripts/prepare_candidate.py --root . --output artifacts/candidate --profile core
 ```
 
 This report compares `origin/main` and `origin/feat/continuous-knowledge`,
@@ -78,8 +76,8 @@ python scripts/audit_release.py --tracked-only --json
 python -m docops run documents/fixtures/acme-docs --output artifacts/acme --slug acme --license MIT --index-rag
 python -m docops validate artifacts/acme --json
 python -m docops evaluate --package artifacts/acme --cases golden-set/test-cases-fixture.json --adapter mcp --runtime-root . --json
-python scripts/mcp_smoke.py "background tasks"
-python scripts/test_reindex_concurrency.py --package artifacts/acme --seconds 10 --readers 4 --min-searches 40
+python scripts/run_release_gates.py --profile ragflow --json
+python scripts/run_release_gates.py --profile ragflow --json
 python scripts/audit_release.py --candidate --json
 python scripts/prepare_candidate.py --root . --output artifacts/candidate-1.1.0 --profile core
 python scripts/verify_candidate.py --root artifacts/candidate-1.1.0
@@ -101,11 +99,11 @@ RAG gate fails. The wheel gate sets `DOCOPS_REQUIRE_WHEEL_RAG=1` when RAG is
 part of the candidate and must report the installed-package provenance.
 
 The Farol 2.0 RAGFlow profile is separate from that legacy `full` profile. It
-repeats the provider-free core gates and appends the fail-closed RAGFlow
-contract spike:
+repeats the provider-free core gates and appends the fail-closed RAGFlow and
+local OCR contract spikes:
 
 ```text
-python3.13 -m pip install --editable '.[dev,ragflow]'
+python3.13 -m pip install --editable '.[dev,formats,ragflow,ocr]'
 python scripts/run_release_gates.py --root . --profile core --json
 python scripts/run_release_gates.py --root . --profile ragflow --json
 ```
@@ -116,9 +114,13 @@ The RAGFlow profile requires `DOCOPS_RAGFLOW_ENDPOINT`,
 an operator-provisioned service. Missing inputs fail the required profile with
 a redacted blocker report; they are never counted as a successful skip.
 
+The OCR stage pins `docling==2.129.0` and `onnxruntime==1.30.0`, renders a
+synthetic scanned PDF, and proves extracted text, page/bbox locators and
+confidence through `PdfExtractor` without sending the source remotely.
+
 The FastAPI Golden is an internal pilot artifact and is intentionally outside
 the public `1.1.0` scope because its private documentation corpus is not
-licensed in this checkout. Do not run `scripts/evaluate_golden.py` for this
+licensed in this checkout. Do not run the external RAGFlow profile for this
 release unless an authorized corpus is supplied; the reviewed MIT fixture is
 the public Golden gate.
 
@@ -159,7 +161,7 @@ snapshots are never distributed in the candidate. Supplying `--model-cache`
 records a deterministic external snapshot manifest and digest. Dependency and
 model requirements are explicit and independent: use
 `--profile rag --require-model` for a RAG candidate. The core profile may omit
-only the optional `knowledge-rag` lock root; version drift and every other
+only the optional the retired backend lock root; version drift and every other
 missing root remain fatal.
 
 `candidate-manifest.json` e `candidate-identity.json` distinguem

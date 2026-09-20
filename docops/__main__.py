@@ -60,7 +60,6 @@ from .master import (
     submit_project_enrichment,
     timeout_project_enrichment,
     validate_dependency_mitigation,
-    validate_project_derivatives,
     verify_project_backup,
 )
 from .observability import redact_report, redact_text
@@ -77,7 +76,7 @@ from .operations import cleanup as cleanup_residue
 from .operations import plan as build_plan
 from .package_validator import validate_package
 from .project import ProjectError, ProjectService
-from .rag_sync import RagSnapshotError, compare_embedding_profiles, snapshot_rag_package
+from .rag_snapshots import RagSnapshotError, compare_embedding_profiles, snapshot_rag_package
 from .reader_sessions import create_reader_session, query_reader_session, revoke_reader_session
 from .source_policy import reconcile_source, register_source
 from .source_resolver import SourceResolver
@@ -146,7 +145,6 @@ CLI_COMPATIBILITY_MAP = {
     "project-change-prepare": "project change prepare",
     "project-change-activate": "project change activate",
     "project-rollback": "project rollback",
-    "project-derivatives": "project derivatives validate",
     "project-enrichment-dispatch": "project enrichment dispatch",
     "project-enrichment-inspect": "project enrichment inspect",
     "project-enrichment-submit": "project enrichment submit",
@@ -415,7 +413,7 @@ def build_parser() -> argparse.ArgumentParser:
     impact.add_argument("--json", action="store_true")
     reader_session = commands.add_parser("reader-session", help="create a pinned read-only reader session")
     reader_session.add_argument("--package", type=Path, required=True)
-    reader_session.add_argument("--adapter", choices=("memory", "mcp"), default="memory")
+    reader_session.add_argument("--adapter", choices=("memory",), default="memory")
     reader_session.add_argument("--session-id")
     reader_session.add_argument("--snapshot", type=Path, help="explicit relocatable RAG snapshot to pin")
     reader_session.add_argument("--now")
@@ -426,7 +424,7 @@ def build_parser() -> argparse.ArgumentParser:
     reader_query.add_argument("--session", required=True)
     reader_query.add_argument("--tool", required=True)
     reader_query.add_argument("--query", required=True)
-    reader_query.add_argument("--adapter", choices=("memory", "mcp"))
+    reader_query.add_argument("--adapter", choices=("memory",))
     reader_query.add_argument("--max-results", type=int, default=5)
     reader_query.add_argument("--now")
     reader_query.add_argument("--runtime-root", type=Path)
@@ -441,7 +439,7 @@ def build_parser() -> argparse.ArgumentParser:
     rag_snapshot.add_argument("--package", type=Path, required=True)
     rag_snapshot.add_argument("--previous", type=Path)
     rag_snapshot.add_argument("--snapshot-out", type=Path)
-    rag_snapshot.add_argument("--backend", default="knowledge-rag")
+    rag_snapshot.add_argument("--backend", default="ragflow")
     rag_snapshot.add_argument("--supports-incremental", action="store_true")
     rag_snapshot.add_argument("--server-version")
     rag_snapshot.add_argument("--verify-query")
@@ -628,10 +626,6 @@ def build_parser() -> argparse.ArgumentParser:
     project_rollback.add_argument("--expected-revision", type=int)
     project_rollback.add_argument("--now")
     project_rollback.add_argument("--json", action="store_true")
-    project_derivatives = commands.add_parser("project-derivatives", help="validate project derivatives")
-    project_derivatives.add_argument("--project", type=Path, required=True)
-    project_derivatives.add_argument("--revision-id")
-    project_derivatives.add_argument("--json", action="store_true")
     project_rag_prepare = commands.add_parser("project-rag-prepare", help="prepare an isolated RAG candidate")
     project_rag_prepare.add_argument("--project", type=Path, required=True)
     project_rag_prepare.add_argument("--candidate", type=Path)
@@ -825,7 +819,7 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     lifecycle.set_defaults(_canonical_namespace=True)
-    config_audit = commands.add_parser("config-audit", help="audit MCP transport security")
+    config_audit = commands.add_parser("config-audit", help="audit package transport security")
     config_audit.add_argument("config", type=Path)
     config_audit.add_argument("--json", action="store_true")
     return parser
@@ -1073,8 +1067,6 @@ def _dispatch(args: argparse.Namespace) -> int:
                 now=args.now,
             )
         )
-    if args.command == "project-derivatives":
-        return _print_new_result(validate_project_derivatives(args.project, args.revision_id))
     if args.command == "project-rag-prepare":
         return _print_new_result(
             prepare_project_rag_candidate(

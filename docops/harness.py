@@ -1,4 +1,4 @@
-"""Portable hand-off metadata for external Agent Skills/MCP harnesses."""
+"""Portable hand-off metadata for external Agent Skills and RAGFlow."""
 
 from __future__ import annotations
 
@@ -34,23 +34,15 @@ def build_harness_manifest(package_root: Path | str) -> dict[str, Any]:
         "generation": generation,
         "skills": ["skill", "router"],
         "operator_skill": {"name": "docops-agent", "discovery": "docops skill path"},
-        "mcp": {
-            "name": "knowledge-rag",
-            "transport": "stdio",
-            "command": "python",
-            "args": ["-m", "mcp_server.server"],
+        "backend": {
+            "name": "ragflow",
+            "version": "0.27.2",
+            "adapter": "docops.backends.ragflow.RagFlowAdapter",
+            "transport": "https-or-loopback-development",
             "cwd": ".",
-            "env": {
-                "KNOWLEDGE_RAG_DIR": ".",
-                "KNOWLEDGE_RAG_WATCHER_DISABLED": "1",
-                "KNOWLEDGE_RAG_READ_ONLY": "1",
-                "KNOWLEDGE_RAG_GENERATION": generation["release_id"],
-            },
             "config": "config.yaml",
-            "mode": "read_only",
-            "capabilities": ["search_knowledge", "get_document"],
-            "write_capabilities": [],
-            "concurrent_publication_allowed": False,
+            "capabilities": ["probe", "prepare", "apply", "query", "snapshot", "discard", "close"],
+            "external": True,
         },
         "notes": [
             "Pin the reader to generation.release_id and reopen it if the package composition changes.",
@@ -104,12 +96,11 @@ def read_harness_manifest(path: Path | str) -> dict[str, Any]:
     operator_skill = value.get("operator_skill")
     if operator_skill != {"name": "docops-agent", "discovery": "docops skill path"}:
         raise ValueError("harness operator skill is invalid")
-    mcp_value = value.get("mcp")
-    if not isinstance(mcp_value, Mapping):
-        raise ValueError("harness MCP configuration is invalid")
-    env = mcp_value.get("env")
-    if not isinstance(env, Mapping) or env.get("KNOWLEDGE_RAG_GENERATION") != generation.get("release_id"):
-        raise ValueError("harness generation environment does not match generation")
+    backend = value.get("backend")
+    if not isinstance(backend, Mapping) or backend.get("name") != "ragflow" or backend.get("cwd") != ".":
+        raise ValueError("harness RAGFlow backend configuration is invalid")
+    if backend.get("version") != "0.27.2" or backend.get("config") != "config.yaml":
+        raise ValueError("harness RAGFlow backend version/configuration is invalid")
     try:
         current = package_revisions(Path(path).resolve().parent)
     except (OSError, ValueError, TypeError, KeyError) as exc:
@@ -117,23 +108,9 @@ def read_harness_manifest(path: Path | str) -> dict[str, Any]:
     for field in generation_fields:
         if str(current.get(field)) != str(generation.get(field)):
             raise ValueError("harness generation does not match package")
-    mcp = mcp_value
-    if isinstance(mcp, Mapping) and mcp.get("mode") == "read_only":
-        capabilities = mcp.get("capabilities", [])
-        write_capabilities = mcp.get("write_capabilities", [])
-        if not isinstance(capabilities, list) or any(not isinstance(item, str) for item in capabilities):
-            raise ValueError("read-only harness capabilities must be a string array")
-        if not isinstance(write_capabilities, list) or any(not isinstance(item, str) for item in write_capabilities):
-            raise ValueError("read-only harness write_capabilities must be a string array")
-        forbidden = {
-            "add_document",
-            "update_document",
-            "delete_document",
-            "reindex_documents",
-            "update_source",
-        }
-        if forbidden.intersection(capabilities) or write_capabilities:
-            raise ValueError("read-only harness cannot expose writer capabilities")
+    capabilities = backend.get("capabilities", [])
+    if not isinstance(capabilities, list) or any(not isinstance(item, str) for item in capabilities):
+        raise ValueError("harness backend capabilities must be a string array")
     return value
 
 

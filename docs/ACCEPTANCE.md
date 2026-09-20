@@ -33,8 +33,8 @@ checkout de trabalho.
 ## Integração opcional
 
 Com `python scripts/bootstrap.py --dev --rag`, a execução de release também
-deve passar pelo servidor real, `scripts/mcp_smoke.py`,
-`scripts/test_reindex_concurrency.py` e pelo fluxo sintético
+deve passar pelo servidor real, the RAGFlow integration profile,
+the RAGFlow lifecycle/recovery profile e pelo fluxo sintético
 `docops run` → `validate` → `evaluate`. Uma execução com rede/configuração de
 produção deve também passar `config-audit`; nenhuma etapa publica ou faz
 commit automaticamente.

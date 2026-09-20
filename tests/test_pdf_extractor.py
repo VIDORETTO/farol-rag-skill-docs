@@ -1,10 +1,13 @@
 # seam-scope: implementation-infrastructure (public format extractor fixtures)
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
+from pypdf import PdfWriter
+
 from docops.extractors import ExtractorPolicy
-from docops.extractors.pdf import PdfExtractor
+from docops.extractors.pdf import DoclingOcrAdapter, PdfExtractor
 from docops.ir import validate_ir_document
 
 
@@ -47,6 +50,13 @@ def _policy(**kwargs: object) -> ExtractorPolicy:
     )
 
 
+def _blank_pdf(path: Path) -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    with path.open("wb") as stream:
+        writer.write(stream)
+
+
 def test_textual_pdf_preserves_page_locators(tmp_path: Path) -> None:
     source = tmp_path / "guide.pdf"
     source.write_bytes(_pdf_page("KNOWN", page_count=2))
@@ -61,7 +71,7 @@ def test_textual_pdf_preserves_page_locators(tmp_path: Path) -> None:
 
 def test_scanned_pdf_is_quarantined_without_authorized_ocr(tmp_path: Path) -> None:
     source = tmp_path / "scan.pdf"
-    source.write_bytes(b"%PDF-1.4\n%%EOF\n")
+    _blank_pdf(source)
     result = PdfExtractor().extract(source, _policy(), {})
 
     assert result.document is None
@@ -69,9 +79,35 @@ def test_scanned_pdf_is_quarantined_without_authorized_ocr(tmp_path: Path) -> No
     assert result.receipt.errors[0]["code"] == "ocr_required"
 
 
+def test_malformed_pdf_reports_a_typed_parse_failure_instead_of_requesting_ocr(tmp_path: Path) -> None:
+    source = tmp_path / "malformed.pdf"
+    source.write_bytes(b"this is not a PDF")
+
+    result = PdfExtractor().extract(source, _policy(), {})
+
+    assert result.document is None
+    assert result.receipt.status == "failed"
+    assert result.receipt.errors[0]["code"] == "malformed"
+
+
+def test_encrypted_pdf_reports_a_typed_encryption_failure(tmp_path: Path) -> None:
+    source = tmp_path / "encrypted.pdf"
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    writer.encrypt("secret")
+    with source.open("wb") as stream:
+        writer.write(stream)
+
+    result = PdfExtractor().extract(source, _policy(), {})
+
+    assert result.document is None
+    assert result.receipt.status == "failed"
+    assert result.receipt.errors[0]["code"] == "encrypted"
+
+
 def test_ocr_requires_opt_in_and_low_confidence_stays_quarantined(tmp_path: Path) -> None:
     source = tmp_path / "scan.pdf"
-    source.write_bytes(b"scan-bytes")
+    _blank_pdf(source)
     calls: list[str] = []
 
     def ocr(path: Path, _policy: ExtractorPolicy):
@@ -90,3 +126,81 @@ def test_ocr_requires_opt_in_and_low_confidence_stays_quarantined(tmp_path: Path
     assert calls == ["scan.pdf"]
     assert allowed.document is None
     assert allowed.receipt.quarantine_reason == "low_confidence"
+
+
+def test_ocr_rejects_non_finite_confidence_instead_of_promoting_invalid_ir(tmp_path: Path) -> None:
+    source = tmp_path / "scan.pdf"
+    _blank_pdf(source)
+
+    def ocr(_path: Path, _policy: ExtractorPolicy):
+        return [{"page": 1, "text": "OCR text", "confidence": math.nan}]
+
+    result = PdfExtractor(ocr=ocr).extract(
+        source,
+        _policy(allow_remote=True, authorized_extractors=("ocr",)),
+        {},
+    )
+
+    assert result.document is None
+    assert result.receipt.status == "failed"
+    assert result.receipt.errors[0]["code"] == "ocr_output_invalid"
+
+
+def test_ocr_rejects_non_positive_page_locators(tmp_path: Path) -> None:
+    source = tmp_path / "scan.pdf"
+    _blank_pdf(source)
+
+    def ocr(_path: Path, _policy: ExtractorPolicy):
+        return [{"page": 0, "text": "OCR text", "confidence": 0.9}]
+
+    result = PdfExtractor(ocr=ocr).extract(
+        source,
+        _policy(allow_remote=True, authorized_extractors=("ocr",)),
+        {},
+    )
+
+    assert result.document is None
+    assert result.receipt.status == "failed"
+    assert result.receipt.errors[0]["code"] == "ocr_output_invalid"
+
+
+def test_docling_ocr_adapter_converts_structured_items_to_page_bbox_records(monkeypatch, tmp_path: Path) -> None:
+    Bbox = type("Bbox", (), {"l": 10.0, "t": 90.0, "r": 80.0, "b": 20.0})
+
+    class Provenance:
+        page_no = 2
+        bbox = Bbox()
+
+    class Item:
+        text = "OCR text"
+        prov = [Provenance()]
+
+    class Confidence:
+        ocr_score = 0.93
+
+    class Document:
+        @staticmethod
+        def iterate_items():
+            return iter([(Item(), 1)])
+
+    class Result:
+        document = Document()
+        confidence = Confidence()
+
+    class Converter:
+        @staticmethod
+        def convert(_path):
+            return Result()
+
+    monkeypatch.setattr(DoclingOcrAdapter, "_converter", lambda self: Converter())
+
+    records = DoclingOcrAdapter()(tmp_path / "scan.pdf", _policy())
+
+    assert records == [
+        {
+            "page": 2,
+            "text": "OCR text",
+            "confidence": 0.93,
+            "bbox": [10.0, 20.0, 80.0, 90.0],
+        }
+    ]

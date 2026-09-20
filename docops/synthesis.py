@@ -136,6 +136,7 @@ class SynthesisCandidate:
 class SynthesisAdapter(Protocol):
     name: str
     version: str
+    execution: str
 
     def synthesize(self, request: SynthesisRequest, projections: Mapping[str, list[IRBlock]]) -> Mapping[str, Any]: ...
 
@@ -145,6 +146,7 @@ class BookToSkillAdapter:
 
     name = "book-to-skill"
     version = "contract-2.0"
+    execution = "contract-fixture"
 
     def synthesize(self, request: SynthesisRequest, projections: Mapping[str, list[IRBlock]]) -> Mapping[str, Any]:
         skills: list[dict[str, Any]] = []
@@ -246,7 +248,11 @@ class SynthesisEngine:
         receipt = SynthesisReceipt(
             request_id=request.request_id,
             request_hash=request.request_hash,
-            adapter={"name": self.adapter.name, "version": self.adapter.version, "execution": "external-contract"},
+            adapter={
+                "name": self.adapter.name,
+                "version": self.adapter.version,
+                "execution": getattr(self.adapter, "execution", "external"),
+            },
             status="ready",
             input_hash=content_hash(request.to_dict()),
             output_hash=output_hash,
@@ -309,12 +315,26 @@ def _validate_output(
         if topic_id not in expected or topic_id in seen:
             raise SynthesisError("owner_conflict", "each taxonomy concept must have one skill owner")
         seen.add(topic_id)
+        allowed_block_ids = {str(block_id) for block_id in expected[topic_id].get("block_ids", [])}
+        expected_slug = str(expected[topic_id]["slug"])
+        slug = str(raw.get("slug") or expected_slug)
+        if slug != expected_slug or re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug) is None:
+            raise SynthesisError("output_invalid", f"skill {topic_id} must preserve its approved taxonomy slug")
         markdown = str(raw.get("markdown") or "")
         if not markdown.strip():
             raise SynthesisError("output_invalid", f"skill {topic_id} is empty")
         token_count = _tokens(markdown)
         if token_count > int(request.budget.get("max_tokens", 4000)):
             raise SynthesisError("budget_exceeded", f"skill {topic_id} exceeds the configured token budget")
+        raw_chapters = raw.get("chapters") or {}
+        if not isinstance(raw_chapters, Mapping):
+            raise SynthesisError("output_invalid", f"skill {topic_id} chapters must be an object")
+        chapters: dict[str, str] = {}
+        for raw_name, raw_content in raw_chapters.items():
+            name = str(raw_name)
+            if re.fullmatch(r"[a-z0-9][a-z0-9._-]*\.md", name) is None:
+                raise SynthesisError("output_invalid", f"skill {topic_id} contains an unsafe chapter path")
+            chapters[name] = str(raw_content)
         lineages: list[ClaimLineage] = []
         claims = raw.get("claims", [])
         if not isinstance(claims, list):
@@ -333,7 +353,13 @@ def _validate_output(
                     raise SynthesisError(
                         "lineage_invalid", f"claim {claim.get('claim_id')} references an unknown block"
                     )
-                block = blocks[str(ref["block_id"])]
+                block_id = str(ref["block_id"])
+                if block_id not in allowed_block_ids:
+                    raise SynthesisError(
+                        "lineage_invalid",
+                        f"claim {claim.get('claim_id')} references a block outside the topic projection",
+                    )
+                block = blocks[block_id]
                 canonical_refs.append(
                     {
                         "block_id": block.block_id,
@@ -352,10 +378,10 @@ def _validate_output(
         result.append(
             SkillArtifact(
                 topic_id=topic_id,
-                slug=str(raw.get("slug") or expected[topic_id]["slug"]),
+                slug=slug,
                 language=request.language,
                 markdown=markdown,
-                chapters={str(key): str(value) for key, value in (raw.get("chapters") or {}).items()},
+                chapters=chapters,
                 lineage=lineages,
                 token_count=token_count,
             )

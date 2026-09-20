@@ -84,14 +84,14 @@ def default_registry() -> ExtractorRegistry:
 
     from .legacy_text import LegacyTextExtractor
     from .office_ebook import OfficeEbookExtractor
-    from .pdf import PdfExtractor
+    from .pdf import DoclingOcrAdapter, PdfExtractor
     from .repository import RepositoryExtractor
     from .text_web import TextWebExtractor
 
     return ExtractorRegistry(
         [
             TextWebExtractor(),
-            PdfExtractor(),
+            PdfExtractor(ocr=DoclingOcrAdapter()),
             OfficeEbookExtractor(),
             RepositoryExtractor(),
             LegacyTextExtractor(),

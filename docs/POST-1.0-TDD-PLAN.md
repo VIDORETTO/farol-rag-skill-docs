@@ -235,8 +235,8 @@ python -m ruff check docops tests scripts
 python -m ruff format --check docops tests scripts
 python scripts/verify_clean_clone.py
 python scripts/verify_wheel.py
-python scripts/mcp_smoke.py "background tasks"
-python scripts/test_reindex_concurrency.py --seconds 20
+python scripts/run_release_gates.py --profile ragflow --json
+python scripts/run_release_gates.py --profile ragflow --json
 python scripts/audit_release.py --candidate --json
 python scripts/prepare_candidate.py --root . --output artifacts/candidate-1.1.0
 python scripts/verify_candidate.py --root artifacts/candidate-1.1.0

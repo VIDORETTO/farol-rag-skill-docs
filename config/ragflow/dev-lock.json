@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "repository": "https://github.com/infiniflow/ragflow.git",
+  "tag": "v0.27.2",
+  "commit": "a024bea0cd93f39e6652a42bf84dd20c55bc560b",
+  "compose_file": "docker/docker-compose.yml",
+  "profiles": ["cpu", "elasticsearch", "metadata-mysql", "tei-cpu"],
+  "services": ["es01", "mysql", "minio", "redis", "tei-cpu", "ragflow-cpu"],
+  "tei_image_digest": "infiniflow/text-embeddings-inference@sha256:ad4a00f5af757f7f323bdeb9e873313ed71225cf57d94658cbc9c6c17dc67d85",
+  "embedding_model": "BAAI/bge-small-en-v1.5",
+  "sdk_version": "0.27.2"
+}

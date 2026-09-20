@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import shutil
@@ -324,6 +325,13 @@ def validate_ir_document(value: Mapping[str, Any] | IRDocument) -> ValidationRep
             _error(errors, "duplicate_ordinal", "block ordinals must be unique", f"{path}.ordinal")
         else:
             ordinals.add(ordinal)
+            if ordinal != index:
+                _error(
+                    errors,
+                    "ordinal_sequence",
+                    "block ordinals must be contiguous and match document order",
+                    f"{path}.ordinal",
+                )
         if block.get("kind") not in BLOCK_KINDS:
             _error(errors, "block_kind", "block kind is not supported", f"{path}.kind")
         fragment_hash = block.get("source_fragment_hash")
@@ -336,6 +344,14 @@ def validate_ir_document(value: Mapping[str, Any] | IRDocument) -> ValidationRep
                 "source_fragment_hash must be a SHA-256 hex identity",
                 f"{path}.source_fragment_hash",
             )
+        confidence = block.get("confidence")
+        if confidence is not None and (
+            not isinstance(confidence, (int, float))
+            or isinstance(confidence, bool)
+            or not math.isfinite(float(confidence))
+            or not 0.0 <= float(confidence) <= 1.0
+        ):
+            _error(errors, "confidence", "confidence must be finite and between zero and one", f"{path}.confidence")
         if block.get("text") is None and not isinstance(block.get("structured"), Mapping):
             _error(errors, "block_content", "block needs text or structured content", path)
         locators = block.get("locators")
@@ -348,6 +364,8 @@ def validate_ir_document(value: Mapping[str, Any] | IRDocument) -> ValidationRep
                     _error(errors, "locator_invalid", "locator kind is not supported", locator_path)
                 elif not isinstance(locator.get("label"), str) or not locator["label"].strip():
                     _error(errors, "locator_label", "locator label is required", f"{locator_path}.label")
+                else:
+                    _validate_locator_range(locator, locator_path, errors)
         parent = block.get("parent_id")
         if parent is not None and (not isinstance(parent, str) or not parent):
             _error(errors, "parent_invalid", "parent_id must be null or a block id", f"{path}.parent_id")
@@ -356,6 +374,33 @@ def validate_ir_document(value: Mapping[str, Any] | IRDocument) -> ValidationRep
             _error(
                 errors, "dangling_parent", "parent_id does not reference an IR block", f"$.blocks[{index}].parent_id"
             )
+    parent_by_id = {
+        str(block["block_id"]): str(block["parent_id"])
+        for block in blocks
+        if isinstance(block, Mapping)
+        and isinstance(block.get("block_id"), str)
+        and block.get("block_id") in ids
+        and isinstance(block.get("parent_id"), str)
+        and block.get("parent_id") in ids
+    }
+    visited: set[str] = set()
+    visiting: set[str] = set()
+
+    def visit(block_id: str) -> None:
+        if block_id in visited:
+            return
+        if block_id in visiting:
+            _error(errors, "parent_cycle", "IR block parent graph must be acyclic", "$.blocks")
+            return
+        visiting.add(block_id)
+        parent_id = parent_by_id.get(block_id)
+        if parent_id is not None:
+            visit(parent_id)
+        visiting.discard(block_id)
+        visited.add(block_id)
+
+    for block_id in ids:
+        visit(block_id)
     expected_hash = None
     try:
         document = IRDocument.from_dict(payload)
@@ -369,6 +414,35 @@ def validate_ir_document(value: Mapping[str, Any] | IRDocument) -> ValidationRep
         elif expected_hash and revision_id != expected_hash:
             _error(errors, "hash_mismatch", "revision_id does not match the canonical IR hash", "$.revision_id")
     return ValidationReport(not errors, errors)
+
+
+def _validate_locator_range(locator: Mapping[str, Any], path: str, errors: list[dict[str, Any]]) -> None:
+    kind = str(locator.get("kind") or "")
+    if kind in {"line", "page", "slide"}:
+        value = locator.get(kind)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+            _error(errors, "locator_range", f"{kind} locator must be a positive integer", f"{path}.{kind}")
+    if kind == "timestamp":
+        value = locator.get("timestamp")
+        if (
+            not isinstance(value, (int, float))
+            or isinstance(value, bool)
+            or not math.isfinite(float(value))
+            or float(value) < 0
+        ):
+            _error(errors, "locator_range", "timestamp locator must be finite and non-negative", f"{path}.timestamp")
+    bbox = locator.get("bbox")
+    if kind == "bbox" and bbox is None:
+        _error(errors, "locator_range", "bbox locator requires four coordinates", f"{path}.bbox")
+    if bbox is not None and (
+        not isinstance(bbox, list)
+        or len(bbox) != 4
+        or any(
+            not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(float(value))
+            for value in bbox
+        )
+    ):
+        _error(errors, "locator_range", "bbox must contain four finite coordinates", f"{path}.bbox")
 
 
 class IRStore:

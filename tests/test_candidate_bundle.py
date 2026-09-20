@@ -91,6 +91,42 @@ def test_candidate_bundle_has_new_identity_and_reproducible_release_assets(tmp_p
     assert "metadata_version_mismatch" in inconsistent.stdout
 
 
+def test_candidate_bundle_excludes_private_originals_and_runtime_state(tmp_path: Path) -> None:
+    output = tmp_path / "candidate"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/prepare_candidate.py",
+            "--root",
+            ".",
+            "--output",
+            str(output),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    manifest = json.loads((output / "candidate-manifest.json").read_text(encoding="utf-8"))
+    assets = set(manifest["assets"])
+    private_roots = {".docops", "artifacts", "data", "documents", "models_cache"}
+
+    assert not any(Path(asset).parts and Path(asset).parts[0] in private_roots for asset in assets)
+    assert not (output / "documents").exists()
+    assert not (output / "data").exists()
+    assert not (output / "models_cache").exists()
+    assert (output / "provenance" / "requirements.lock").is_file()
+    assert (output / "evidence" / "supply-chain.json").is_file()
+    assert manifest["candidate_audit"]["ok"] is True
+    assert manifest["publication"] == {
+        "performed": False,
+        "automated": False,
+        "human_authorization_required": True,
+        "actions": [],
+    }
+
+
 def test_candidate_verifier_requires_every_release_and_community_asset(tmp_path: Path) -> None:
     output = tmp_path / "candidate"
     prepared = subprocess.run(

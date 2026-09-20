@@ -20,7 +20,7 @@ from urllib.parse import urlsplit
 from .backends.ragflow import RagFlowAdapter
 from .config_audit import audit_config_file
 from .extractors import default_registry
-from .runtime import _supports_knowledge_rag, discover_rag_python, platform_venv_name, venv_config_matches_host
+from .runtime import platform_venv_name, venv_config_matches_host
 
 
 @dataclass(frozen=True)
@@ -71,7 +71,7 @@ def _candidate_paths(project_root: Path) -> list[tuple[Path, str]]:
         fallback = (Path("Scripts") / "python.exe", Path("Scripts") / "python")
     for venv_name in (platform_specific, ".venv", ".venv-rag", other_platform):
         directory = project_root / venv_name
-        if not venv_config_matches_host(directory):
+        if not directory.is_dir() or (not venv_config_matches_host(directory) and (directory / "pyvenv.cfg").is_file()):
             continue
         source = "project-venv" if venv_name != ".venv-rag" else "rag-venv"
         for relative in native:
@@ -183,29 +183,27 @@ def run_doctor(
         capabilities = {
             "rag": "skipped",
             "network": "not-probed",
-            "harness": "external Agent Skills + MCP",
+            "harness": "external Agent Skills + RAGFlow",
             "operator_skill": "skills/doc-to-rag-operator/SKILL.md",
-            "mcp_transport": "stdio by default; HTTP/SSE requires audited bearer auth",
+            "ragflow_transport": "HTTPS required except explicit loopback development",
         }
         checks["rag"] = {"ok": True, "status": "skipped", "reason": "DOCOPS_SKIP_RAG"}
     else:
-        rag_required = env.get("DOCOPS_REQUIRE_RAG", "").lower() in {"1", "true", "yes"}
-        rag_executable = discover_rag_python(root, environ=env)
-        rag_python = rag_executable.path if rag_executable.exists else None
-        rag_ok = rag_python is not None and rag_executable.source != "missing" and _supports_knowledge_rag(rag_python)
+        rag_required = env.get("DOCOPS_REQUIRE_RAGFLOW", "").lower() in {"1", "true", "yes"}
+        ragflow_check = _ragflow_check(env)
+        rag_ok = ragflow_check.get("status") == "ready"
         checks["rag"] = {
             "ok": rag_ok or not rag_required,
             "status": "available" if rag_ok else "missing",
             "required": rag_required,
-            "python": _display_path(rag_python, root) if rag_python else None,
-            "hint": "Run bootstrap with --rag to install knowledge-rag." if not rag_ok else None,
+            "hint": "Configure the RAGFlow integration profile before indexing." if not rag_ok else None,
         }
         capabilities = {
             "rag": "available" if rag_ok else "missing",
             "network": "not-probed",
-            "harness": "external Agent Skills + MCP",
+            "harness": "external Agent Skills + RAGFlow",
             "operator_skill": "skills/doc-to-rag-operator/SKILL.md",
-            "mcp_transport": "stdio by default; HTTP/SSE requires audited bearer auth",
+            "ragflow_transport": "HTTPS required except explicit loopback development",
         }
 
     ragflow_check = _ragflow_check(env)

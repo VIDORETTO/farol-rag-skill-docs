@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -99,6 +100,28 @@ def test_ir_validation_rejects_non_hex_content_hash_and_revision_mismatch() -> N
     result = validate_ir_document(payload)
     assert not result.ok
     assert "hash_mismatch" in {error["code"] for error in result.errors}
+
+
+def test_ir_validation_rejects_invalid_ranges_confidence_and_block_order() -> None:
+    payload = _document().to_dict()
+    payload["blocks"][1]["ordinal"] = 3
+    payload["blocks"][1]["confidence"] = math.nan
+    payload["blocks"][1]["locators"] = [{"kind": "line", "label": "0", "line": 0}]
+
+    result = validate_ir_document(payload)
+
+    assert not result.ok
+    assert {"ordinal_sequence", "confidence", "locator_range"}.issubset({error["code"] for error in result.errors})
+
+
+def test_ir_validation_rejects_parent_cycles() -> None:
+    payload = _document().to_dict()
+    payload["blocks"][0]["parent_id"] = "block-paragraph"
+
+    result = validate_ir_document(payload)
+
+    assert not result.ok
+    assert "parent_cycle" in {error["code"] for error in result.errors}
 
 
 def test_ir_store_is_immutable_and_atomic(tmp_path: Path) -> None:

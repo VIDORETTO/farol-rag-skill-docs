@@ -13,6 +13,7 @@ import argparse
 import datetime as dt
 import json
 import locale
+import math
 import os
 import platform
 import re
@@ -31,7 +32,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ISOLATION = "unique-temporary-workspace"
 PYTEST_COUNT_RE = re.compile(r"(?P<count>\d+)\s+(?P<label>passed|failed|skipped|xfailed|xpassed|error|errors)")
 PYTEST_DURATION_RE = re.compile(r"in\s+(?P<seconds>[0-9]+(?:\.[0-9]+)?)s")
-RAG_UNAVAILABLE_REASON = "knowledge-rag unavailable in the selected interpreter"
+DEFAULT_PIPELINE_TIMEOUT_SECONDS = 7200.0
 
 
 @dataclass(frozen=True)
@@ -186,7 +187,11 @@ def build_gate_plan(root: Path, python: Path, output: Path, profile: str) -> lis
     # UTF-8 here breaks existing subprocess seams on Windows: their parent
     # decodes text with the locale encoding, while Python would emit UTF-8.
     # The runner itself decodes and writes evidence explicitly below.
-    common_env = {"PYTHONNOUSERSITE": "1"}
+    common_env = {
+        "PYTHONNOUSERSITE": "1",
+        "DOCOPS_RAGFLOW_INTEGRATION": "0",
+        "DOCOPS_OCR_INTEGRATION": "0",
+    }
     clean_clone_command = [
         py,
         _script(root, "verify_clean_clone.py"),
@@ -196,8 +201,6 @@ def build_gate_plan(root: Path, python: Path, output: Path, profile: str) -> lis
         py,
         "--bootstrap",
     ]
-    if profile == "full":
-        clean_clone_command.append("--rag")
     stages = [
         _stage(
             "platform-info",
@@ -311,8 +314,8 @@ def build_gate_plan(root: Path, python: Path, output: Path, profile: str) -> lis
                     "-m",
                     "pytest",
                     "-q",
-                    "tests/test_rag_security_contract.py",
-                    "tests/test_supply_chain.py",
+                    "tests/test_release_audit.py",
+                    "tests/test_source_registry.py",
                     "tests/test_learning.py",
                     "tests/test_usage_feedback.py",
                 ),
@@ -380,7 +383,7 @@ def build_gate_plan(root: Path, python: Path, output: Path, profile: str) -> lis
             root,
             python,
             stage_root / "15-ruff",
-            (("ruff", "check", "docops", "tests", "scripts"),),
+            ((py, "-m", "ruff", "check", "docops", "tests", "scripts"),),
             artifacts=("ruff.log",),
             environment=common_env,
         ),
@@ -389,7 +392,7 @@ def build_gate_plan(root: Path, python: Path, output: Path, profile: str) -> lis
             root,
             python,
             stage_root / "16-format",
-            (("ruff", "format", "--check", "docops", "tests", "scripts"),),
+            ((py, "-m", "ruff", "format", "--check", "docops", "tests", "scripts"),),
             artifacts=("format.log",),
             environment=common_env,
         ),
@@ -468,143 +471,42 @@ def build_gate_plan(root: Path, python: Path, output: Path, profile: str) -> lis
             environment=common_env,
         ),
     ]
-    if profile == "full":
-        rag_environment = {
-            **common_env,
-            "DOCOPS_RAG_PYTHON": str(python),
-            "PYTHONPATH": os.pathsep.join((str(root / "skills" / "vendor" / "knowledge-rag"), str(root))),
-        }
-        stages.extend(
-            [
-                _stage(
-                    "wheel-rag",
-                    root,
-                    python,
-                    stage_root / "23-wheel-rag",
-                    ((py, _script(root, "verify_wheel.py"), "--require-rag"),),
-                    artifacts=("wheel-rag.json",),
-                    requires_rag=True,
-                    environment=common_env,
-                ),
-                _stage(
-                    "rag-mcp",
-                    root,
-                    python,
-                    stage_root / "24-rag-mcp",
-                    _rag_commands(root, python, stage_root / "24-rag-mcp"),
-                    artifacts=("stage-report.json", "package/manifest.json", "package/rag/index.json"),
-                    requires_rag=True,
-                    environment=rag_environment,
-                ),
-            ]
-        )
-    if profile == "ragflow":
+    if profile in {"full", "book-to-skill"}:
         stages.append(
             _stage(
-                "ragflow-contract",
+                "book-to-skill-contract",
                 root,
                 python,
-                stage_root / "23-ragflow-contract",
-                ((py, _script(root, "run_ragflow_profile.py"), "--json"),),
-                artifacts=("ragflow-report.json",),
+                stage_root / "23-book-to-skill-contract",
+                ((py, _script(root, "run_book_to_skill_profile.py"), "--json"),),
+                artifacts=("book-to-skill-report.json",),
                 environment=common_env,
             )
         )
-    return stages
-
-
-def _rag_commands(root: Path, python: Path, stage_root: Path) -> tuple[tuple[str, ...], ...]:
-    py = str(python)
-    source = stage_root / "source"
-    package = stage_root / "package"
-    cases = stage_root / "cases.json"
-    return (
-        (
-            py,
-            "-m",
-            "docops",
-            "run",
-            str(source),
-            "--output",
-            str(package),
-            "--slug",
-            "release-gate",
-            "--license",
-            "MIT",
-            "--runtime-root",
-            str(stage_root),
-            "--index-rag",
-        ),
-        (py, "-m", "docops", "validate", str(package), "--json"),
-        (
-            py,
-            "-m",
-            "docops",
-            "evaluate",
-            "--package",
-            str(package),
-            "--cases",
-            str(cases),
-            "--adapter",
-            "mcp",
-            "--runtime-root",
-            str(stage_root),
-            "--json",
-        ),
-        (py, _script(root, "mcp_smoke.py"), "background tasks"),
-        (
-            py,
-            _script(root, "test_reindex_concurrency.py"),
-            "--package",
-            str(package),
-            "--readers",
-            "4",
-            "--min-searches",
-            "40",
-            "--seconds",
-            "10",
-        ),
-    )
-
-
-def _prepare_rag_fixture(stage_root: Path) -> None:
-    source = stage_root / "source"
-    source.mkdir(parents=True, exist_ok=True)
-    (source / "guide.md").write_text("# Guide\nAuthentication retries are bounded and observable.\n", encoding="utf-8")
-    (stage_root / "cases.json").write_text(
-        json.dumps(
-            {
-                "schema_version": 1,
-                "reviewed": True,
-                "cases": [
-                    {
-                        "query": "authentication retries",
-                        "expected_filepath": "guide.md",
-                        "reviewed": True,
-                    }
-                ],
-            },
-            ensure_ascii=False,
-        ),
-        encoding="utf-8",
-    )
-
-
-def _rag_available(python: Path, root: Path) -> tuple[bool, str]:
-    environment = {**os.environ, "PYTHONNOUSERSITE": "1", "PYTHONPATH": str(root)}
-    try:
-        completed = subprocess.run(
-            [str(python), "-c", "import mcp_server.server"],
-            cwd=root,
-            env=environment,
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=30,
+    if profile in {"full", "ragflow"}:
+        stages.extend(
+            [
+                _stage(
+                    "ragflow-contract",
+                    root,
+                    python,
+                    stage_root / "24-ragflow-contract",
+                    ((py, _script(root, "run_ragflow_profile.py"), "--json"),),
+                    artifacts=("ragflow-report.json",),
+                    environment={**common_env, "DOCOPS_RAGFLOW_INTEGRATION": "1"},
+                ),
+                _stage(
+                    "ocr-contract",
+                    root,
+                    python,
+                    stage_root / "25-ocr-contract",
+                    ((py, _script(root, "run_ocr_profile.py"), "--json"),),
+                    artifacts=("ocr-report.json",),
+                    environment={**common_env, "DOCOPS_OCR_INTEGRATION": "1"},
+                ),
+            ]
         )
-    except (OSError, subprocess.SubprocessError) as exc:
-        return False, str(exc)
-    return completed.returncode == 0, (completed.stderr or completed.stdout or "").strip()[-500:]
+    return stages
 
 
 def _initial_report(root: Path, python: Path, output: Path, profile: str, execution: str) -> dict[str, Any]:
@@ -618,11 +520,10 @@ def _initial_report(root: Path, python: Path, output: Path, profile: str, execut
         "platform": _platform_report(python),
         "versions": _version_report(python),
         "source": _source_report(root),
-        "denominators": {"stages": 0, "passed": 0, "failed": 0, "skipped": 0, "not_run": 0},
+        "denominators": {"stages": 0, "passed": 0, "failed": 0, "blocked": 0, "skipped": 0, "not_run": 0},
         "skip_policy": {
-            "allowed": profile != "full",
-            "observable": "status=skipped with an explicit reason and required=false",
-            "rag_reason": RAG_UNAVAILABLE_REASON,
+            "allowed": False,
+            "observable": "status=skipped with an explicit reason; a required skip is never green",
         },
         "isolation": {
             "mode": "serial",
@@ -669,7 +570,7 @@ def _stage_record(
     return {
         "order": order,
         "name": stage.name,
-        "status": status,
+        "status": _canonical_status(status) or status,
         "required": stage.required,
         "requires_rag": stage.requires_rag,
         "isolation": ISOLATION,
@@ -693,6 +594,49 @@ def _last_json_line(text: str) -> str | None:
             continue
         return candidate
     return None
+
+
+def _last_json_payload(text: str) -> dict[str, Any] | None:
+    raw = _last_json_line(text)
+    if raw is None:
+        return None
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _canonical_status(status: Any) -> str | None:
+    if not isinstance(status, str):
+        return None
+    normalized = status.strip().casefold().replace("-", "_")
+    return normalized if normalized in {"passed", "failed", "blocked", "skipped", "not_run"} else None
+
+
+def _command_status(command_result: dict[str, Any]) -> tuple[str | None, str | None]:
+    """Extract an explicit blocked/not-run result without masking real failures."""
+
+    output = "\n".join(str(command_result.get(key, "")) for key in ("stdout_tail", "stderr_tail"))
+    payload = _last_json_payload(output)
+    if payload is not None:
+        status = _canonical_status(payload.get("status"))
+        if status in {"blocked", "not_run", "failed"}:
+            reason = payload.get("reason") or payload.get("code")
+            return status, str(reason) if reason else None
+
+    counts = command_result.get("denominators")
+    if (
+        command_result.get("returncode") == 0
+        and isinstance(counts, dict)
+        and int(counts.get("passed", 0) or 0) == 0
+        and int(counts.get("skipped", 0) or 0) > 0
+        and int(counts.get("failed", 0) or 0) == 0
+        and int(counts.get("error", 0) or 0) == 0
+        and int(counts.get("xpassed", 0) or 0) == 0
+    ):
+        return "not_run", "command completed with skips and no executed tests"
+    return None, None
 
 
 def _materialize_declared_artifacts(stage: GateStage, command_results: list[dict[str, Any]]) -> None:
@@ -741,6 +685,7 @@ def _run_stage(
     output: Path,
     python: Path,
     timeout: int,
+    deadline: float | None = None,
 ) -> dict[str, Any]:
     stage_dir = Path(stage.artifacts[0]).parent
     stage_dir.mkdir(parents=True, exist_ok=True)
@@ -757,8 +702,26 @@ def _run_stage(
     started_at = _utc_now()
     record = _stage_record(stage, order, root=root, output=output, status="running")
     command_results: list[dict[str, Any]] = []
-    success = True
+    stage_status = "passed"
+    stage_reason: str | None = None
     for command_index, command in enumerate(stage.commands, start=1):
+        command_timeout: float = float(timeout)
+        if deadline is not None:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                stage_status = "failed"
+                stage_reason = "pipeline_timeout"
+                command_results.append(
+                    {
+                        "index": command_index,
+                        "command": _command_display(command, root, output),
+                        "returncode": None,
+                        "error": "release gate pipeline deadline expired before command start",
+                        "denominators": {},
+                    }
+                )
+                break
+            command_timeout = min(command_timeout, remaining)
         try:
             completed = subprocess.run(
                 list(command),
@@ -769,7 +732,7 @@ def _run_stage(
                 text=True,
                 encoding=locale.getpreferredencoding(False),
                 errors="replace",
-                timeout=timeout,
+                timeout=command_timeout,
             )
             result = {
                 "index": command_index,
@@ -782,11 +745,33 @@ def _run_stage(
             command_results.append(result)
             (stage_dir / f"command-{command_index:02d}-stdout.log").write_text(result["stdout_tail"], encoding="utf-8")
             (stage_dir / f"command-{command_index:02d}-stderr.log").write_text(result["stderr_tail"], encoding="utf-8")
-            if completed.returncode:
-                success = False
+            command_status, command_reason = _command_status(result)
+            if command_status is not None and command_status != "passed":
+                stage_status = command_status
+                stage_reason = command_reason
                 break
+            if completed.returncode:
+                stage_status = "failed"
+                break
+        except subprocess.TimeoutExpired as exc:
+            stage_status = "failed"
+            stage_reason = (
+                "pipeline_timeout" if deadline is not None and time.monotonic() >= deadline else "command_timeout"
+            )
+            command_results.append(
+                {
+                    "index": command_index,
+                    "command": _command_display(command, root, output),
+                    "returncode": None,
+                    "error": f"release gate command timed out ({stage_reason})",
+                    "stdout_tail": _safe_tail(str(exc.stdout or ""), root, output),
+                    "stderr_tail": _safe_tail(str(exc.stderr or ""), root, output),
+                    "denominators": {},
+                }
+            )
+            break
         except (OSError, subprocess.SubprocessError) as exc:
-            success = False
+            stage_status = "failed"
             command_results.append(
                 {
                     "index": command_index,
@@ -801,27 +786,44 @@ def _run_stage(
     _materialize_declared_artifacts(stage, command_results)
     record.update(
         {
-            "status": "passed" if success else "failed",
+            "status": stage_status,
             "started_at": started_at,
             "duration_seconds": round(finished - started, 3),
-            "returncode": 0
-            if success
-            else next((item.get("returncode") for item in command_results if item.get("returncode")), 1),
+            "returncode": (
+                0
+                if stage_status == "passed"
+                else next(
+                    (
+                        item.get("returncode")
+                        for item in command_results
+                        if isinstance(item.get("returncode"), int) and item.get("returncode") != 0
+                    ),
+                    0,
+                )
+            ),
             "commands_run": command_results,
         }
     )
+    record["status"] = stage_status
+    record["reason"] = stage_reason
     # The stage report itself is an artifact and contains only redacted tails.
     _write_json(stage_dir / "stage-report.json", record)
     return record
 
 
 def _update_denominators(report: dict[str, Any]) -> None:
-    denominators = report["denominators"]
     stages = report["stages"]
-    denominators["stages"] = len(stages)
+    denominators: dict[str, int] = {
+        "stages": len(stages),
+        "passed": 0,
+        "failed": 0,
+        "blocked": 0,
+        "skipped": 0,
+        "not_run": 0,
+    }
     for stage in stages:
-        status = stage.get("status")
-        key = {"passed": "passed", "failed": "failed", "skipped": "skipped", "not-run": "not_run"}.get(status)
+        status = _canonical_status(stage.get("status"))
+        key = status if status in {"passed", "failed", "blocked", "skipped", "not_run"} else None
         if key:
             denominators[key] += 1
         for command in stage.get("commands_run", []):
@@ -829,6 +831,7 @@ def _update_denominators(report: dict[str, Any]) -> None:
                 if label == "duration_seconds":
                     continue
                 denominators[label] = denominators.get(label, 0) + count
+    report["denominators"] = denominators
 
 
 def run_gate_pipeline(
@@ -839,15 +842,18 @@ def run_gate_pipeline(
     profile: str,
     allow_rag_skip: bool = False,
     timeout: int = 1800,
+    pipeline_timeout: float = DEFAULT_PIPELINE_TIMEOUT_SECONDS,
 ) -> dict[str, Any]:
+    if not math.isfinite(float(pipeline_timeout)) or float(pipeline_timeout) <= 0:
+        raise ValueError("pipeline_timeout must be finite and positive")
     stages = build_gate_plan(root, python, output, profile)
     report = _initial_report(root, python, output, profile, "run")
     report["skip_policy"]["allowed"] = bool(profile != "full" or allow_rag_skip)
-    rag_available = True
-    rag_diagnostic = "not-requested"
-    if profile == "full":
-        rag_available, rag_diagnostic = _rag_available(python, root)
-        report["platform"]["rag_runtime"] = {"available": rag_available, "diagnostic": rag_diagnostic}
+    report["timeouts"] = {
+        "per_command_seconds": max(1, timeout),
+        "pipeline_seconds": float(pipeline_timeout),
+    }
+    deadline = time.monotonic() + float(pipeline_timeout)
     blocked = False
     for order, stage in enumerate(stages, start=1):
         if blocked:
@@ -859,36 +865,38 @@ def run_gate_pipeline(
                 status="not-run",
                 reason="blocked by an earlier required gate",
             )
-        elif stage.requires_rag and not rag_available:
-            if allow_rag_skip:
-                record = _stage_record(
-                    stage,
-                    order,
-                    root=root,
-                    output=output,
-                    status="skipped",
-                    reason=RAG_UNAVAILABLE_REASON,
-                )
-            else:
-                record = _stage_record(
-                    stage,
-                    order,
-                    root=root,
-                    output=output,
-                    status="failed",
-                    reason=f"{RAG_UNAVAILABLE_REASON}; rerun with an installed RAG runtime or explicit --allow-rag-skip",
-                )
-                blocked = True
+        elif time.monotonic() >= deadline:
+            record = _stage_record(
+                stage,
+                order,
+                root=root,
+                output=output,
+                status="failed",
+                reason="pipeline_timeout",
+            )
+            blocked = True
         else:
-            if stage.name == "rag-mcp":
-                _prepare_rag_fixture(Path(stage.artifacts[0]).parent)
-            record = _run_stage(stage, order, root=root, output=output, python=python, timeout=timeout)
+            record = _run_stage(
+                stage,
+                order,
+                root=root,
+                output=output,
+                python=python,
+                timeout=timeout,
+                deadline=deadline,
+            )
             if record["status"] == "failed" and stage.required:
                 blocked = True
         report["stages"].append(record)
+        if record["status"] in {"failed", "blocked", "not_run"} and stage.required:
+            blocked = True
         _update_denominators(report)
         _write_json(output / "release-gates.json", report)
-    report["ok"] = not any(stage.get("status") == "failed" for stage in report["stages"])
+    report["ok"] = not any(
+        stage.get("status") in {"failed", "blocked", "not_run"}
+        or (stage.get("status") == "skipped" and stage.get("required", True))
+        for stage in report["stages"]
+    )
     report["finished_at"] = _utc_now()
     _update_denominators(report)
     _write_json(output / "release-gates.json", report)
@@ -919,9 +927,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--root", type=Path, default=PROJECT_ROOT)
     parser.add_argument("--python", type=Path, default=Path(sys.executable))
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--profile", choices=("core", "full", "ragflow"), default="full")
+    parser.add_argument("--profile", choices=("core", "full", "ragflow", "book-to-skill"), default="full")
     parser.add_argument("--allow-rag-skip", action="store_true")
     parser.add_argument("--timeout", type=int, default=1800)
+    parser.add_argument("--pipeline-timeout", type=float, default=DEFAULT_PIPELINE_TIMEOUT_SECONDS)
     parser.add_argument("--plan", action="store_true", help="print the ordered plan without executing commands")
     parser.add_argument("--json", action="store_true", help="emit the machine-readable report")
     args = parser.parse_args(argv)
@@ -948,6 +957,7 @@ def main(argv: list[str] | None = None) -> int:
                 profile=args.profile,
                 allow_rag_skip=args.allow_rag_skip,
                 timeout=max(1, args.timeout),
+                pipeline_timeout=args.pipeline_timeout,
             )
     except (OSError, RuntimeError, ValueError) as exc:
         report = {

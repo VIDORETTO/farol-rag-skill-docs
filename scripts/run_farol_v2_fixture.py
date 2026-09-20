@@ -4,17 +4,22 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any
 
-from docops.composition import CompositionManager
-from docops.extractors.base import ExtractorPolicy
-from docops.extractors.text_web import TextWebExtractor
-from docops.project import ProjectService
-from docops.router import GlobalRouter
-from docops.synthesis import SynthesisEngine
-from docops.taxonomy import TaxonomyEngine
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from docops.composition import CompositionManager  # noqa: E402
+from docops.extractors.base import ExtractorPolicy  # noqa: E402
+from docops.extractors.text_web import TextWebExtractor  # noqa: E402
+from docops.project import ProjectService  # noqa: E402
+from docops.router import GlobalRouter  # noqa: E402
+from docops.synthesis import SynthesisEngine  # noqa: E402
+from docops.taxonomy import TaxonomyEngine  # noqa: E402
 
 
 def run_fixture(root: Path | str) -> dict[str, Any]:

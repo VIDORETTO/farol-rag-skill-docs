@@ -40,6 +40,46 @@ def test_documentation_checker_accepts_farol_launcher(tmp_path: Path) -> None:
     assert result["ok"] is True, result["findings"]
 
 
+def test_documentation_checker_reads_tilde_fenced_commands(tmp_path: Path) -> None:
+    # The repository README fences command blocks with tildes; a backtick-only
+    # scanner silently skips them and lets real CLI drift through.
+    (tmp_path / "README.md").write_text("~~~text\ndocops definitely-not-a-command --json\n~~~\n", encoding="utf-8")
+
+    result = check_documentation(tmp_path)
+
+    assert result["ok"] is False
+    assert any(finding["code"] == "documented_command_unknown" for finding in result["findings"])
+
+
+def test_documentation_checker_expands_documented_command_groups(tmp_path: Path) -> None:
+    (tmp_path / "README.md").write_text(
+        "~~~text\ndocops v2 {inspect,apply}\ndocops v2 {not-a-verb}\n~~~\n",
+        encoding="utf-8",
+    )
+
+    result = check_documentation(tmp_path)
+
+    findings = [finding for finding in result["findings"] if finding["code"] == "documented_command_unknown"]
+    assert any("not-a-verb" in finding["message"] for finding in findings)
+    assert not any("inspect" in finding["message"] or "apply" in finding["message"] for finding in findings)
+
+
+def test_documentation_checker_covers_the_normative_specs_tree(tmp_path: Path) -> None:
+    # The Farol 2.0 spec/tickets/evidence live under specs/; a broken citation
+    # link there must fail the gate just like one under docs/.
+    spec = tmp_path / "specs" / "farol-2"
+    spec.mkdir(parents=True)
+    (spec / "spec.md").write_text("See [ticket](tickets/TK-999.md).\n", encoding="utf-8")
+
+    result = check_documentation(tmp_path)
+
+    assert result["ok"] is False
+    assert any(
+        finding["code"] == "broken_local_link" and "specs/farol-2/spec.md" in finding["path"]
+        for finding in result["findings"]
+    )
+
+
 def test_documentation_checker_requires_evidence_for_done_tickets(tmp_path: Path) -> None:
     ticket_root = tmp_path / "docs" / "main-consolidation" / "tickets"
     ticket_root.mkdir(parents=True)

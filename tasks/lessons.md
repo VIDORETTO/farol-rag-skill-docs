@@ -1,5 +1,55 @@
 # Lessons
 
+## 2026-09-13 — oráculo de docs precisa enxergar as cercas reais
+
+- `check_documentation.py` só reconhecia blocos cercados por crase tripla, mas
+  o README usa crase: blocos `~~~` ficavam fora do gate. Corrija o scanner para
+  aceitar ` ` ` e `~` (mínimo de três) e valide também a notação de grupo
+  `docops <grupo> {a,b}` expandindo para comandos concretos.
+- Um gate verde que não lê o arquivo onde a prosa contradiz o produto não é
+  evidência: confira que a superfície validada é a mesma que o humano lê.
+- O gate também ignorava `specs/` (48 Markdown normativos: spec/plan, tickets,
+  evidências) — a árvore que carrega as citações verificáveis do projeto. Um
+  oráculo precisa cobrir a fonte normativa, não só `docs/`/`README.md`.
+
+## 2026-09-13 — auditor de superfície e wheel contaminado por `build/`
+
+- Um scanner que varre `rglob("*")` do checkout mede o que está no disco, não o
+  que é versionado: ele contou ~15k findings de `documents/`, `.venv`,
+  `artifacts` e caches. Enumere a superfície normativa a partir de
+  `git ls-files` e filtre por prefixo de pacote.
+- Padrões de contração devem casar símbolos do contrato, não palavras inglesas
+  genéricas: `\bpage\b` acusava o locator legítimo `page` da IR. Ancore em
+  `course_id`/`page_id`, `*.schema.json`, `offer.json`, `page.offer` etc.
+- O wheel 1.1.0 continuou trazendo `course.schema.json`, `page.schema.json` e
+  `presets/mercado-livre.json` depois de removê-los do checkout, porque o
+  `build/lib` gitignored ainda os continha e o setuptools copiou de lá. Antes
+  de usar o wheel como oráculo de aceite, limpe artefatos de build obsoletos e
+  reconstrua.
+- Deleções só entram no índice após `git rm`/`git add`: `git ls-files --cached`
+  segue listando arquivos apenas apagados do disco, o que faz verificadores de
+  candidato verem “missing file” até o índice ser atualizado.
+
+## 2026-09-13 — denominadores de gate precisam ser idempotentes
+
+- O agregado do `run_release_gates.py` re-somava as etapas anteriores a cada
+  atualização, inflando o resultado para `7419 passed / 150 skipped`. O número
+  real do candidate é `1077 passed / 20 skipped` (`22` créditos de etapa mais
+  `1055` testes; skips são as duas execuções de suíte com `10` cada). Agregados
+  de gate devem ser calculados de forma idempotente e ter semântica explícita.
+- Contagens de suíte dependem do ambiente: o core isolado (Python 3.11, sem
+  `chromadb`) registra `499 passed, 10 skipped`, enquanto o venv do projeto
+  (Python 3.14.2, com `chromadb`) registra `504 passed, 5 skipped`. Registre o
+  ambiente junto da contagem e não atribua números históricos ao candidate
+  atual sem um relatório terminal próprio.
+
+## 2026-09-12 — não usar `rtk`
+
+- O usuário corrigiu explicitamente o workflow: comandos shell devem ser
+  executados sem o wrapper `rtk`. Não invocar `rtk` em nenhuma etapa futura;
+  preservar apenas a redaction e os limites de saída necessários diretamente
+  no comando usado.
+
 ## 2026-09-04 — prontidão, publicação e divulgação são gates diferentes
 
 - Um candidate técnico verde não é uma release pública: commit, digest, CI,

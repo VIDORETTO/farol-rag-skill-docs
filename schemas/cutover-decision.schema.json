@@ -4,14 +4,185 @@
   "title": "Farol 2.0 cutover decision",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "kind", "status", "ok", "legacy_preserved", "gates", "blockers"],
+  "required": [
+    "schema_version",
+    "kind",
+    "status",
+    "ok",
+    "legacy_preserved",
+    "gates",
+    "blockers",
+    "candidate",
+    "ir_revision",
+    "golden_revision",
+    "corpus_digest",
+    "environment",
+    "metrics",
+    "backends",
+    "arm_statuses",
+    "arm_identities",
+    "arm_metrics",
+    "arm_lifecycles",
+    "mappings",
+    "mapping_hashes",
+    "arm_hashes",
+    "lifecycle",
+    "cleanup",
+    "receipt_hash"
+  ],
   "properties": {
     "schema_version": {"const": 2, "type": "integer"},
     "kind": {"const": "cutover_decision", "type": "string"},
     "status": {"enum": ["cutover_approved", "cutover_rejected", "not_run"], "type": "string"},
     "ok": {"type": "boolean"},
     "legacy_preserved": {"type": "boolean"},
-    "gates": {"type": "object"},
-    "blockers": {"type": "array", "items": {"type": "string"}}
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "legacy_arm",
+        "ragflow_arm",
+        "candidate",
+        "ir_revision",
+        "golden_revision",
+        "corpus_digest",
+        "environment",
+        "backend",
+        "mappings",
+        "recall_at_5",
+        "mrr_at_5",
+        "citation_coverage",
+        "lineage_coverage",
+        "id_parity",
+        "lifecycle",
+        "recovery",
+        "rollback",
+        "cleanup",
+        "arm_hashes"
+      ],
+      "properties": {
+        "legacy_arm": {"type": "boolean"},
+        "ragflow_arm": {"type": "boolean"},
+        "candidate": {"type": "boolean"},
+        "ir_revision": {"type": "boolean"},
+        "golden_revision": {"type": "boolean"},
+        "corpus_digest": {"type": "boolean"},
+        "environment": {"type": "boolean"},
+        "backend": {"type": "boolean"},
+        "mappings": {"type": "boolean"},
+        "recall_at_5": {"type": "boolean"},
+        "mrr_at_5": {"type": "boolean"},
+        "citation_coverage": {"type": "boolean"},
+        "lineage_coverage": {"type": "boolean"},
+        "id_parity": {"type": "boolean"},
+        "lifecycle": {"type": "boolean"},
+        "recovery": {"type": "boolean"},
+        "rollback": {"type": "boolean"},
+        "cleanup": {"type": "boolean"},
+        "arm_hashes": {"type": "boolean"}
+      }
+    },
+    "blockers": {"type": "array", "items": {"type": "string"}},
+    "candidate": {"type": ["string", "null"], "minLength": 1},
+    "ir_revision": {"type": ["string", "null"], "minLength": 1},
+    "golden_revision": {"type": ["string", "null"], "minLength": 1},
+    "corpus_digest": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "environment": {"type": "object"},
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recall_at_5", "mrr_at_5", "citation_coverage", "lineage_coverage", "id_parity"],
+      "properties": {
+        "recall_at_5": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "mrr_at_5": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "citation_coverage": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "lineage_coverage": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "id_parity": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      }
+    },
+    "backends": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["legacy", "ragflow"],
+      "properties": {
+        "legacy": {"type": ["object", "null"]},
+        "ragflow": {"type": ["object", "null"]}
+      }
+    },
+    "arm_statuses": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["legacy", "ragflow"],
+      "properties": {
+        "legacy": {"enum": ["passed", "failed", "blocked", "not_run"], "type": "string"},
+        "ragflow": {"enum": ["passed", "failed", "blocked", "not_run"], "type": "string"}
+      }
+    },
+    "arm_identities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["legacy", "ragflow"],
+      "properties": {
+        "legacy": {"type": ["object", "null"]},
+        "ragflow": {"type": ["object", "null"]}
+      }
+    },
+    "arm_metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["legacy", "ragflow"],
+      "properties": {
+        "legacy": {"type": ["object", "null"]},
+        "ragflow": {"type": ["object", "null"]}
+      }
+    },
+    "arm_lifecycles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["legacy", "ragflow"],
+      "properties": {
+        "legacy": {"type": ["object", "null"]},
+        "ragflow": {"type": ["object", "null"]}
+      }
+    },
+    "mappings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["legacy", "ragflow"],
+      "properties": {
+        "legacy": {"type": ["object", "null"]},
+        "ragflow": {"type": ["object", "null"]}
+      }
+    },
+    "mapping_hashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["legacy", "ragflow"],
+      "properties": {
+        "legacy": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "ragflow": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "arm_hashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["legacy", "ragflow"],
+      "properties": {
+        "legacy": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "ragflow": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["queryable", "recovery", "rollback"],
+      "properties": {
+        "queryable": {"type": "boolean"},
+        "recovery": {"type": "boolean"},
+        "rollback": {"type": "boolean"}
+      }
+    },
+    "cleanup": {"enum": ["passed", "failed", "not_run", "not_required"], "type": "string"},
+    "receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
   }
 }

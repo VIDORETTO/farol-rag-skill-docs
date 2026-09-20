@@ -314,8 +314,11 @@ def _validate_nodes(nodes: list[TaxonomyNode], known: set[str]) -> None:
     ids = [node.node_id for node in nodes]
     concepts = [node.concept_id for node in nodes]
     owners = [node.owner for node in nodes]
+    slugs = [node.slug for node in nodes]
     if len(ids) != len(set(ids)) or len(concepts) != len(set(concepts)) or len(owners) != len(set(owners)):
         raise TaxonomyError("duplicate_owner", "node_id, concept_id and owner must be unique")
+    if len(slugs) != len(set(slugs)):
+        raise TaxonomyError("duplicate_slug", "taxonomy skill slugs must be unique")
     node_ids = set(ids)
     for node in nodes:
         if not node.owner:

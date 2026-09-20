@@ -66,8 +66,6 @@ __all__ = [
     "prepare_project_change",
     "activate_project_change",
     "rollback_project",
-    "validate_project_derivatives",
-    "prepare_project_derivatives",
     "dispatch_project_enrichment",
     "inspect_project_enrichment",
     "submit_project_enrichment",
@@ -95,7 +93,6 @@ __all__ = [
     "CapabilityV2",
     "MigrationPlanV2",
     "KnowledgeBackend",
-    "KnowledgeRagLegacyAdapter",
     "QueryRequest",
     "RagFlowAdapter",
     "TaxonomyEngine",
@@ -130,6 +127,8 @@ __all__ = [
     "ProjectService",
     "CutoverDecision",
     "evaluate_cutover",
+    "build_cutover_receipt",
+    "cutover_metrics_from_arms",
     "SurfaceAudit",
     "audit_release_surface",
     "require_cutover_approved",
@@ -137,7 +136,7 @@ __all__ = [
 __version__ = "1.1.0"
 
 from .api_types import CapabilityV2, KnowledgeProjectV2, MigrationPlanV2, OperationRequestV2, OperationResultV2
-from .backends import KnowledgeBackend, KnowledgeRagLegacyAdapter, QueryRequest, RagFlowAdapter
+from .backends import KnowledgeBackend, QueryRequest, RagFlowAdapter
 from .composition import CompositionCandidate, CompositionError, CompositionManager, CompositionReceipt
 from .migration import (
     LegacyInspection,
@@ -149,7 +148,15 @@ from .migration import (
     rollback_migration,
 )
 from .project import ProjectError, ProjectService
-from .release_v2 import CutoverDecision, SurfaceAudit, audit_release_surface, evaluate_cutover, require_cutover_approved
+from .release_v2 import (
+    CutoverDecision,
+    SurfaceAudit,
+    audit_release_surface,
+    build_cutover_receipt,
+    cutover_metrics_from_arms,
+    evaluate_cutover,
+    require_cutover_approved,
+)
 from .router import GlobalRouter, RoutePlan, RouterError, route_query_v2
 from .synthesis import (
     BookToSkillAdapter,
@@ -311,7 +318,7 @@ def revoke_reader_session(*args, **kwargs):
 def build_rag_snapshot(*args, **kwargs):
     """Build a relocatable content snapshot without mutating the package."""
 
-    from .rag_sync import build_rag_snapshot as build
+    from .rag_snapshots import build_rag_snapshot as build
 
     return build(*args, **kwargs)
 
@@ -319,7 +326,7 @@ def build_rag_snapshot(*args, **kwargs):
 def read_rag_snapshot(*args, **kwargs):
     """Read and verify a relocatable RAG snapshot."""
 
-    from .rag_sync import read_rag_snapshot as read
+    from .rag_snapshots import read_rag_snapshot as read
 
     return read(*args, **kwargs)
 
@@ -327,7 +334,7 @@ def read_rag_snapshot(*args, **kwargs):
 def rag_snapshot_identity(*args, **kwargs):
     """Return the compact identity used to pin a reader to a snapshot."""
 
-    from .rag_sync import rag_snapshot_identity as identity
+    from .rag_snapshots import rag_snapshot_identity as identity
 
     return identity(*args, **kwargs)
 
@@ -335,7 +342,7 @@ def rag_snapshot_identity(*args, **kwargs):
 def validate_rag_snapshot(*args, **kwargs):
     """Validate a snapshot against a package generation and revocations."""
 
-    from .rag_sync import validate_rag_snapshot as validate
+    from .rag_snapshots import validate_rag_snapshot as validate
 
     return validate(*args, **kwargs)
 
@@ -343,7 +350,7 @@ def validate_rag_snapshot(*args, **kwargs):
 def compare_embedding_profiles(*args, **kwargs):
     """Compare embedding profiles without changing the active package."""
 
-    from .rag_sync import compare_embedding_profiles as compare
+    from .rag_snapshots import compare_embedding_profiles as compare
 
     return compare(*args, **kwargs)
 
@@ -351,7 +358,7 @@ def compare_embedding_profiles(*args, **kwargs):
 def plan_rag_reuse(*args, **kwargs):
     """Plan incremental reuse or a declared full rebuild."""
 
-    from .rag_sync import plan_rag_reuse as plan
+    from .rag_snapshots import plan_rag_reuse as plan
 
     return plan(*args, **kwargs)
 
@@ -359,7 +366,7 @@ def plan_rag_reuse(*args, **kwargs):
 def snapshot_rag_package(*args, **kwargs):
     """Build and optionally persist a snapshot plus its non-mutating reuse plan."""
 
-    from .rag_sync import snapshot_rag_package as snapshot
+    from .rag_snapshots import snapshot_rag_package as snapshot
 
     return snapshot(*args, **kwargs)
 
@@ -576,18 +583,6 @@ def rollback_project(*args, **kwargs):
     from .master import rollback_project as rollback
 
     return rollback(*args, **kwargs)
-
-
-def validate_project_derivatives(*args, **kwargs):
-    from .master import validate_project_derivatives as validate
-
-    return validate(*args, **kwargs)
-
-
-def prepare_project_derivatives(*args, **kwargs):
-    from .master import prepare_project_derivatives as prepare
-
-    return prepare(*args, **kwargs)
 
 
 def dispatch_project_enrichment(*args, **kwargs):

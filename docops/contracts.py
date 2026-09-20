@@ -52,8 +52,6 @@ _SCHEMA_FILES = {
     "init-session": "init-session.schema.json",
     "project-revision": "project-revision.schema.json",
     "brief": "brief.schema.json",
-    "course": "course.schema.json",
-    "page": "page.schema.json",
     "decisions": "decisions.schema.json",
     "policy": "policy.schema.json",
     "dependencies": "dependencies.schema.json",

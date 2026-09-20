@@ -10,8 +10,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .contracts import validate_artifact
-from .harness import read_harness_manifest
-from .rag_sync import (
+from .rag_snapshots import (
     RagSnapshotError,
     build_rag_snapshot,
     rag_snapshot_identity,
@@ -244,38 +243,13 @@ def _assert_session_active(root: Path, session: Mapping[str, Any], now: datetime
 
 
 def _reader_capability(root: Path, adapter: str) -> dict[str, Any]:
-    if adapter == "memory":
-        return {
-            "adapter": "memory",
-            "concurrent_publication_allowed": False,
-            "capability_source": "local-read-only-adapter",
-        }
-    if adapter != "mcp":
-        raise ReaderSessionError("reader_adapter_invalid", "reader adapter must be memory or mcp")
-    manifest_path = root / "harness.json"
-    if not manifest_path.is_file():
-        raise ReaderSessionError("reader_capability_missing", "MCP reader requires a harness manifest")
-    try:
-        manifest = read_harness_manifest(manifest_path)
-    except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
-        raise ReaderSessionError("reader_capability_missing", "MCP harness is not a safe read-only profile") from exc
-    mcp = manifest.get("mcp")
-    capabilities = mcp.get("capabilities", []) if isinstance(mcp, Mapping) else []
-    if (
-        not isinstance(mcp, Mapping)
-        or mcp.get("mode") != "read_only"
-        or not set(READ_ONLY_TOOLS).issubset(capabilities if isinstance(capabilities, list) else set())
-        or mcp.get("write_capabilities") not in (None, [])
-        or mcp.get("concurrent_publication_allowed") is True
-    ):
-        raise ReaderSessionError(
-            "reader_capability_missing",
-            "MCP backend lacks the explicit read-only capability required by a pinned reader",
-        )
+    del root
+    if adapter != "memory":
+        raise ReaderSessionError("reader_adapter_invalid", "reader adapter must be memory after legacy contraction")
     return {
-        "adapter": "mcp",
+        "adapter": "memory",
         "concurrent_publication_allowed": False,
-        "capability_source": "harness-read-only-profile",
+        "capability_source": "local-read-only-adapter",
     }
 
 
@@ -295,7 +269,7 @@ def create_reader_session(
     capability = _reader_capability(root, adapter)
     generation = _generation(root)
     generation_root = _resolve_generation(root, generation)
-    expected_backend = "knowledge-rag" if adapter == "mcp" else "memory"
+    expected_backend = "memory"
     try:
         pinned_snapshot = (
             build_rag_snapshot(
@@ -456,7 +430,7 @@ def query_reader_session(
         metadata = {"backend": "local-snapshot", "adapter": "read_only_document"}
     else:
         try:
-            retrieval = adapter_for_package(generation_root, selected_adapter, runtime_root=runtime_root)
+            retrieval = adapter_for_package(generation_root, selected_adapter)
             try:
                 results = retrieval.search(query, max_results=max_results)
                 metadata = retrieval.metadata()

@@ -16,7 +16,7 @@ Para o MCP local:
 
 ```text
 python scripts/bootstrap.py --dev --rag
-python scripts/mcp_smoke.py "background tasks"
+python scripts/run_release_gates.py --profile ragflow --json
 ```
 
 No Windows use `scripts/bootstrap.ps1`; em Linux/macOS use
@@ -52,29 +52,28 @@ ela nunca remove a geração ativa nem staging resumível recente.
 
 O `run` gera skill, router, corpus normalizado, `config.yaml`, `harness.json` e
 manifesto. A configuração padrão é relativa ao pacote e não sobrescreve uma
-configuração existente. Para indexar de fato no servidor local, acrescente
-`--index-rag`; sem essa opção o `rag/index.json` fica em modo `corpus-ready`,
-pronto para o processo MCP.
+configuração existente. A indexação RAGFlow é uma operação externa opt-in;
+sem o perfil autorizado, o `rag/index.json` fica em modo `corpus-ready`.
 
 `rag/index.json` uses named metrics: `corpus_documents` counts documents
 accepted by the operator; `operator_chunks` is the local estimate before the
 backend; `backend_total_documents` and `backend_total_chunks` are totals
-observed from knowledge-rag, or `null` when real indexing was not executed.
+observed from RAGFlow, or `null` when real indexing was not executed.
 The current generator does not emit the ambiguous `documents`/`chunks` aliases.
 
-## Atualização legada
+## Atualização e integração externa
 
-`scripts/update_rag.py` continua disponível para o corpus de trabalho legado:
+O backend legado foi removido. Para verificar a integração externa e o estado do
+cutover, use:
 
 ```text
-python scripts/update_rag.py plan
-python scripts/update_rag.py apply
-python scripts/update_rag.py status
+python scripts/run_release_gates.py --profile ragflow --json
+python scripts/run_cutover_dual.py --json
+python -m docops doctor --json
 ```
 
-O modo padrão aplica mudanças por arquivo, salva checkpoint após cada operação
-e desabilita o watcher durante mutações explícitas. O estado `.rag_state.json`
-é local e ignorado.
+O core aplica mudanças por arquivo, salva checkpoint após cada operação e não
+inicia serviço externo. Credenciais RAGFlow ficam somente no ambiente do perfil.
 
 `scripts/update_docs.ps1 -Sources <fonte> -Slug <slug>` agora delega ao
 `docops run`; não há instrução de copiar/colar no caminho feliz. O
@@ -119,8 +118,8 @@ python -m docops impact-assess --package <pacote> --events <events.json> --json
 python -m docops reader-session --package <pacote> --adapter memory --now <RFC3339> --json
 python -m docops reader-query --package <pacote> --session <id> --tool search_knowledge --query "..." --adapter memory --now <RFC3339> --json
 python -m docops reader-session-revoke --package <pacote> --session <id> --now <RFC3339> --json
-python -m docops rag-snapshot --package <pacote> --backend knowledge-rag --supports-incremental --snapshot-out <snapshot.json> --json
-python -m docops rag-snapshot --package <pacote> --previous <snapshot.json> --backend knowledge-rag --supports-incremental --verify-query "..." --json
+python -m docops rag-snapshot --package <pacote> --backend ragflow --supports-incremental --snapshot-out <snapshot.json> --json
+python -m docops rag-snapshot --package <pacote> --previous <snapshot.json> --backend ragflow --supports-incremental --verify-query "..." --json
 python -m docops rag-profile-compare --package <pacote> --profiles compact,multilingual --language pt-BR --json
 python -m docops learning-submit --package <pacote> --proposal <proposal.json> --capture-opt-in --json
 python -m docops learning-review --package <pacote> --proposal-id <id> --decision admit --actor <revisor-local> --json
@@ -128,7 +127,7 @@ python -m docops learning-review --package <pacote> --proposal-id <id> --decisio
 python -m docops feedback-submit --package <pacote> --feedback <feedback.json> --json
 python -m docops feedback-submit --package <pacote> --feedback <feedback.json> --queue <fila.sqlite> --now <RFC3339> --json
 python -m docops feedback-report --package <pacote> --window-days 7 --now <RFC3339> --json
-python scripts/evaluate_golden.py --cases golden-set/test-cases.json
+python scripts/run_release_gates.py --profile ragflow --json
 ```
 
 Os comandos acima são aliases planos de uma hierarquia canônica. Para novos
@@ -168,8 +167,8 @@ artefato lógico do backend ou backend sem capacidade declarada de reuso fazem
 o relatório escolher `full_rebuild`; nunca há alegação falsa de incremental.
 O relatório traz `active_preserved=true` e `publication_allowed=false`.
 `--verify-query` executa uma busca pós-snapshot pelo adapter escolhido para
-conferir contagem e fontes; em TDD usa `memory`, enquanto MCP externo requer
-runtime/harness isolado e não é acionado implicitamente.
+conferir contagem e fontes; em TDD usa `memory`, enquanto RAGFlow externo exige
+o perfil opt-in e não é acionado implicitamente.
 
 Resultados de busca preservam localizadores quando o extrator oferece estrutura:
 `page`, `slide`, `sheet`, `cell`, `section`, `timestamp` e `identifier`. Sem um
@@ -268,10 +267,9 @@ Em cada release, execute no ambiente usado pelo RAG:
 python scripts/audit_dependencies.py --requirements requirements.lock --local --strict
 ```
 
-O comando falha para qualquer advisory fora do residual explicitamente
-documentado em [SECURITY.md](../SECURITY.md). Trocar o perfil de embedding
-exige `reindex_documents(full_rebuild=True)`; não reutilize um índice com
-dimensão ou modelo diferentes.
+O comando falha para qualquer advisory. Trocar o perfil de embedding exige
+rebuild completo e receipt novo; não reutilize um índice com dimensão ou modelo
+diferentes.
 Para integração Python, use a interface raiz documentada em
 [`docs/PYTHON-API.md`](PYTHON-API.md); `docops.pipeline` permanece somente como
 adapter de compatibilidade.

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "consulta-documentacao"
 version = "1.1.0"
-description = "Farol — portable, deterministic documentation-to-knowledge orchestration with optional local RAG/MCP."
+description = "Farol — portable, deterministic documentation-to-knowledge orchestration with an external RAGFlow backend."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -19,8 +19,11 @@ Documentation = "https://github.com/VIDORETTO/agent-knowledge-kit/tree/main/docs
 Issues = "https://github.com/VIDORETTO/agent-knowledge-kit/issues"
 
 [project.optional-dependencies]
-rag = ["knowledge-rag==4.8.5"]
 ragflow = ["ragflow-sdk==0.27.2; python_version >= '3.13' and python_version < '3.14'"]
+ocr = [
+    "docling==2.129.0; python_version >= '3.13' and python_version < '3.14'",
+    "onnxruntime==1.30.0; python_version >= '3.13' and python_version < '3.14'",
+]
 formats = ["PyYAML==6.0.3", "pypdf==6.16.2", "python-docx==1.2.0"]
 dev = ["pytest==9.1.1", "ruff==0.12.7", "pip-audit==2.10.1", "setuptools==84.0.0"]
 

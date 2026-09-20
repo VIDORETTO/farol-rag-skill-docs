@@ -25,8 +25,11 @@ não definem o escopo 2.0.
 - `todo.md` e `backlog.md` são views; não registrar progresso apenas nelas.
 - `state.json` guarda checkpoint do esforço, não substitui tickets.
 
-## Estado inicial
+## Estado inicial do esforço
 
-Fronteira executável: TK-001 e TK-002. Nenhuma implementação foi iniciada.
-RAGFlow, OCR real e `book-to-skill` real são integrações externas e precisam
-registrar `executed` ou `not_run`; ausência nunca é contada como aprovação.
+Na abertura do esforço, a fronteira executável era TK-001 e TK-002 e nenhuma
+implementação havia sido iniciada. Esse registro é histórico; o estado atual
+fica nos tickets e em `state.json`. RAGFlow e OCR real já possuem execução
+fixada e evidência redigida; `book-to-skill` real continua sendo integração de
+harness e precisa registrar `executed` ou `not_run`. Ausência nunca é contada
+como aprovação.

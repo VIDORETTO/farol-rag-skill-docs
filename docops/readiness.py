@@ -67,7 +67,7 @@ def _mcp_evaluation_evidence(evidence: Mapping[str, Any] | None) -> bool:
         evidence
         and evidence.get("ok") is True
         and evidence.get("adapter") == "mcp"
-        and evidence.get("backend") == "knowledge-rag"
+        and evidence.get("backend") in {"ragflow", "memory"}
         and evidence.get("mode") == "gate"
     )
 
@@ -239,7 +239,7 @@ def record_release_evidence(
         raise ValueError("release evidence requires a passing evaluation")
     evaluation_evidence = _read_json(root / ".docops" / "evaluation.json")
     if not _mcp_evaluation_evidence(evaluation_evidence):
-        raise ValueError("release evidence requires a passing MCP evaluation")
+        raise ValueError("release evidence requires a passing RAGFlow evaluation")
     manifest_path = root / "manifest.json"
     if not manifest_path.is_file() or manifest_path.is_symlink():
         raise ValueError("release evidence requires a package manifest")

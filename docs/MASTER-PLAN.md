@@ -23,7 +23,7 @@ Não confundir três produtos: conhecimento operacional do vendedor, curso sobre
 3. [SPEC](master-evolution/SPEC.md): comportamento desejado e histórias.
 4. [Contratos de estado](master-evolution/STATE-CONTRACTS.md): protocolo e invariantes.
 5. [Fontes, RAG e avaliação](master-evolution/KNOWLEDGE-QUALITY.md).
-6. [Preset Mercado Livre](master-evolution/MERCADO-LIVRE-PRESET.md).
+6. Preset de domínio declarativo (documento editorial removido por TK-017).
 7. [Roadmap e tickets](master-evolution/ROADMAP.md), [TDD e execução](master-evolution/TDD-EXECUTION.md).
 
 Para fatos atuais, código e evidência executada prevalecem sobre planos anteriores. Para a implementação nova, estes contratos propostos prevalecem sobre sugestões genéricas dos tickets. Se houver conflito entre documentos desta entrega, interromper apenas o ticket dependente e registrar a decisão; não escolher silenciosamente. Segurança existente não é relaxada por omissão do plano.

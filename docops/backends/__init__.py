@@ -12,7 +12,6 @@ from .base import (
     QueryRequest,
     SnapshotIdentity,
 )
-from .legacy_knowledge_rag import KnowledgeRagLegacyAdapter
 from .ragflow import RagFlowAdapter
 
 __all__ = [
@@ -23,7 +22,6 @@ __all__ = [
     "EvidenceResult",
     "IndexRevision",
     "KnowledgeBackend",
-    "KnowledgeRagLegacyAdapter",
     "ProbeResult",
     "QueryRequest",
     "RagFlowAdapter",

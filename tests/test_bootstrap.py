@@ -3,19 +3,27 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 from scripts.bootstrap import install_command, main, pip_upgrade_command
 
 
-def test_bootstrap_installs_the_project_and_optional_profiles(tmp_path: Path) -> None:
-    command = install_command(Path("python"), tmp_path, rag=True, formats=True, dev=True)
+def test_bootstrap_rejects_the_removed_legacy_profile(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="legacy RAG profile was removed"):
+        install_command(Path("python"), tmp_path, rag=True, formats=True, dev=True)
+
+
+def test_bootstrap_installs_the_project_and_optional_formats_profile(tmp_path: Path) -> None:
+    command = install_command(Path("python"), tmp_path, formats=True, dev=True)
 
     assert command[:5] == ["python", "-m", "pip", "install", "--editable"]
     assert str(tmp_path) in command
-    assert "--requirement" in command
+    assert "--requirement" not in command
     assert "pytest==9.1.1" in command
     assert "pip-audit==2.10.1" in command
     assert "setuptools==84.0.0" in command
-    assert command.count(str(tmp_path / "requirements.txt")) == 1
+    assert "PyYAML==6.0.3" in command
+    assert "pypdf==6.16.2" in command
 
 
 def test_bootstrap_pins_a_known_safe_pip_before_installing_packages() -> None:

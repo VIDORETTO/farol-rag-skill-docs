@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import time
 from typing import Any, Mapping, Protocol
@@ -22,6 +23,9 @@ from .base import (
     SnapshotIdentity,
 )
 
+MAX_RAGFLOW_CHUNK_PAGES = 4096
+MIN_RAGFLOW_TIMEOUT_SECONDS = 0.1
+
 
 class RagFlowClient(Protocol):
     def health(self) -> Mapping[str, Any]: ...
@@ -35,10 +39,18 @@ class _RagFlowSdkClient:
     SDK objects and opaque provider IDs never escape this wrapper.
     """
 
-    def __init__(self, sdk: Any, *, version: str = "0.27.2", timeout_seconds: float = 30.0) -> None:
+    def __init__(
+        self,
+        sdk: Any,
+        *,
+        version: str = "0.27.2",
+        timeout_seconds: float = 30.0,
+        max_chunk_pages: int = 256,
+    ) -> None:
         self.sdk = sdk
         self.version = version
-        self.timeout_seconds = max(float(timeout_seconds), 0.1)
+        self.timeout_seconds = _positive_finite_timeout(timeout_seconds)
+        self.max_chunk_pages = _chunk_page_limit(max_chunk_pages)
         self._datasets: dict[str, Any] = {}
         self._documents: dict[tuple[str, str], Any] = {}
 
@@ -78,8 +90,11 @@ class _RagFlowSdkClient:
 
     def wait_for_parse(self, dataset_id: str, document_id: str, timeout_seconds: float) -> Mapping[str, Any]:
         dataset = self._dataset(dataset_id)
-        deadline = time.monotonic() + min(max(float(timeout_seconds), 0.1), self.timeout_seconds)
+        requested_timeout = _positive_finite_timeout(timeout_seconds)
+        deadline = time.monotonic() + min(requested_timeout, self.timeout_seconds)
         while True:
+            if time.monotonic() >= deadline:
+                raise BackendUnavailable("parse_timeout", "RAGFlow parsing did not finish before the deadline")
             documents = dataset.list_documents(id=document_id, page=1, page_size=1)
             document = documents[0] if documents else None
             status = str(_sdk_attr(document, "run", _sdk_attr(document, "status", ""))).casefold()
@@ -97,15 +112,18 @@ class _RagFlowSdkClient:
     def list_chunks(self, dataset_id: str, document_id: str) -> list[Mapping[str, Any]]:
         document = self._document(dataset_id, document_id)
         result: list[Mapping[str, Any]] = []
-        page = 1
-        while True:
-            chunks = document.list_chunks(page=page, page_size=1024)
+        # RAGFlow v0.27.2 validates this API at a hard maximum of 100.
+        page_size = 100
+        for page in range(1, self.max_chunk_pages + 1):
+            chunks = document.list_chunks(page=page, page_size=page_size)
             for chunk in chunks if isinstance(chunks, list) else []:
                 result.append(_sdk_chunk(chunk, document_id))
-            if not isinstance(chunks, list) or len(chunks) < 1024:
-                break
-            page += 1
-        return result
+            if not isinstance(chunks, list) or len(chunks) < page_size:
+                return result
+        raise BackendUnavailable(
+            "chunks_pagination_limit",
+            "RAGFlow chunk pagination exceeded the configured page limit",
+        )
 
     def search(self, dataset_id: str, query: str, top_k: int) -> list[Mapping[str, Any]]:
         chunks = self.sdk.retrieve(
@@ -308,6 +326,11 @@ class RagFlowAdapter:
             blocks = document.get("blocks")
             if not document_id or not content or not isinstance(blocks, list):
                 raise BackendError("document_invalid", "candidate documents require id, content and blocks")
+            block_index = {
+                str(block["block_id"]): block
+                for block in blocks
+                if isinstance(block, Mapping) and isinstance(block.get("block_id"), str) and block["block_id"]
+            }
             uploaded = self._call(
                 "upload_document", dataset_id, content, {"blocks": blocks, "document_id": document_id}
             )
@@ -322,18 +345,34 @@ class RagFlowAdapter:
                 chunk_id = _external_id(chunk, fallback=f"chunk-{content_hash(chunk)[:16]}")
                 chunk_metadata = chunk.get("metadata") if isinstance(chunk.get("metadata"), Mapping) else {}
                 block_id = str(chunk_metadata.get("block_id") or "")
-                matched_block = None
+                matched_block = block_index.get(block_id) if block_id else None
+                if block_id and matched_block is None:
+                    raise BackendError(
+                        "mapping_unknown_block",
+                        "RAGFlow chunk references a block outside the canonical IR document",
+                    )
                 if not block_id:
                     block_id, matched_block = _match_block(chunk, blocks)
                 if not block_id:
                     continue
-                canonical_metadata = {**dict(chunk_metadata), "block_id": block_id}
+                # Provider metadata is untrusted transport data.  The public
+                # mapping is rebuilt from the canonical IR block so secrets,
+                # stale locators or forged source identities cannot cross the
+                # backend seam.
+                canonical_metadata = {"block_id": block_id}
                 if isinstance(matched_block, Mapping):
                     canonical_metadata.update(
                         {
                             key: matched_block[key]
-                            for key in ("source_id", "source_revision_id", "locators", "heading_path", "kind")
-                            if key in matched_block and key not in canonical_metadata
+                            for key in (
+                                "source_id",
+                                "source_revision_id",
+                                "locators",
+                                "heading_path",
+                                "kind",
+                                "source_fragment_hash",
+                            )
+                            if key in matched_block
                         }
                     )
                 mapping[chunk_id] = canonical_metadata
@@ -396,16 +435,17 @@ class RagFlowAdapter:
                 continue
             external_id = str(raw.get("id") or raw.get("chunk_id") or "")
             canonical = dict(mapping.get(external_id, {}))
-            if not canonical:
-                metadata = raw.get("metadata") if isinstance(raw.get("metadata"), Mapping) else {}
-                canonical = dict(metadata)
+            # A provider hit is evidence only when the adapter created and
+            # retained a canonical mapping for that exact external chunk.
+            # Never trust provider-supplied metadata as a substitute: it may
+            # contain a plausible block_id for a different revision or source.
             if not canonical.get("block_id"):
                 continue
             hits.append({**dict(raw), **canonical, "external_chunk_id": external_id})
         return EvidenceResult(
             index_revision=index_revision.index_revision,
             query=query_request,
-            hits=hits,
+            hits=hits[: query_request.top_k],
             outcome="ok" if hits else "insufficient_evidence",
             metadata={"backend": self.backend_name, "version": self.expected_version},
         )
@@ -509,14 +549,24 @@ class RagFlowAdapter:
         if not callable(waiter):
             raise BackendError("parse_pending", "RAGFlow parsing did not reach a terminal state")
         try:
-            waited = waiter(dataset_id, document_id, float(self.config.get("timeout_seconds", 30)))
-        except Exception as exc:
+            timeout_seconds = _positive_finite_timeout(self.config.get("timeout_seconds", 30))
+        except ValueError as exc:
+            raise BackendError("timeout_invalid", "RAGFlow timeout_seconds must be finite and positive") from exc
+        try:
+            waited = waiter(dataset_id, document_id, timeout_seconds)
+        except BackendUnavailable:
+            raise
+        except (TimeoutError, ConnectionError, OSError) as exc:
             raise BackendUnavailable("parse_timeout", "RAGFlow parsing did not finish before the deadline") from exc
+        except Exception as exc:
+            raise BackendError("parse_protocol_error", "RAGFlow parse waiter failed") from exc
         waited_status = (
             str(waited.get("status") or waited.get("state") or "").casefold() if isinstance(waited, Mapping) else ""
         )
         if waited_status in {"failed", "error", "cancelled", "canceled"}:
             raise BackendError("parse_failed", "RAGFlow document parsing failed")
+        if waited_status not in {"done", "parsed", "success", "succeeded", "completed"}:
+            raise BackendError("parse_pending", "RAGFlow parsing did not reach a terminal state")
 
     def _call(self, method: str, *args: Any, default: Any = None) -> Any:
         if self.client is None:
@@ -559,6 +609,20 @@ class RagFlowAdapter:
         parsed = urlsplit(endpoint)
         if parsed.scheme not in {"http", "https"} or not parsed.hostname:
             raise BackendUnavailable("endpoint_invalid", "RAGFlow endpoint must be an HTTP(S) URL")
+        try:
+            parsed.port
+        except ValueError as exc:
+            raise BackendUnavailable("endpoint_invalid", "RAGFlow endpoint port is invalid") from exc
+        if parsed.username is not None or parsed.password is not None:
+            raise BackendUnavailable(
+                "endpoint_credentials_forbidden",
+                "RAGFlow credentials must be supplied through a secret environment reference",
+            )
+        if parsed.query or parsed.fragment:
+            raise BackendUnavailable(
+                "endpoint_metadata_forbidden",
+                "RAGFlow endpoint must not contain query or fragment data",
+            )
         localhost = parsed.hostname.casefold() in {"localhost", "127.0.0.1", "::1"}
         if parsed.scheme != "https" and not (localhost and settings.get("allow_insecure_localhost") is True):
             raise BackendUnavailable("tls_required", "remote RAGFlow endpoints require HTTPS")
@@ -574,19 +638,47 @@ def _external_id(value: Any, *, fallback: str) -> str:
     return fallback
 
 
+def _positive_finite_timeout(value: Any) -> float:
+    try:
+        timeout = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("timeout_seconds must be finite and positive") from exc
+    if not math.isfinite(timeout) or timeout <= 0:
+        raise ValueError("timeout_seconds must be finite and positive")
+    return max(timeout, MIN_RAGFLOW_TIMEOUT_SECONDS)
+
+
+def _chunk_page_limit(value: Any) -> int:
+    try:
+        pages = int(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("max_chunk_pages must be a positive bounded integer") from exc
+    if pages < 1 or pages > MAX_RAGFLOW_CHUNK_PAGES:
+        raise ValueError(f"max_chunk_pages must be between 1 and {MAX_RAGFLOW_CHUNK_PAGES}")
+    return pages
+
+
 def _match_block(chunk: Mapping[str, Any], blocks: list[Any]) -> tuple[str, Mapping[str, Any] | None]:
     """Map a provider chunk to a canonical block when the SDK omits metadata."""
 
     content = str(chunk.get("content") or "").strip()
     if not content:
         return "", None
+    matches: list[tuple[str, Mapping[str, Any]]] = []
     for block in blocks:
         if not isinstance(block, Mapping):
             continue
         block_text = str(block.get("text") or block.get("content") or "").strip()
         block_id = str(block.get("block_id") or "")
         if block_id and block_text and (content == block_text or content in block_text or block_text in content):
-            return block_id, block
+            matches.append((block_id, block))
+    if len(matches) > 1:
+        raise BackendError(
+            "mapping_ambiguous",
+            "RAGFlow chunk content matches more than one canonical IR block",
+        )
+    if matches:
+        return matches[0]
     return "", None
 
 
@@ -603,7 +695,11 @@ def _build_sdk_client(endpoint: str, token: str, settings: Mapping[str, Any]) ->
     if version != RagFlowAdapter.expected_version:
         raise BackendUnavailable("sdk_version_mismatch", "RAGFlow SDK version does not match the pinned contract")
     base_url = endpoint.rstrip("/")
-    timeout_seconds = max(float(settings.get("timeout_seconds", 30)), 0.1)
+    try:
+        timeout_seconds = _positive_finite_timeout(settings.get("timeout_seconds", 30))
+        max_chunk_pages = _chunk_page_limit(settings.get("max_chunk_pages", 256))
+    except ValueError as exc:
+        raise BackendUnavailable("config_invalid", str(exc)) from exc
 
     class _ConfiguredRAGFlow(RAGFlow):
         def __init__(self, api_key: str, base_url: str, version: str) -> None:
@@ -658,7 +754,12 @@ def _build_sdk_client(endpoint: str, token: str, settings: Mapping[str, Any]) ->
         base_url=base_url,
         version=str(settings.get("api_version") or "v1"),
     )
-    return _RagFlowSdkClient(sdk, version=version, timeout_seconds=timeout_seconds)
+    return _RagFlowSdkClient(
+        sdk,
+        version=version,
+        timeout_seconds=timeout_seconds,
+        max_chunk_pages=max_chunk_pages,
+    )
 
 
 def _safe_endpoint(endpoint: str) -> str:

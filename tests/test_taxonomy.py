@@ -90,6 +90,38 @@ def test_taxonomy_rejects_two_nodes_with_the_same_owner() -> None:
     assert caught.value.code == "duplicate_owner"
 
 
+def test_taxonomy_rejects_duplicate_skill_slugs_before_synthesis() -> None:
+    engine = TaxonomyEngine()
+
+    with pytest.raises(TaxonomyError) as caught:
+        engine.propose(
+            _blocks(),
+            goal="goal",
+            proposal={
+                "nodes": [
+                    {
+                        "node_id": "auth-guide",
+                        "concept_id": "auth-guide",
+                        "owner": "auth-guide",
+                        "title": "Authentication",
+                        "slug": "authentication",
+                        "coverage": ["auth-heading"],
+                    },
+                    {
+                        "node_id": "auth-reference",
+                        "concept_id": "auth-reference",
+                        "owner": "auth-reference",
+                        "title": "Authentication",
+                        "slug": "authentication",
+                        "coverage": ["auth-body"],
+                    },
+                ]
+            },
+        )
+
+    assert caught.value.code == "duplicate_slug"
+
+
 def test_taxonomy_approval_is_explicit_and_compare_and_swap_guarded() -> None:
     engine = TaxonomyEngine()
     proposal = engine.propose(_blocks(), goal="goal")

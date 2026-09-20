@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.metadata
+import math
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -10,6 +12,74 @@ from ..api_types import CapabilityV2
 from ..ir import ExtractionReceipt, IRBlock, IRDocument
 from ..revisions import content_hash
 from .base import ExtractionResult, ExtractorError, ExtractorPolicy
+
+
+class DoclingOcrAdapter:
+    """Local, optional Docling/RapidOCR bridge for scanned PDF blocks."""
+
+    name = "docling-ocr"
+    version = "2.129.0"
+    execution = "local"
+
+    def _converter(self) -> Any:
+        try:
+            from docling.datamodel.base_models import InputFormat  # type: ignore[import-not-found]
+            from docling.datamodel.pipeline_options import (  # type: ignore[import-not-found]
+                OcrMode,
+                PdfPipelineOptions,
+                RapidOcrOptions,
+            )
+            from docling.document_converter import (  # type: ignore[import-not-found]
+                DocumentConverter,
+                PdfFormatOption,
+            )
+        except ImportError as exc:
+            raise ExtractorError(
+                "dependency_missing",
+                "docling and onnxruntime are required for local PDF OCR",
+            ) from exc
+        try:
+            installed = importlib.metadata.version("docling")
+        except importlib.metadata.PackageNotFoundError as exc:
+            raise ExtractorError("dependency_missing", "docling is required for local PDF OCR") from exc
+        if installed != self.version:
+            raise ExtractorError(
+                "dependency_version_mismatch",
+                f"local PDF OCR requires docling {self.version}",
+            )
+        options = PdfPipelineOptions(do_ocr=True, do_table_structure=False)
+        options.ocr_options = RapidOcrOptions(mode=OcrMode.FULL_PAGE)
+        return DocumentConverter(format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=options)})
+
+    def __call__(self, path: Path, _policy: ExtractorPolicy) -> list[Mapping[str, Any]]:
+        try:
+            result = self._converter().convert(path)
+        except ExtractorError:
+            raise
+        except Exception as exc:
+            raise ExtractorError("ocr_failed", "Docling OCR failed to convert the PDF") from exc
+        confidence = _docling_confidence(result)
+        records: list[dict[str, Any]] = []
+        for item, _level in result.document.iterate_items():
+            text = str(getattr(item, "text", "") or "").strip()
+            if not text:
+                continue
+            for item_provenance in list(getattr(item, "prov", []) or []):
+                bbox = getattr(item_provenance, "bbox", None)
+                record: dict[str, Any] = {
+                    "page": getattr(item_provenance, "page_no", None),
+                    "text": text,
+                    "confidence": confidence,
+                }
+                if bbox is not None:
+                    record["bbox"] = [
+                        float(getattr(bbox, "l")),
+                        float(getattr(bbox, "b")),
+                        float(getattr(bbox, "r")),
+                        float(getattr(bbox, "t")),
+                    ]
+                records.append(record)
+        return records
 
 
 class PdfExtractor:
@@ -28,7 +98,10 @@ class PdfExtractor:
             fidelity=["structured-native", "external-converter", "metadata-only"],
             execution="local",
             permissions=["read-private-staging", "ocr-opt-in"],
-            dependencies=[{"name": "pypdf", "optional": True}],
+            dependencies=[
+                {"name": "pypdf", "optional": True},
+                {"name": "docling", "version": DoclingOcrAdapter.version, "optional": True},
+            ],
         )
 
     def extract(
@@ -46,20 +119,31 @@ class PdfExtractor:
         if len(raw) > int(budget.get("max_bytes", policy.max_bytes)):
             raise ExtractorError("budget_exceeded", "PDF exceeds extractor byte budget")
         input_hash = hashlib.sha256(raw).hexdigest()
-        pages = _extract_pages(path)
+        try:
+            pages = _extract_pages(path)
+        except ExtractorError as exc:
+            return _failed_result(path, policy, input_hash, exc.code, exc.code)
         if not pages:
-            if not policy.allow_remote or "ocr" not in set(policy.authorized_extractors):
+            ocr_name = str(getattr(self.ocr, "name", "ocr"))
+            ocr_execution = str(getattr(self.ocr, "execution", "remote"))
+            authorized = bool({"ocr", ocr_name}.intersection(policy.authorized_extractors))
+            if not authorized or (ocr_execution != "local" and not policy.allow_remote):
                 return _failed_result(path, policy, input_hash, "ocr_required", "ocr_required")
             if self.ocr is None:
                 return _failed_result(path, policy, input_hash, "ocr_adapter_missing", "dependency_missing")
-            pages = [dict(page) for page in self.ocr(path, policy)]
+            try:
+                pages = _normalize_ocr_pages(self.ocr(path, policy))
+            except ExtractorError as exc:
+                return _failed_result(path, policy, input_hash, exc.code, exc.code)
+            except (TypeError, ValueError):
+                return _failed_result(path, policy, input_hash, "ocr_output_invalid", "ocr_output_invalid")
             if not pages:
                 return _failed_result(path, policy, input_hash, "ocr_empty", "ocr_empty")
-            confidence = min(float(page.get("confidence", 0.0)) for page in pages)
+            confidence = min(float(page["confidence"]) for page in pages)
             if confidence < policy.ocr_confidence_threshold:
                 return _failed_result(path, policy, input_hash, "low_confidence", "low_confidence")
             fidelity = "external-converter"
-            execution = "remote"
+            execution = ocr_execution
         else:
             fidelity = "structured-native"
             execution = "local"
@@ -88,7 +172,7 @@ class PdfExtractor:
                         }
                     ],
                     confidence=float(confidence) if isinstance(confidence, (int, float)) else None,
-                    quality_flags=["ocr"] if execution == "remote" else [],
+                    quality_flags=["ocr"],
                     source_fragment_hash=content_hash({"page": page_number, "text": text}),
                 )
             )
@@ -140,19 +224,69 @@ def _extract_pages(path: Path) -> list[dict[str, Any]]:
         from pypdf import PdfReader  # type: ignore[import-not-found]
     except ImportError:
         raise ExtractorError("dependency_missing", "pypdf is required for local PDF extraction")
+
+    try:
+        header = path.read_bytes()[:5]
+    except OSError as exc:
+        raise ExtractorError("read_failed", "PDF could not be read") from exc
+    if header != b"%PDF-":
+        raise ExtractorError("malformed", "PDF header is missing or invalid")
+
     try:
         reader = PdfReader(str(path))
+        if reader.is_encrypted:
+            raise ExtractorError("encrypted", "encrypted PDFs require an authorized decrypting adapter")
         pages = []
         for index, page in enumerate(reader.pages, 1):
             text = (page.extract_text() or "").strip()
             if text:
                 pages.append({"page": index, "text": text})
         return pages
-    except Exception:
-        # A valid scanned PDF and a parser-degraded PDF both have no textual
-        # blocks at this seam.  Keep them quarantined until an authorized OCR
-        # adapter proves otherwise; never reinterpret raw bytes as text.
-        return []
+    except ExtractorError:
+        raise
+    except Exception as exc:
+        raise ExtractorError("malformed", "PDF structure could not be parsed") from exc
+
+
+def _normalize_ocr_pages(raw_pages: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw_pages, list):
+        raise ExtractorError("ocr_output_invalid", "OCR output must be a page list")
+    pages: list[dict[str, Any]] = []
+    for raw_page in raw_pages:
+        if not isinstance(raw_page, Mapping):
+            raise ExtractorError("ocr_output_invalid", "OCR page must be an object")
+        page = dict(raw_page)
+        raw_page_number = page.get("page", len(pages) + 1)
+        if isinstance(raw_page_number, bool):
+            raise ExtractorError("ocr_output_invalid", "OCR page number must be a positive integer")
+        if isinstance(raw_page_number, float) and not raw_page_number.is_integer():
+            raise ExtractorError("ocr_output_invalid", "OCR page number must be a positive integer")
+        if isinstance(raw_page_number, str) and not raw_page_number.strip().isdigit():
+            raise ExtractorError("ocr_output_invalid", "OCR page number must be a positive integer")
+        try:
+            page_number = int(raw_page_number)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ExtractorError("ocr_output_invalid", "OCR page number must be a positive integer") from exc
+        if page_number < 1:
+            raise ExtractorError("ocr_output_invalid", "OCR page numbers must be positive")
+        confidence = float(page.get("confidence", 0.0))
+        if not math.isfinite(confidence) or not 0.0 <= confidence <= 1.0:
+            raise ExtractorError("ocr_output_invalid", "OCR confidence must be finite and between zero and one")
+        page["page"] = page_number
+        page["confidence"] = confidence
+        pages.append(page)
+    return pages
+
+
+def _docling_confidence(result: Any) -> float:
+    confidence = getattr(result, "confidence", None)
+    for name in ("ocr_score", "mean_score", "low_score"):
+        value = getattr(confidence, name, None)
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value)):
+            numeric = float(value)
+            if 0.0 <= numeric <= 1.0:
+                return numeric
+    raise ExtractorError("ocr_output_invalid", "Docling OCR did not expose a finite confidence score")
 
 
 def _failed_result(

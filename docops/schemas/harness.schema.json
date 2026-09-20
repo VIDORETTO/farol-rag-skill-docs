@@ -3,7 +3,7 @@
   "$id": "https://consulta-documentacao.invalid/schemas/harness.schema.json",
   "title": "docops external harness hand-off",
   "type": "object",
-  "required": ["schema_version", "package_root", "generation", "operator_skill", "skills", "mcp"],
+  "required": ["schema_version", "package_root", "generation", "operator_skill", "skills", "backend"],
   "properties": {
     "schema_version": {"const": 1},
     "package_root": {"const": "."},
@@ -30,21 +30,18 @@
       }
     },
     "skills": {"type": "array", "minItems": 2, "items": {"type": "string"}},
-    "mcp": {
+    "backend": {
       "type": "object",
-      "required": ["name", "transport", "command", "args", "cwd", "env", "config"],
+      "required": ["name", "version", "adapter", "transport", "cwd", "config", "capabilities", "external"],
       "properties": {
-        "name": {"const": "knowledge-rag"},
-        "transport": {"const": "stdio"},
-        "command": {"type": "string", "minLength": 1},
-        "args": {"type": "array", "items": {"type": "string"}},
+        "name": {"const": "ragflow"},
+        "version": {"const": "0.27.2"},
+        "adapter": {"type": "string", "minLength": 1},
+        "transport": {"type": "string", "minLength": 1},
         "cwd": {"const": "."},
-        "env": {"type": "object"},
         "config": {"const": "config.yaml"},
-        "mode": {"enum": ["read_only", "maintenance"]},
         "capabilities": {"type": "array", "items": {"type": "string"}},
-        "write_capabilities": {"type": "array", "items": {"type": "string"}},
-        "concurrent_publication_allowed": {"type": "boolean"}
+        "external": {"const": true}
       }
     }
   }

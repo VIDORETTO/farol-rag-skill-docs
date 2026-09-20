@@ -219,7 +219,7 @@ def write_skill(output_dir: Path, slug: str, accepted: list[dict[str, Any]], sou
     fixed = {
         "glossary.md": "# Glossary\n\nTerms are discovered from the source headings by the external skill generator.\n",
         "patterns.md": "# Patterns\n\nUse the source chapters for patterns and anti-patterns.\n",
-        "cheatsheet.md": "# Cheatsheet\n\n- Concepts → generated skill\n- Literal facts → knowledge-rag with citation\n",
+        "cheatsheet.md": "# Cheatsheet\n\n- Concepts → generated skill\n- Literal facts → RAGFlow evidence with citation\n",
     }
     for name, content in fixed.items():
         written += int(write_if_changed(skill_dir / name, content))

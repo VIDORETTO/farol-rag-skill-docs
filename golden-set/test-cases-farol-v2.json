@@ -6,16 +6,23 @@
     {
       "case_id": "v2-auth-default",
       "query": "What is the exact token behavior?",
-      "expected_filepath": "guide.md",
+      "expected_filepath": "documents/fixtures/acme-docs/guide.md",
       "reviewed": true,
       "critical": true
     },
     {
       "case_id": "v2-deployment-pattern",
-      "query": "How should deployment be structured?",
-      "expected_filepath": "guide.md",
+      "query": "How should transient 429 and 503 responses be retried?",
+      "expected_filepath": "documents/fixtures/acme-docs/guide.md",
       "reviewed": true,
       "critical": false
+    },
+    {
+      "case_id": "v2-timeout-default",
+      "query": "What is the timeout_seconds default and how can a caller override it?",
+      "expected_filepath": "documents/fixtures/acme-docs/release.md",
+      "reviewed": true,
+      "critical": true
     }
   ]
 }

@@ -1,0 +1,54 @@
+services:
+  ragflow-cpu:
+    image: ${DOCOPS_RAGFLOW_IMAGE_DIGEST:?DOCOPS_RAGFLOW_IMAGE_DIGEST must be repository@sha256}
+    environment:
+      - COMPOSE_PROFILES=elasticsearch,cpu,metadata-mysql,tei-cpu
+      - TEI_MODEL=BAAI/bge-small-en-v1.5
+    ports: !override
+      - "127.0.0.1:${DOCOPS_RAGFLOW_WEB_PORT:-8080}:80"
+      - "127.0.0.1:${DOCOPS_RAGFLOW_API_PORT:-9380}:9380"
+  tei-cpu:
+    image: ${DOCOPS_RAGFLOW_TEI_IMAGE_DIGEST:?DOCOPS_RAGFLOW_TEI_IMAGE_DIGEST must be repository@sha256}
+    environment:
+      - TEI_MODEL=BAAI/bge-small-en-v1.5
+    ports: !override
+      - "127.0.0.1:${TEI_PORT:-6380}:80"
+  es01:
+    ports: !override
+      - "127.0.0.1:${ES_PORT}:9200"
+  opensearch01:
+    ports: !override
+      - "127.0.0.1:${OS_PORT}:9201"
+  infinity:
+    ports: !override
+      - "127.0.0.1:${INFINITY_THRIFT_PORT}:23817"
+      - "127.0.0.1:${INFINITY_HTTP_PORT}:23820"
+      - "127.0.0.1:${INFINITY_PSQL_PORT}:5432"
+  serenedb:
+    ports: !override
+      - "127.0.0.1:${SERENEDB_PORT}:7890"
+  oceanbase:
+    ports: !override
+      - "127.0.0.1:${OCEANBASE_PORT:-2881}:2881"
+  seekdb:
+    ports: !override
+      - "127.0.0.1:${SEEKDB_PORT:-2881}:2881"
+  mysql:
+    ports: !override
+      - "127.0.0.1:${EXPOSE_MYSQL_PORT}:3306"
+  minio:
+    ports: !override
+      - "127.0.0.1:${MINIO_PORT}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT}:9001"
+  redis:
+    ports: !override
+      - "127.0.0.1:${REDIS_PORT}:6379"
+  jaeger:
+    ports: !override
+      - "127.0.0.1:${JAEGER_OTLP_GRPC_PORT:-4317}:4317"
+      - "127.0.0.1:${JAEGER_OTLP_HTTP_PORT:-4318}:4318"
+      - "127.0.0.1:${JAEGER_UI_PORT:-16686}:16686"
+  nats:
+    ports: !override
+      - "127.0.0.1:${EXPOSE_NATS_PORT:-4222}:4222"
+      - "127.0.0.1:${NATS_MONITOR_PORT:-8222}:8222"

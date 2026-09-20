@@ -82,6 +82,7 @@ def test_synthesis_generates_multiple_budgeted_skills_with_lineage() -> None:
     assert all(skill.lineage for skill in result.skills)
     assert "token" in result.skills[0].markdown
     assert result.receipt.request_hash
+    assert result.receipt.adapter["execution"] == "contract-fixture"
 
 
 def test_synthesis_rejects_claim_without_supported_lineage() -> None:
@@ -104,6 +105,85 @@ def test_synthesis_rejects_claim_without_supported_lineage() -> None:
             },
         )
     assert caught.value.code == "lineage_required"
+
+
+def test_synthesis_rejects_lineage_outside_the_topic_projection() -> None:
+    blocks = _blocks()
+    taxonomy = _taxonomy(blocks)
+    engine = SynthesisEngine()
+
+    with pytest.raises(SynthesisError) as caught:
+        engine.submit(
+            request=engine.prepare(taxonomy, blocks, language="en"),
+            output={
+                "skills": [
+                    {
+                        "topic_id": "auth",
+                        "slug": "auth",
+                        "markdown": "# Authentication\n\nDeployment is automatic.",
+                        "claims": [
+                            {
+                                "claim_id": "cross-topic",
+                                "text": "Deployment is automatic.",
+                                "lineage": [{"block_id": "deploy"}],
+                            }
+                        ],
+                    },
+                    {"topic_id": "deployment", "slug": "deployment", "markdown": "# Deployment", "claims": []},
+                ]
+            },
+        )
+
+    assert caught.value.code == "lineage_invalid"
+
+
+def test_synthesis_rejects_an_unsafe_external_skill_slug() -> None:
+    blocks = _blocks()
+    taxonomy = _taxonomy(blocks)
+    engine = SynthesisEngine()
+
+    with pytest.raises(SynthesisError) as caught:
+        engine.submit(
+            request=engine.prepare(taxonomy, blocks, language="en"),
+            output={
+                "skills": [
+                    {
+                        "topic_id": "auth",
+                        "slug": "../../escaped",
+                        "markdown": "# Authentication",
+                        "claims": [],
+                    },
+                    {"topic_id": "deployment", "slug": "deployment", "markdown": "# Deployment", "claims": []},
+                ]
+            },
+        )
+
+    assert caught.value.code == "output_invalid"
+
+
+def test_synthesis_rejects_unsafe_external_chapter_paths() -> None:
+    blocks = _blocks()
+    taxonomy = _taxonomy(blocks)
+    engine = SynthesisEngine()
+
+    with pytest.raises(SynthesisError) as caught:
+        engine.submit(
+            request=engine.prepare(taxonomy, blocks, language="en"),
+            output={
+                "skills": [
+                    {
+                        "topic_id": "auth",
+                        "slug": "auth",
+                        "markdown": "# Authentication",
+                        "chapters": {"../../outside.md": "unsafe"},
+                        "claims": [],
+                    },
+                    {"topic_id": "deployment", "slug": "deployment", "markdown": "# Deployment", "claims": []},
+                ]
+            },
+        )
+
+    assert caught.value.code == "output_invalid"
 
 
 def test_synthesis_retry_is_idempotent_and_conflicting_payload_fails() -> None:

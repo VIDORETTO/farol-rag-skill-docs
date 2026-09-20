@@ -178,6 +178,9 @@ qualquer composição ativa.
 7. **Promover 2.0:** novos projetos usam RAGFlow; 1.x permanece migrável/read-only.
 8. **Contrair:** remover Mercado Livre/curso/página/oferta, depois knowledge-rag,
    Chroma, vendor e configurações quando seus gates independentes passarem.
+9. **Governar a distribuição:** manter originais privados e emitir somente
+   derivados allowlisted com provenance verificável (TK-021), sem publicar
+   automaticamente.
 
 Nenhum ticket mistura a contração destrutiva com a criação do rollback que a
 torna segura.
@@ -217,6 +220,8 @@ Oráculos independentes:
 - processo reiniciado para crash/recovery;
 - auditor de release para proibir corpus, segredos e contratos excluídos;
 - pacote 1.x sintético para migração/rollback.
+- candidato sintético para auditar a fronteira entre originais privados,
+  derivados distribuíveis e provenance (TK-021).
 
 Gates de remoção do legado: Recall@5 ≥ 1,0 nos críticos, MRR@5 ≥ 0,86,
 100% de hits factuais com locator verificável, zero claim factual de skill sem

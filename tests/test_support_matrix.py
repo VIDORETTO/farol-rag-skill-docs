@@ -103,9 +103,7 @@ def test_integration_workflow_retains_redacted_rag_evidence() -> None:
 
     assert "actions/upload-artifact@" in workflow
     assert "integration-evidence-${{ github.sha }}" in workflow
-    assert "artifacts/acme/evaluation.json" in workflow
-    assert "artifacts/acme/mcp-smoke.log" in workflow
-    assert "artifacts/acme/concurrency.json" in workflow
+    assert "artifacts/ragflow-release-gates.json" in workflow
 
 
 def test_support_checker_rejects_package_without_candidate_artifact(tmp_path: Path) -> None:
@@ -157,7 +155,7 @@ def test_support_checker_rejects_broad_rag_artifact(tmp_path: Path) -> None:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: unsafe
-          path: artifacts/acme
+          path: artifacts/ragflow
 """
         (workflows / path.name).write_text(content, encoding="utf-8")
 
@@ -181,7 +179,7 @@ def test_support_checker_rejects_broad_rag_artifact(tmp_path: Path) -> None:
     assert any(finding["code"] == "integration_artifact_unsafe" for finding in report["findings"])
 
 
-@pytest.mark.parametrize("unsafe_path", ["artifacts/acme/rag", "artifacts", "artifacts/acme/**"])
+@pytest.mark.parametrize("unsafe_path", ["artifacts/ragflow/rag", "artifacts", "artifacts/ragflow/**"])
 def test_support_checker_rejects_every_broad_integration_artifact_path(
     tmp_path: Path,
     unsafe_path: str,
