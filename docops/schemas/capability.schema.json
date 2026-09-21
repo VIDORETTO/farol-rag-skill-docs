@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/capability.schema.json",
+  "title": "Farol 2.0 extractor/backend capability",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "contract_version", "kind", "name", "version", "status", "supports", "fidelity", "execution", "permissions", "dependencies", "extensions"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "contract_version": {"const": "2.0", "type": "string"},
+    "kind": {"const": "capability", "type": "string"},
+    "name": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "minLength": 1},
+    "status": {"enum": ["available", "disabled", "dependency_missing", "permission_required", "unavailable"], "type": "string"},
+    "supports": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "fidelity": {"type": "array", "items": {"enum": ["structured-native", "text-fallback", "external-converter", "metadata-only", "unsupported"], "type": "string"}, "uniqueItems": true},
+    "execution": {"enum": ["local", "remote", "hybrid"], "type": "string"},
+    "permissions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "dependencies": {"type": "array", "items": {"type": "object"}},
+    "extensions": {"type": "object"}
+  }
+}

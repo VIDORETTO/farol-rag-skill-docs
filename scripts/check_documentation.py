@@ -45,7 +45,9 @@ def _finding(code: str, path: Path, message: str) -> dict[str, str]:
 
 
 def _markdown_files(root: Path) -> Iterable[Path]:
-    roots = [root / "README.md", root / "AGENTS.md", root / "docs", root / "skills"]
+    # `specs/` holds the normative effort (spec, plan, tickets, evidence) and the
+    # citation locators those documents rely on, so it belongs to the same gate.
+    roots = [root / "README.md", root / "AGENTS.md", root / "docs", root / "skills", root / "specs"]
     for value in roots:
         if value.is_file() and value.suffix.casefold() == ".md":
             yield value
@@ -133,15 +135,25 @@ def _known_docops_commands() -> tuple[set[str], set[tuple[str, ...]]]:
 
 
 def _code_fragments(content: str) -> Iterable[str]:
-    yield from (match.group(1) for match in re.finditer(r"```[^\n]*\n(.*?)```", content, flags=re.DOTALL))
+    yield from _fenced_blocks(content)
     yield from (match.group(1) for match in re.finditer(r"`([^`\n]+)`", content))
+
+
+# Markdown permits both backtick and tilde fences; the README in this repository
+# uses tildes, so a backtick-only scanner silently skips documented commands.
+_FENCED_BLOCK_RE = re.compile(r"^(?P<fence>`{3,}|~{3,})[^\n]*\n(?P<body>.*?)^(?P=fence)\s*$", re.DOTALL | re.MULTILINE)
+
+
+def _fenced_blocks(content: str) -> Iterable[str]:
+    for match in _FENCED_BLOCK_RE.finditer(content):
+        yield match.group("body")
 
 
 def _code_fragments_with_context(content: str) -> Iterable[tuple[str, str]]:
     """Yield code fragments together with nearby prose used for proposal markers."""
 
-    for match in re.finditer(r"```[^\n]*\n(.*?)```", content, flags=re.DOTALL):
-        yield match.group(1), content[max(0, match.start() - 240) : match.start()]
+    for match in _FENCED_BLOCK_RE.finditer(content):
+        yield match.group("body"), content[max(0, match.start() - 240) : match.start()]
     for match in re.finditer(r"`([^`\n]+)`", content):
         yield match.group(1), content[max(0, match.start() - 240) : match.start()]
 
@@ -171,9 +183,12 @@ def _docops_argv(line: str) -> list[str] | None:
     match = _DOCOPS_START_RE.match(line)
     if not match:
         return None
+    args = match.group("args")
+    if not args:
+        return None
     try:
-        return shlex.split(match.group("args"), posix=True)
-    except ValueError:
+        return shlex.split(args, posix=True)
+    except (TypeError, ValueError):
         return None
 
 
@@ -199,38 +214,64 @@ def _check_docops_fragment(fragment: str, context: str, path: Path, root: Path) 
                     argv.extend(shlex.split(lines[index].strip(), posix=True))
                 except ValueError:
                     pass
-        expanded = _expand_canonical_argv(argv)
-        if not expanded:
+        # Documentation summarises a group as ``docops lifecycle rag {snapshot,profile-compare}``.
+        # Expand each brace token so the real CLI map is checked per concrete command.
+        for concrete in _expand_brace_groups(argv):
+            findings.extend(_check_docops_argv(concrete, flat, canonical, path, root))
+    return findings
+
+
+def _expand_brace_groups(argv: list[str]) -> list[list[str]]:
+    expanded: list[list[str]] = [[]]
+    for token in argv:
+        if token.startswith("{") and token.endswith("}"):
+            choices = [choice.strip() for choice in token[1:-1].split(",") if choice.strip()]
+        else:
+            choices = [token]
+        expanded = [prefix + [choice] for prefix in expanded for choice in choices]
+    return expanded
+
+
+def _check_docops_argv(
+    argv: list[str],
+    flat: set[str],
+    canonical: set[tuple[str, ...]],
+    path: Path,
+    root: Path,
+) -> list[dict[str, str]]:
+    expanded = _expand_canonical_argv(argv)
+    if not expanded:
+        return []
+    command = expanded[0].casefold()
+    if command.startswith((".", "/", "-")) or command in {"...", "<command>"}:
+        return []
+    if command not in flat:
+        tokens = tuple(token.casefold() for token in argv[:4])
+        if "/" in command or any(token in {"...", "<command>", "{command}"} for token in tokens[1:]):
+            return []
+        if any(candidate[: len(tokens)] == tokens for candidate in canonical):
+            return []
+        return [
+            _finding(
+                "documented_command_unknown",
+                path.relative_to(root),
+                f"documented docops command is not in the CLI compatibility map: {' '.join(tokens)}",
+            )
+        ]
+    findings: list[dict[str, str]] = []
+    valid_options = _command_option_names(expanded)
+    for token in expanded[1:]:
+        if not token.startswith("--"):
             continue
-        command = expanded[0].casefold()
-        if command.startswith((".", "/", "-")) or command in {"...", "<command>"}:
-            continue
-        if command not in flat:
-            tokens = tuple(token.casefold() for token in argv[:4])
-            if "/" in command or any(token in {"...", "<command>", "{command}"} for token in tokens[1:]):
-                continue
-            if not any(candidate[: len(tokens)] == tokens for candidate in canonical):
-                findings.append(
-                    _finding(
-                        "documented_command_unknown",
-                        path.relative_to(root),
-                        f"documented docops command is not in the CLI compatibility map: {' '.join(tokens)}",
-                    )
+        option = token.split("=", 1)[0].casefold()
+        if option not in {value.casefold() for value in valid_options}:
+            findings.append(
+                _finding(
+                    "documented_option_unknown",
+                    path.relative_to(root),
+                    f"documented option is not supported by docops {command}: {option}",
                 )
-            continue
-        valid_options = _command_option_names(expanded)
-        for token in expanded[1:]:
-            if not token.startswith("--"):
-                continue
-            option = token.split("=", 1)[0].casefold()
-            if option not in {value.casefold() for value in valid_options}:
-                findings.append(
-                    _finding(
-                        "documented_option_unknown",
-                        path.relative_to(root),
-                        f"documented option is not supported by docops {command}: {option}",
-                    )
-                )
+            )
     return findings
 
 

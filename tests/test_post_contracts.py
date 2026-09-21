@@ -178,6 +178,6 @@ def test_release_evidence_requires_the_real_mcp_evaluation(tmp_path: Path) -> No
     try:
         record_release_evidence(package, version="1.0.1", gates={"tests": True})
     except ValueError as exc:
-        assert "MCP" in str(exc)
+        assert "RAGFlow" in str(exc)
     else:
         raise AssertionError("memory evaluation unexpectedly qualified for release evidence")

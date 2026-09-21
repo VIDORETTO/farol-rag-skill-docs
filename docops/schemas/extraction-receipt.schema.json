@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/extraction-receipt.schema.json",
+  "title": "Farol 2.0 extraction receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "artifact_id", "source_id", "source_revision_id", "extractor", "fidelity", "status", "input_hash", "ir_revision", "warnings", "errors", "quarantine_reason", "metadata"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "kind": {"const": "extraction_receipt", "type": "string"},
+    "artifact_id": {"type": "string", "minLength": 1},
+    "source_id": {"type": "string", "minLength": 1},
+    "source_revision_id": {"type": "string", "minLength": 1},
+    "extractor": {"type": "object"},
+    "fidelity": {"enum": ["structured-native", "text-fallback", "external-converter", "metadata-only", "unsupported"], "type": "string"},
+    "status": {"enum": ["extracted", "degraded", "quarantined", "failed"], "type": "string"},
+    "input_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "ir_revision": {"type": ["string", "null"]},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "errors": {"type": "array", "items": {"type": "object"}},
+    "quarantine_reason": {"type": ["string", "null"]},
+    "metadata": {"type": "object"}
+  }
+}

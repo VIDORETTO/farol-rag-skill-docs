@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/synthesis-receipt.schema.json",
+  "title": "Farol 2.0 synthesis receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "request_id", "request_hash", "adapter", "status", "input_hash", "output_hash", "skills", "rejected_claims", "warnings"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "kind": {"const": "synthesis_receipt", "type": "string"},
+    "request_id": {"type": "string", "minLength": 1},
+    "request_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "adapter": {"type": "object"},
+    "status": {"type": "string"},
+    "input_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "output_hash": {"type": ["string", "null"]},
+    "skills": {"type": "array", "items": {"type": "string"}},
+    "rejected_claims": {"type": "array", "items": {"type": "object"}},
+    "warnings": {"type": "array", "items": {"type": "string"}}
+  }
+}

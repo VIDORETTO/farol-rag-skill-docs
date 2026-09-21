@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/backend-mapping.schema.json",
+  "title": "Farol 2.0 reconstructible backend mapping",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "project_revision", "ir_revision", "backend", "backend_version", "dataset_id", "entries", "parser_fingerprint", "created_at"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "kind": {"const": "backend_mapping", "type": "string"},
+    "project_revision": {"type": "string", "minLength": 1},
+    "ir_revision": {"type": "string", "minLength": 1},
+    "backend": {"type": "string", "minLength": 1},
+    "backend_version": {"type": "string", "minLength": 1},
+    "dataset_id": {"type": ["string", "null"]},
+    "entries": {"type": "array", "items": {"type": "object"}},
+    "parser_fingerprint": {"type": ["string", "null"]},
+    "created_at": {"type": ["string", "null"]}
+  }
+}

@@ -7,7 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from docops.rag_sync import package_rag_config_text
+from docops.rag_snapshots import package_rag_config_text
 
 
 def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:

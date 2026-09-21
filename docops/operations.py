@@ -61,11 +61,10 @@ from .primitives import (
 from .primitives import (
     write_if_changed as _write_if_changed,
 )
-from .rag_sync import RagSynchronizer, embedding_configuration, package_rag_config_text
+from .rag_snapshots import backend_provenance, package_rag_config_text
 from .readiness import assess_readiness
 from .repository_acquirer import RepositoryAcquirer
 from .revisions import evidence_matches_package, file_hash, package_revisions
-from .runtime import runtime_provenance
 from .source_resolver import SourceResolution, SourceResolver, canonicalize_url
 from .state import CheckpointStore, SourceRecord, StateStore
 from .storage import write_json_atomic, write_text_atomic
@@ -664,7 +663,7 @@ def _collect(source: str | Path, resolution: SourceResolution, options: Pipeline
     }
     if repository_metadata:
         provenance["repository"] = repository_metadata
-    provenance["runtime"] = runtime_provenance(_runtime_root(options))
+    provenance["runtime"] = backend_provenance(_runtime_root(options))
     return _Collection(
         resolution,
         tuple(_freeze(entry) for entry in entries),
@@ -856,7 +855,7 @@ def plan(source: str | Path | OperationRequest, *, options: PipelineOptions | No
             "license": options.license or "unknown",
             "redistribution": options.redistribution,
             "content_trust": "untrusted",
-            "runtime": runtime_provenance(_runtime_root(options)),
+            "runtime": backend_provenance(_runtime_root(options)),
         }
     )
     config_content: str | None = None
@@ -1331,48 +1330,19 @@ def _write_index(stage: Path, plan_value: OperationPlan) -> dict[str, Any]:
         for path in document_paths
         if path.relative_to(stage / "rag" / "documents").parts[:1] == ("learning",)
     )
-    rag_sync_result = None
     if plan_value.request.options.index_rag:
-        full_rebuild = False
-        active_index = plan_value.request.options.output_dir / "rag" / "index.json"
-        if active_index.is_file() and not active_index.is_symlink():
-            try:
-                previous_index = json.loads(active_index.read_text(encoding="utf-8"))
-            except (OSError, UnicodeError, json.JSONDecodeError):
-                previous_index = {}
-            if previous_index.get("mode") == "indexed":
-                previous_configuration = previous_index.get("configuration")
-                previous_fingerprint = (
-                    previous_configuration.get("embedding_fingerprint")
-                    if isinstance(previous_configuration, Mapping)
-                    else None
-                )
-                current_configuration = embedding_configuration(stage)
-                full_rebuild = not isinstance(previous_fingerprint, str) or (
-                    previous_fingerprint != current_configuration.get("embedding_fingerprint")
-                )
-        rag_sync_result = RagSynchronizer(runtime_root=_runtime_root(plan_value.request.options)).sync(
-            stage,
-            full_rebuild=full_rebuild,
+        raise OperationFailure(
+            "ragflow_external_required",
+            "RAGFlow indexing is an external opt-in operation; use the RAGFlow adapter/profile with its receipt",
+            phase="index",
         )
-        if not rag_sync_result.ok:
-            raise OperationFailure(
-                (rag_sync_result.error or {}).get("code", "rag_integration_failed"),
-                (rag_sync_result.error or {}).get("message", "knowledge-rag indexing failed"),
-                phase="index",
-            )
-    backend_stats = rag_sync_result.stats if rag_sync_result is not None else {}
-    backend_total_chunks = (
-        backend_stats.get("total_chunks") if isinstance(backend_stats.get("total_chunks"), int) else None
-    )
-    backend_total_documents = (
-        backend_stats.get("total_documents") if isinstance(backend_stats.get("total_documents"), int) else None
-    )
+    backend_total_chunks = None
+    backend_total_documents = None
     index_payload: dict[str, Any] = {
         "schema_version": 1,
         "status": "ready" if plan_value.records else "empty",
-        "backend": "knowledge-rag",
-        "mode": "indexed" if rag_sync_result is not None and rag_sync_result.ok else "corpus-ready",
+        "backend": "ragflow",
+        "mode": "corpus-ready",
         "profile": "compact",
         "corpus_documents": corpus_documents,
         "operator_chunks": operator_chunks,
@@ -1388,17 +1358,7 @@ def _write_index(stage: Path, plan_value: OperationPlan) -> dict[str, Any]:
         "language": plan_value.resolution.selected.language if plan_value.resolution.selected else None,
         "source_state": ".docops/state.json",
     }
-    if rag_sync_result is not None:
-        safe_sync = rag_sync_result.to_dict()
-        index_payload["server_stats"] = safe_sync["stats"]
-        index_payload["reindex"] = safe_sync["reindex"]
-        index_payload["smoke"] = safe_sync["smoke"]
-        index_payload["configuration"] = safe_sync["configuration"]
-        index_payload["profile"] = safe_sync["configuration"].get("profile", "unknown")
-        index_payload["provenance"] = safe_sync["provenance"]
-        index_payload["diagnostics"] = safe_sync["diagnostics"]
-    else:
-        index_payload["smoke"] = {"status": "not-run", "hint": "run with --index-rag or scripts/mcp_smoke.py"}
+    index_payload["smoke"] = {"status": "not-run", "hint": "run the opt-in RAGFlow integration profile"}
     write_json_atomic(stage / "rag" / "index.json", index_payload)
     return index_payload
 

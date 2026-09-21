@@ -1,6 +1,6 @@
 ---
 name: {{SLUG}}-router
-description: Routes {{SLUG}} conceptual questions to the skill and factual questions to knowledge-rag.
+description: Routes {{SLUG}} conceptual questions to the skill and factual questions to RAGFlow evidence.
 metadata:
   type: router
   generated_by: docops

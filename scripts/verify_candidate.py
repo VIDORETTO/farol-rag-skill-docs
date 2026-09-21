@@ -33,7 +33,6 @@ _REQUIRED_ASSETS = {
     "SECURITY.md",
     "CODE_OF_CONDUCT.md",
     "CONTRIBUTING.md",
-    "docs/CHROMA-RESIDUAL-DECISION.md",
     "docs/DEPENDENCIES.md",
     "docs/RELEASE.md",
     "docs/RELEASE-NOTES-1.1.0.md",

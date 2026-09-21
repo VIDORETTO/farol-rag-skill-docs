@@ -29,11 +29,11 @@ MVP = P0–P2, manutenção guiada pelo agente e publicação manual. Produto lo
 | [T08](tickets/08-construir-candidata-multilingue-sem-interromper-leitores.md) | P2 | Construir candidata multilíngue sem interromper leitores | T07 | 8 |
 | [T09](tickets/09-distinguir-norma-estrategia-conflito-e-ausencia-de-evidencia.md) | P2 | Distinguir norma, estratégia, conflito e ausência de evidência | T07 | 7,8 |
 | [T10](tickets/10-avaliar-candidata-com-golden-do-dominio-e-casos-criticos.md) | P2 | Avaliar candidata com Golden do domínio e casos críticos | T08, T09 | 8 |
-| [T11](tickets/11-aplicar-preset-mercado-livre-sem-acoplar-o-nucleo.md) | P2 | Aplicar preset Mercado Livre sem acoplar o núcleo | T03, T05 | 1,7,8 |
+| T11 (removido por TK-017) | P2 | Preset de domínio declarativo sem acoplar o núcleo | T03, T05 | 1,7,8 |
 | [T12](tickets/12-preparar-mudanca-com-diff-e-impacto-transitivo.md) | P3 | Preparar mudança com diff e impacto transitivo | T04, T05 | 3,12 |
 | [T13](tickets/13-revogar-fonte-e-derivados-sem-ressuscitar-conteudo.md) | P3 | Revogar fonte e derivados sem ressuscitar conteúdo | T12, T07 | 3,7 |
 | [T14](tickets/14-orquestrar-enriquecimento-externo-retomavel.md) | P3 | Orquestrar enriquecimento externo retomável | T12 | 5 |
-| [T15](tickets/15-preparar-curso-e-pagina-como-derivados-avaliaveis.md) | P3 | Preparar curso e página como derivados avaliáveis | T03, T11, T12, T14 | 1,3,5,7 |
+| T15 (removido por TK-017) | P3 | Derivados editoriais avaliáveis | T03, T11, T12, T14 | 1,3,5,7 |
 | [T16](tickets/16-promover-composicao-do-projeto-de-forma-atomica.md) | P3 | Promover composição do projeto de forma atômica | T10, T13, T15 | 3,6 |
 | [T17](tickets/17-recuperar-worker-apos-ultimo-crash-e-proteger-lease-longo.md) | P4 | Recuperar worker após último crash e proteger lease longo | T01 | 4,10 |
 | [T18](tickets/18-agendar-reconcile-e-worker-com-parada-e-retomada.md) | P4 | Agendar reconcile e worker com parada e retomada | T05, T17 | 4,10 |
@@ -58,7 +58,7 @@ Prefatoração é localizada ao ticket que precisa dela: caracterizar seam públ
 |---|---|---|
 | 1 Interface/retomada init | STATE-CONTRACTS: protocolo de sessão | T02 |
 | 2 Artefatos/schemas | STATE-CONTRACTS: contratos e revisões | T03–T04 |
-| 3 Núcleo/preset | MASTER-PLAN e MERCADO-LIVRE-PRESET | T11 |
+| 3 Núcleo/preset | MASTER-PLAN e preset declarativo | T11 |
 | 4 Fontes/licenças/conflitos | KNOWLEDGE-QUALITY: fontes e claims | T05, T09 |
 | 5 Aquisição/transcrições | KNOWLEDGE-QUALITY: aquisição | T05–T06 |
 | 6 RAG/router/citação | KNOWLEDGE-QUALITY: consulta elegível | T07–T09 |

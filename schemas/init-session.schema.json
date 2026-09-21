@@ -15,7 +15,7 @@
     "session_revision": {"type": "integer", "minimum": 0},
     "status": {"enum": ["collecting", "draft_ready", "finalized", "cancelled"], "type": "string"},
     "preset": {"type": ["object", "null"]},
-    "requested_deliverables": {"type": "array", "items": {"enum": ["knowledge", "course", "page"], "type": "string"}, "uniqueItems": true},
+    "requested_deliverables": {"type": "array", "items": {"enum": ["knowledge"], "type": "string"}, "uniqueItems": true},
     "answers": {
       "type": "array",
       "items": {
@@ -58,7 +58,7 @@
           "key": {"type": "string", "minLength": 1},
           "prompt": {"type": "string", "minLength": 1},
           "reason": {"type": "string", "minLength": 1},
-          "blocks": {"type": "array", "items": {"enum": ["draft", "course", "page", "ingestion", "activation", "public_distribution"], "type": "string"}},
+          "blocks": {"type": "array", "items": {"enum": ["draft", "ingestion", "activation", "public_distribution"], "type": "string"}},
           "required": {"type": "boolean"}
         }
       }

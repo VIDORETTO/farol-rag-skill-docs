@@ -21,7 +21,7 @@ def test_doctor_command_emits_machine_readable_report(tmp_path: Path) -> None:
     assert completed.returncode == 0, completed.stderr
     report = json.loads(completed.stdout)
     assert report["ok"] is True
-    assert report["capabilities"]["harness"] == "external Agent Skills + MCP"
+    assert report["capabilities"]["harness"] == "external Agent Skills + RAGFlow"
     assert str(tmp_path.resolve()) not in completed.stdout
     assert report["project_root"] == "."
     assert report["checks"]["project_metadata"]["path"] == "pyproject.toml"

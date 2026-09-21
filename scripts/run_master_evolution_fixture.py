@@ -4,13 +4,18 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
-from docops import (
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from docops import (  # noqa: E402
     activate_project_change,
     answer_project_init,
     authorize_factual_change,
@@ -32,7 +37,7 @@ from docops import (
     revoke_project_source,
     start_project_init,
 )
-from docops.revisions import content_hash
+from docops.revisions import content_hash  # noqa: E402
 
 NOW = "2026-09-08T12:00:00Z"
 LATER = "2027-01-01T00:00:00Z"
@@ -343,14 +348,14 @@ def run_fixture() -> dict[str, Any]:
             raise RuntimeError(f"revoked delegation was not blocked: {blocked}")
         steps.append({"name": "delegation-revoked-block", "status": "passed", "code": blocked["errors"][0]["code"]})
 
-        marketplace = load_project_preset("mercado-livre")
         neutral = load_project_preset("neutral")
+        generic = load_project_preset("generic")
         steps.append(
             {
-                "name": "presets-neutral-and-marketplace",
+                "name": "presets-neutral-and-generic",
                 "status": "passed",
-                "marketplace_themes": len(marketplace["themes"]),
-                "neutral_id": neutral["id"],
+                "neutral_themes": len(neutral["themes"]),
+                "generic_id": generic["id"],
             }
         )
         return {
@@ -366,7 +371,7 @@ def run_fixture() -> dict[str, Any]:
             },
             "external_state_changed": False,
             "limitations": [
-                "MCP retrieval, real corpus/index rebuild, commercial authority and publication credentials were not exercised by design.",
+                "External RAGFlow retrieval, real corpus/index rebuild, commercial authority and publication credentials were not exercised by design.",
                 "The fixture proves blocked outcomes for those boundaries; it does not grant external authorization.",
             ],
             "identity": content_hash(

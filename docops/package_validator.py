@@ -97,7 +97,7 @@ def _frontmatter(path: Path) -> dict[str, str]:
 def validate_package(package_root: Path | str) -> ValidationResult:
     """Validate skill, router, RAG metadata, manifest and provenance.
 
-    The checks use only files and JSON metadata. They never start an MCP
+    The checks use only files and JSON metadata. They never start an external
     server, download a model, execute a skill, or call an LLM.
     """
 
@@ -197,16 +197,16 @@ def validate_package(package_root: Path | str) -> ValidationResult:
                     _error(errors, "harness_schema", "harness manifest schema_version must be 1")
                 elif (
                     harness.get("package_root") != "."
-                    or not isinstance(harness.get("mcp"), dict)
-                    or harness["mcp"].get("cwd") != "."
+                    or not isinstance(harness.get("backend"), dict)
+                    or harness["backend"].get("cwd") != "."
                 ):
                     _error(errors, "harness_paths", "harness manifest must use relative package paths")
                 else:
                     harness_config_target = _safe_relative(
-                        root, harness["mcp"].get("config"), errors, "harness_config_path"
+                        root, harness["backend"].get("config"), errors, "harness_config_path"
                     )
                     if harness_config_target is not None and not harness_config_target.is_file():
-                        _error(errors, "missing_config", "harness MCP config does not exist in the package")
+                        _error(errors, "missing_config", "harness backend config does not exist in the package")
                     elif harness_config_target is not None:
                         config_targets.append(harness_config_target)
 
@@ -391,7 +391,7 @@ def validate_package(package_root: Path | str) -> ValidationResult:
     config_results: list[tuple[Path, Any]] = []
     for config_path in unique_config_targets:
         if config_path.is_symlink():
-            _error(errors, "symlink_artifact", "referenced MCP config must be a regular file")
+            _error(errors, "symlink_artifact", "referenced backend config must be a regular file")
         elif config_path.is_file():
             config_result = audit_config_file(config_path)
             config_results.append((config_path, config_result))

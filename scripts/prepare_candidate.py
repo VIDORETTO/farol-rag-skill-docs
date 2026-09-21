@@ -40,7 +40,6 @@ _BUNDLE_FILES = (
     ("docs/DEPENDENCIES.md", "docs/DEPENDENCIES.md"),
     ("docs/RELEASE.md", "docs/RELEASE.md"),
     ("docs/RELEASE-NOTES-1.1.0.md", "docs/RELEASE-NOTES-1.1.0.md"),
-    ("docs/CHROMA-RESIDUAL-DECISION.md", "docs/CHROMA-RESIDUAL-DECISION.md"),
     ("docs/SUPPORT-MATRIX.json", "docs/SUPPORT-MATRIX.json"),
     ("docs/REPOSITORY-METADATA.json", "metadata/repository.json"),
     ("community/CODE_OF_CONDUCT.md", "community/CODE_OF_CONDUCT.md"),
@@ -154,21 +153,6 @@ def _copy_file(source: Path, destination: Path) -> None:
         raise RuntimeError("a required candidate asset is missing or is a symbolic link")
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
-
-
-def _copy_candidate_vendor(root: Path, relative_files: Iterable[str], destination: Path) -> None:
-    prefix = Path("skills/vendor/knowledge-rag")
-    copied = 0
-    for value in relative_files:
-        relative = Path(value)
-        try:
-            vendor_relative = relative.relative_to(prefix)
-        except ValueError:
-            continue
-        _copy_file(root / relative, destination / vendor_relative)
-        copied += 1
-    if not copied:
-        raise RuntimeError("the candidate has no reviewed knowledge-rag vendor files")
 
 
 def _wheel_version(path: Path) -> str:
@@ -327,9 +311,6 @@ def build_candidate(
     lock_source = root / "requirements.lock"
     lock_destination = output / "provenance" / "requirements.lock"
     _copy_file(lock_source, lock_destination)
-    vendor_destination = output / "provenance" / "vendor" / "knowledge-rag"
-    _copy_candidate_vendor(root, relative_files, vendor_destination)
-
     model_source: Path | None = None
     if model_cache is not None:
         model_source = model_cache.expanduser().resolve()
@@ -354,7 +335,6 @@ def build_candidate(
         require_model=require_model,
         profile=profile,
         lock_path=lock_destination,
-        vendor_root=vendor_destination,
         source_commit=source_commit,
         source_candidate_digest=source_candidate_digest,
     )

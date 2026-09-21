@@ -9,9 +9,10 @@ feita nela.
 
 O produto se chama **Farol**. O identificador técnico da distribuição publicada
 em `v1.1.0` continua sendo `consulta-documentacao`, e o namespace Python/CLI
-`docops` continua disponível como compatibilidade. Os `$id` dos schemas e os
-nomes dos assets dessa release também permanecem estáveis; uma futura release
-de migração deve alterar esses identificadores somente com uma política explícita.
+`docops` continua disponível como compatibilidade. A migração normativa para o
+contrato Farol 2.0 já foi executada nos tickets de `specs/farol-2/`; a
+compatibilidade 1.x permanece onde foi explicitamente preservada, enquanto
+schemas e superfícies contraídos exigem a evidência registrada no ticket.
 
 ## Versionamento
 

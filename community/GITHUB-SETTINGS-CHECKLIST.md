@@ -7,7 +7,7 @@ performed for the `1.1.0` release; no credential or token is stored here.
 
 - **Administrator:** `VIDORETTO` (authenticated GitHub CLI identity; repository
   permission `admin`).
-- [x] Branch protection is enabled on `main`: [protection endpoint](https://api.github.com/repos/VIDORETTO/agent-knowledge-kit/branches/main/protection).
+- [x] Branch protection is enabled on `main`: [protection endpoint](https://api.github.com/repos/VIDORETTO/farol-rag-skill-docs/branches/main/protection).
   It requires the 13 CI job checks, blocks force-push/deletion, requires linear
   history and conversation resolution. `enforce_admins=false` is intentional:
   this personal repository has one maintainer, so the owner retains a documented
@@ -15,7 +15,7 @@ performed for the `1.1.0` release; no credential or token is stored here.
 - [x] Required status checks and reviewers match the support matrix: all
   Python 3.11–3.13 OS jobs, clean-clone jobs and the wheel job are required;
   one code-owner approval is required and stale reviews are dismissed.
-- [x] `CODEOWNERS` is active and valid: [CODEOWNERS](https://github.com/VIDORETTO/agent-knowledge-kit/blob/main/.github/CODEOWNERS)
+- [x] `CODEOWNERS` is active and valid: [CODEOWNERS](https://github.com/VIDORETTO/farol-rag-skill-docs/blob/main/.github/CODEOWNERS)
   has no API errors and names `@VIDORETTO`.
 - [x] Dependabot security updates are enabled; the repository has the checked-in
   Dependabot configuration.

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/index-revision.schema.json",
+  "title": "Farol 2.0 index revision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "index_revision", "project_revision", "ir_revision", "backend", "backend_version", "state", "mapping_hash", "external_ids", "fingerprints"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "kind": {"const": "index_revision", "type": "string"},
+    "index_revision": {"type": "string", "minLength": 1},
+    "project_revision": {"type": "string", "minLength": 1},
+    "ir_revision": {"type": "string", "minLength": 1},
+    "backend": {"type": "string", "minLength": 1},
+    "backend_version": {"type": ["string", "null"]},
+    "state": {"type": "string"},
+    "mapping_hash": {"type": "string", "minLength": 1},
+    "external_ids": {"type": "object"},
+    "fingerprints": {"type": "object"}
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/migration-receipt.schema.json",
+  "title": "Farol 2.0 migration receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "status", "migration_id", "destination", "plan_hash", "rollback_ref", "imported", "excluded", "message"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "kind": {"const": "migration_receipt", "type": "string"},
+    "status": {"type": "string"},
+    "migration_id": {"type": "string", "minLength": 1},
+    "destination": {"type": ["string", "null"]},
+    "plan_hash": {"type": ["string", "null"]},
+    "rollback_ref": {"type": ["string", "null"]},
+    "imported": {"type": "array", "items": {"type": "string"}},
+    "excluded": {"type": "array", "items": {"type": "object"}},
+    "message": {"type": "string"}
+  }
+}

@@ -1,0 +1,9 @@
+schema_version: 2
+kind: backend_config
+backend: ragflow
+endpoint: https://ragflow.example.invalid
+token_env: DOCOPS_RAGFLOW_TOKEN
+expected_version: 0.27.2
+allow_insecure_localhost: false
+timeout_seconds: 30
+retry_limit: 2

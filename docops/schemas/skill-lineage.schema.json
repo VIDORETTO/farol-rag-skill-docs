@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/skill-lineage.schema.json",
+  "title": "Farol 2.0 skill lineage",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "topic_id", "skill_slug", "language", "claims"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "kind": {"const": "skill_lineage", "type": "string"},
+    "topic_id": {"type": "string", "minLength": 1},
+    "skill_slug": {"type": "string", "minLength": 1},
+    "language": {"type": "string", "minLength": 1},
+    "claims": {"type": "array", "items": {"type": "object"}}
+  }
+}

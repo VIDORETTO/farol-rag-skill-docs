@@ -10,17 +10,18 @@
 ## Documentação confiável para agentes de IA
 
 Transforme uma fonte de documentação em um pacote portátil, versionado e
-consultável — com **skill**, **roteador**, RAG opcional e evidências verificáveis.
+consultável — com **IR canônica**, **skills**, **roteador**, RAGFlow opcional e
+evidências verificáveis.
 
 <p>
-  <a href="https://github.com/VIDORETTO/agent-knowledge-kit/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/VIDORETTO/agent-knowledge-kit/actions/workflows/ci.yml/badge.svg?branch=main"></a>
-  <a href="https://github.com/VIDORETTO/agent-knowledge-kit/releases"><img alt="Release mais recente" src="https://img.shields.io/github/v/release/VIDORETTO/agent-knowledge-kit?display_name=tag&sort=semver"></a>
+  <a href="https://github.com/VIDORETTO/farol-rag-skill-docs/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/VIDORETTO/farol-rag-skill-docs/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="https://github.com/VIDORETTO/farol-rag-skill-docs/releases"><img alt="Release mais recente" src="https://img.shields.io/github/v/release/VIDORETTO/farol-rag-skill-docs?display_name=tag&sort=semver"></a>
   <img alt="Python 3.11 ou superior" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
-  <a href="https://github.com/VIDORETTO/agent-knowledge-kit/blob/main/LICENSE"><img alt="Licença MIT" src="https://img.shields.io/github/license/VIDORETTO/agent-knowledge-kit"></a>
-  <img alt="RAG local opcional" src="https://img.shields.io/badge/RAG-local%20%7C%20opcional-0f766e?logo=sqlite&logoColor=white">
+  <a href="https://github.com/VIDORETTO/farol-rag-skill-docs/blob/main/LICENSE"><img alt="Licença MIT" src="https://img.shields.io/github/license/VIDORETTO/farol-rag-skill-docs"></a>
+  <img alt="RAGFlow externo" src="https://img.shields.io/badge/RAGFlow-external%20%7C%20opt--in-0f766e">
 </p>
 
-**Versão do pacote:** [v1.1.0](https://github.com/VIDORETTO/agent-knowledge-kit/releases/tag/v1.1.0)
+**Estado atual:** snapshot Farol 2.0 na branch `farol-v3`; a última release pública do pacote continua sendo [v1.1.0](https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v1.1.0).
 
 </div>
 
@@ -32,7 +33,7 @@ consultável — com **skill**, **roteador**, RAG opcional e evidências verific
 
 **Entender:** [arquitetura](#arquitetura) · [segurança](#seguranca-e-limites) · [estrutura do repositório](#estrutura-do-repositorio)
 
-**Aprofundar:** [documentação](#documentacao) · [evolução P0–P5](#evolucao-p0p5) · [contribuição](CONTRIBUTING.md)
+**Aprofundar:** [documentação](#documentacao) · [estado Farol 2.0](#estado-farol-20) · [contribuição](CONTRIBUTING.md)
 
 **Comunidade:** [governança](community/GOVERNANCE.md) · [suporte](community/SUPPORT.md)
 
@@ -46,7 +47,7 @@ repositório Git ou nome de catálogo — e produz um pacote com:
 | --- | --- |
 | <code>skill/</code> | Conceitos, padrões, glossário e orientação de alto nível. |
 | <code>router/</code> | Decide quando usar a skill e quando buscar evidência literal. |
-| <code>rag/</code> | Corpus normalizado e índice local opcional para fatos, defaults e assinaturas. |
+| <code>rag/</code> | Corpus normalizado, proveniência e estado para indexação externa no RAGFlow. |
 | <code>manifest.json</code> | Identidade, licença, hashes, estado, métricas e checkpoints. |
 | <code>harness.json</code> | Instruções de integração com OpenCode, Codex ou outro harness compatível. |
 
@@ -56,11 +57,12 @@ contexto, consultar o MCP quando necessário e produzir a resposta final.
 
 ### O que torna o pacote confiável
 
-- **Separação clara:** entendimento conceitual na skill; fatos literais no RAG.
+- **Separação clara:** entendimento conceitual nas skills; fatos literais no RAGFlow.
+- **IR canônica:** extractors preservam blocos, relações e locators antes da síntese ou indexação.
 - **Rastreabilidade:** respostas factuais apontam para <code>path#seção</code> ou <code>path:linha</code>.
 - **Fail-closed:** ambiguidade, licença desconhecida, revogação e evidência ausente bloqueiam o avanço.
 - **Recuperação:** staging, leases, checkpoints, journal, backup e rollback preservam a geração ativa.
-- **Portabilidade:** o núcleo funciona localmente, sem modelo, banco ou serviço obrigatório.
+- **Portabilidade:** o núcleo funciona localmente, sem modelo, banco ou serviço obrigatório; RAGFlow e OCR são perfis opt-in.
 
 ## Visão rápida
 
@@ -69,19 +71,20 @@ contexto, consultar o MCP quando necessário e produzir a resposta final.
 | Entrada | Nome, URL, repositório Git, pasta ou arquivo local |
 | Saída | Pacote autocontido com skill, router, corpus, manifesto e harness |
 | Runtime | Python 3.11+ |
-| RAG | Opcional, local, via <code>knowledge-rag==4.8.5</code> e MCP <code>stdio</code> |
-| Distribuição | GitHub Release; não há publicação automática no PyPI |
+| RAG | Backend externo RAGFlow `0.27.2`; integração opt-in com endpoint, token e imagem fixados por digest |
+| OCR | Docling `2.129.0` + ONNX Runtime `1.30.0` + RapidOCR no perfil Python 3.13 |
+| Distribuição | Release pública v1.1.0; o snapshot Farol 2.0 ainda exige handoff e publicação manual |
 | Exemplos públicos | Fixtures sintéticas em <code>documents/fixtures/</code> |
 
 ## Instalação
 
-### Usar uma release
+### Usar a release pública
 
-> O produto se chama **Farol**. A wheel da release `v1.1.0` ainda usa o
+> O produto se chama **Farol**. A wheel da release pública `v1.1.0` ainda usa o
 > identificador técnico `consulta-documentacao` para preservar compatibilidade
 > com a distribuição já publicada.
 
-A distribuição pública é feita pelo [GitHub Release v1.1.0](https://github.com/VIDORETTO/agent-knowledge-kit/releases/tag/v1.1.0).
+A distribuição pública é feita pelo [GitHub Release v1.1.0](https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v1.1.0).
 Baixe a wheel e instale-a em um ambiente virtual:
 
 ~~~bash
@@ -107,17 +110,18 @@ publicado na release.
 ### Trabalhar a partir do código-fonte
 
 ~~~bash
-git clone https://github.com/VIDORETTO/agent-knowledge-kit.git
-cd agent-knowledge-kit
+git clone https://github.com/VIDORETTO/farol-rag-skill-docs.git
+cd farol-rag-skill-docs
 python scripts/bootstrap.py --dev
 python -m docops doctor --json
 ~~~
 
 O bootstrap cria o ambiente e instala o perfil de desenvolvimento em modo
-editável. Para incluir leitura de YAML, PDF, DOCX e o RAG local:
+editável. Para executar os perfis externos de RAGFlow e OCR, use um
+interpretador Python 3.13 e instale os extras fixados:
 
 ~~~bash
-python scripts/bootstrap.py --dev --rag
+python -m pip install --editable ".[dev,formats,ragflow,ocr]"
 ~~~
 
 Há wrappers equivalentes em <code>scripts/bootstrap.sh</code> e
@@ -163,17 +167,22 @@ python -m docops golden-candidates ./artifacts/acme --json
 As perguntas geradas são candidatas. Um Golden Set oficial precisa de revisão
 humana antes de virar critério de publicação.
 
-### 5. Habilitar RAG quando necessário
+### 5. Habilitar a integração RAGFlow quando necessário
 
-Com o perfil RAG instalado:
+Configure o perfil externo com credenciais fora do repositório. Em Bash:
 
 ~~~bash
-python -m docops run ./documents/fixtures/acme-docs --output ./artifacts/acme --slug acme --license MIT --redistribution private-only --index-rag
-python -m docops evaluate --package ./artifacts/acme --cases ./golden-set/test-cases-fixture.json --adapter mcp --runtime-root . --json
+export DOCOPS_RAGFLOW_ENDPOINT=https://...
+export DOCOPS_RAGFLOW_TOKEN=<secret>
+export DOCOPS_RAGFLOW_IMAGE_DIGEST=<repository>@sha256:<64-hex>
+export DOCOPS_RAGFLOW_SDK_VERSION=0.27.2
+python scripts/run_release_gates.py --profile ragflow --json
 ~~~
 
-O RAG padrão é local e usa <code>stdio</code>; não é necessário abrir uma porta
-na rede.
+No Windows PowerShell, use `$env:DOCOPS_RAGFLOW_*` com os mesmos valores.
+
+O core não inicia containers nem faz rede. Sem os inputs externos, o perfil
+falha fechado como `blocked`/`not_run`.
 
 ### Escolha da rota no agente
 
@@ -217,11 +226,12 @@ flowchart LR
     D --> E["Pacote versionado"]
     E --> S["skill<br/>conceitos"]
     E --> R["router<br/>decisão de rota"]
-    E --> G["RAG<br/>fatos literais"]
+    E --> I["IR canônica<br/>blocos + locators"]
+    I --> G["RAGFlow externo<br/>fatos literais"]
     E --> M["manifest<br/>evidências"]
     S --> H["Harness externo"]
     R --> H
-    G -. opcional / local .-> H
+    G -. opt-in / externo .-> H
 ~~~
 
 O núcleo mantém uma única autoridade editorial e expõe operações de lifecycle
@@ -230,7 +240,7 @@ com estado versionado:
 1. **Resolver** normaliza a identidade da fonte e aplica limites de aquisição.
 2. **Planejar** calcula um plano imutável sem alterar o destino ativo.
 3. **Gerar** normaliza documentos, produz skill/router/RAG e registra evidências.
-4. **Validar** confere manifesto, schemas, composição, proveniência e políticas.
+4. **Validar** confere manifesto, schemas, IR, composição, proveniência e políticas.
 5. **Promover** exige os gates corretos; aprovação, publicação e rollback são explícitos.
 6. **Operar** usa eventos idempotentes, worker retomável, readers pinados e snapshots seguros.
 
@@ -255,7 +265,7 @@ com <code>python -m docops</code>, pois foi empacotada antes do rebrand.
 | <code>validate &lt;pacote&gt;</code> | Confere o contrato do pacote. | Nenhum |
 | <code>golden-candidates &lt;pacote&gt;</code> | Gera perguntas não revisadas. | Escreve evidência |
 | <code>evaluate --package ...</code> | Mede recuperação contra Golden revisado. | Registra avaliação |
-| <code>config-audit &lt;config.yaml&gt;</code> | Audita transporte MCP. | Nenhum |
+| <code>config-audit &lt;config.yaml&gt;</code> | Audita transporte configurado. | Nenhum |
 | <code>cleanup &lt;pacote&gt;</code> | Remove apenas resíduos expirados e não retomáveis. | Limitado e protegido |
 
 ### Hierarquia canônica
@@ -274,6 +284,7 @@ docops lifecycle learning {submit,review}
 docops lifecycle feedback {submit,report}
 docops init {start,status,answer,finalize}
 docops project {inspect,adopt,source,evidence,change,rollback,health,backup,restore,preset}
+docops v2 {start,inspect,apply}
 docops supervisor {run,stop,resume}
 ~~~
 
@@ -297,7 +308,8 @@ result = docops.apply(operation)
 inspection = docops.inspect("artifacts/acme")
 ~~~
 
-Detalhes de tipos, imutabilidade e compatibilidade 1.0 estão em
+Detalhes de tipos, imutabilidade e compatibilidade entre a distribuição 1.x e o
+contrato 2.0 estão em
 [docs/PYTHON-API.md](docs/PYTHON-API.md).
 
 ## Segurança e limites
@@ -307,16 +319,35 @@ O projeto trata documentação como dado, não como instrução executável.
 - Informe a licença real da fonte; a licença MIT do código não licencia o corpus processado.
 - Não versione documentos privados/protegidos, credenciais, <code>data/</code>, <code>models_cache/</code> ou <code>.rag_state.json</code>.
 - Ambiguidade, autenticação ausente, licença desconhecida, revogação e evidência incompleta permanecem bloqueadas.
-- O transporte padrão é MCP local por <code>stdio</code>. HTTP/SSE exige configuração privada, bearer token forte, rate limit, logging redigido e <code>config-audit</code>.
-- O RAG não deve ser exposto na rede sem ler [SECURITY.md](SECURITY.md) e [docs/CHROMA-RESIDUAL-DECISION.md](docs/CHROMA-RESIDUAL-DECISION.md).
+- O backend factual é RAGFlow externo; endpoint, token e digest ficam fora do pacote e o transporte remoto exige HTTPS. Desenvolvimento local pode usar loopback explícito.
+- O RAGFlow não deve ser exposto publicamente sem política de bearer, logs redigidos e autorização operacional.
 - Aquisição web respeita robots, redirects seguros e limites de host, páginas, profundidade, payload e timeout.
 - O processo de limpeza deve atingir somente o PID exato do projeto; não use <code>Get-Process python | Stop-Process</code>.
 
-Browser rendering, OCR, autenticação de fonte, confirmação de licença e
-autorizações comerciais não são simulados como concluídos. O manifesto preserva
-o bloqueio para que um harness ou operador autorizado decida como prosseguir.
+OCR está disponível no perfil opt-in fixado em Docling/RapidOCR; browser
+rendering, autenticação de fonte, confirmação de licença e autorizações
+comerciais continuam gates explícitos. O manifesto preserva o bloqueio para que
+um harness ou operador autorizado decida como prosseguir.
 
-## Evolução P0–P5
+## Estado Farol 2.0
+
+O planejamento normativo e o estado agregado estão em
+[specs/farol-2/](specs/farol-2/README.md). A implementação atual cobre IR
+canônica, locators, extractors, OCR real, taxonomia hierárquica, múltiplas
+skills, lineage, router global e RAGFlow externo `0.27.2`.
+
+Os 21 tickets do esforço e os 33 critérios de aceite estão `verified`. O gate
+full final registrou `25/25` etapas, `1045 passed`, `12 skipped` e zero falhas,
+bloqueios ou etapas `not_run`. O dual-run terminou em `cutover_approved` e a
+contração do backend legado foi concluída; a evidência redigida está em
+`artifacts/release-gates-full-20260920-final7/release-gates.json` e nos arquivos
+de `specs/farol-2/evidence/`.
+
+O snapshot foi versionado e enviado na branch `farol-v3`. Não há implementação
+pendente: o próximo passo é a decisão humana sobre tag/release/publicação, que
+continua manual.
+
+### Histórico Farol 1.x
 
 O estado atual do repositório inclui a implementação e a evidência local das
 fases P0–P5 e dos 24 tickets do plano master:
@@ -330,7 +361,8 @@ fases P0–P5 e dos 24 tickets do plano master:
 | P4 | Worker, supervisor, backup, release gates e distribuição |
 | P5 | Delegação factual restrita e piloto reproduzível |
 
-Os testes e fixtures não concedem autorização comercial, credencial, publicação
+Esses artefatos são históricos e não definem o escopo Farol 2.0. Seus testes e
+fixtures não concedem autorização comercial, credencial, publicação
 externa ou uso do corpus/índice real. A evidência detalhada e as limitações
 estão em:
 
@@ -357,8 +389,11 @@ python scripts/run_release_gates.py --profile core --json
 ~~~
 
 Os gates de release executam etapas sequenciais em workspaces isolados e
-registram evidências redigidas. O perfil <code>full</code> inclui as etapas que
-dependem do RAG local instalado.
+registram evidências redigidas. O perfil <code>full</code> inclui core,
+book-to-skill, RAGFlow, OCR, wheel, candidate e supply-chain. O perfil
+<code>ragflow</code> exige endpoint, token, digest de imagem e SDK RAGFlow
+provisionados; qualquer dependência ou recurso ausente falha fechado, sem
+converter integração não executada em aprovação.
 
 ## Estrutura do repositório
 
@@ -370,6 +405,8 @@ scripts/                    bootstrap, gates, auditorias e utilitários
 skills/docops-agent/        skill operacional distribuível
 documents/fixtures/         exemplos sintéticos
 golden-set/                 casos de avaliação revisáveis
+config/ragflow/             lock e override local opt-in do RAGFlow
+specs/farol-2/              contratos, tickets, evidências e matriz de aceite
 docs/                       arquitetura, uso, planos e runbooks
 ~~~
 
@@ -388,6 +425,8 @@ Schemas em <code>schemas/</code> são a fonte canônica; a cópia em
 | Consultar schemas | [docs/SCHEMAS.md](docs/SCHEMAS.md) |
 | Auditar segurança | [SECURITY.md](SECURITY.md) |
 | Preparar uma release | [docs/RELEASE.md](docs/RELEASE.md) |
+| Conferir a aceitação Farol 2.0 | [specs/farol-2/acceptance-matrix.md](specs/farol-2/acceptance-matrix.md) |
+| Preparar o RAGFlow local | [config/ragflow/README.md](config/ragflow/README.md) |
 | Ver limites de suporte | [docs/SUPPORT-MATRIX.json](docs/SUPPORT-MATRIX.json) |
 | Contribuir | [CONTRIBUTING.md](CONTRIBUTING.md) |
 

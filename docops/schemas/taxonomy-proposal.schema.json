@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/taxonomy-proposal.schema.json",
+  "title": "Farol 2.0 taxonomy proposal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "project_revision", "ir_revision", "goal", "nodes", "coverage", "overlaps", "orphans", "proposal_hash", "request_id", "requires_approval", "status"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "kind": {"const": "taxonomy_proposal", "type": "string"},
+    "project_revision": {"type": "string", "minLength": 1},
+    "ir_revision": {"type": "string", "minLength": 1},
+    "goal": {"type": "string", "minLength": 1},
+    "nodes": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/node"}},
+    "coverage": {"type": "object"},
+    "overlaps": {"type": "array", "items": {"type": "object"}},
+    "orphans": {"type": "array", "items": {"type": "string"}},
+    "proposal_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "request_id": {"type": ["string", "null"]},
+    "requires_approval": {"type": "boolean"},
+    "status": {"enum": ["proposed", "approved", "rejected"], "type": "string"}
+  },
+  "definitions": {
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "concept_id", "title", "slug", "owner", "parent_id", "aliases", "dependencies", "coverage", "cross_references"],
+      "properties": {
+        "node_id": {"type": "string", "minLength": 1},
+        "concept_id": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "slug": {"type": "string", "minLength": 1},
+        "owner": {"type": "string", "minLength": 1},
+        "parent_id": {"type": ["string", "null"]},
+        "aliases": {"type": "array", "items": {"type": "string"}},
+        "dependencies": {"type": "array", "items": {"type": "string"}},
+        "coverage": {"type": "array", "items": {"type": "string"}},
+        "cross_references": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

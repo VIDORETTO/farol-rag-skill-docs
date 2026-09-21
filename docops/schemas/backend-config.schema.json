@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/backend-config.schema.json",
+  "title": "Farol 2.0 backend configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "backend", "endpoint", "token_env", "expected_version", "allow_insecure_localhost", "timeout_seconds", "retry_limit"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "kind": {"const": "backend_config", "type": "string"},
+    "backend": {"const": "ragflow", "type": "string"},
+    "endpoint": {"type": "string", "minLength": 1},
+    "token_env": {"type": "string", "minLength": 1},
+    "expected_version": {"const": "0.27.2", "type": "string"},
+    "allow_insecure_localhost": {"type": "boolean"},
+    "timeout_seconds": {"type": "number", "minimum": 0.1},
+    "retry_limit": {"type": "integer", "minimum": 0}
+  }
+}

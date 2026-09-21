@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,202 @@ from .package_validator import ValidationResult
 from .primitives import absolute_path_without_resolving
 
 SUPPORTED_LAYERS = ("conceptual", "factual")
+V2_SCHEMA_VERSION = 2
+V2_CONTRACT_VERSION = "2.0"
+
+
+def _v2_now() -> str:
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _json_copy(value: Any) -> Any:
+    """Copy only JSON-compatible data at a public contract boundary."""
+
+    return json.loads(json.dumps(value, ensure_ascii=False, sort_keys=True))
+
+
+@dataclass(frozen=True)
+class KnowledgeProjectV2:
+    """Immutable public identity for a resumable Farol 2.0 project."""
+
+    project_id: str
+    session_id: str
+    revision: int
+    name: str
+    objective: str
+    sources: list[dict[str, Any]]
+    taxonomy_revision: str | None = None
+    active_composition_id: str | None = None
+    status: str = "proposed"
+    created_at: str = field(default_factory=_v2_now)
+    extensions: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return _json_copy(
+            {
+                "schema_version": V2_SCHEMA_VERSION,
+                "contract_version": V2_CONTRACT_VERSION,
+                "kind": "knowledge_project",
+                "project_id": self.project_id,
+                "session_id": self.session_id,
+                "revision": self.revision,
+                "name": self.name,
+                "objective": self.objective,
+                "sources": self.sources,
+                "taxonomy_revision": self.taxonomy_revision,
+                "active_composition_id": self.active_composition_id,
+                "status": self.status,
+                "created_at": self.created_at,
+                "extensions": self.extensions,
+            }
+        )
+
+
+@dataclass(frozen=True)
+class OperationRequestV2:
+    """Idempotent request envelope for a project operation."""
+
+    operation_id: str
+    project_id: str
+    session_id: str
+    operation: str
+    idempotency_key: str
+    expected_revision: int
+    inputs: dict[str, Any] = field(default_factory=dict)
+    requested_at: str = field(default_factory=_v2_now)
+    extensions: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return _json_copy(
+            {
+                "schema_version": V2_SCHEMA_VERSION,
+                "contract_version": V2_CONTRACT_VERSION,
+                "kind": "operation",
+                "operation_id": self.operation_id,
+                "project_id": self.project_id,
+                "session_id": self.session_id,
+                "operation": self.operation,
+                "idempotency_key": self.idempotency_key,
+                "expected_revision": self.expected_revision,
+                "inputs": self.inputs,
+                "requested_at": self.requested_at,
+                "extensions": self.extensions,
+            }
+        )
+
+    def request_fingerprint(self) -> str:
+        from .revisions import content_hash
+
+        payload = self.to_dict()
+        payload.pop("requested_at", None)
+        return content_hash(payload)
+
+
+@dataclass(frozen=True)
+class OperationResultV2:
+    """Versioned terminal/resumable result returned by the v2 operation seam."""
+
+    operation_id: str
+    project_id: str
+    idempotency_key: str
+    status: str
+    revision: int
+    pending: list[dict[str, Any]] = field(default_factory=list)
+    next_action: str = "inspect project state"
+    blockers: list[dict[str, Any]] = field(default_factory=list)
+    result: dict[str, Any] = field(default_factory=dict)
+    extensions: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return _json_copy(
+            {
+                "schema_version": V2_SCHEMA_VERSION,
+                "contract_version": V2_CONTRACT_VERSION,
+                "kind": "operation_result",
+                "operation_id": self.operation_id,
+                "project_id": self.project_id,
+                "idempotency_key": self.idempotency_key,
+                "status": self.status,
+                "revision": self.revision,
+                "pending": self.pending,
+                "next_action": self.next_action,
+                "blockers": self.blockers,
+                "result": self.result,
+                "extensions": self.extensions,
+            }
+        )
+
+
+@dataclass(frozen=True)
+class CapabilityV2:
+    """Capability report for a parser or knowledge backend."""
+
+    name: str
+    version: str
+    status: str
+    supports: list[str]
+    fidelity: list[str]
+    execution: str
+    permissions: list[str]
+    dependencies: list[dict[str, Any]]
+    extensions: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return _json_copy(
+            {
+                "schema_version": V2_SCHEMA_VERSION,
+                "contract_version": V2_CONTRACT_VERSION,
+                "kind": "capability",
+                "name": self.name,
+                "version": self.version,
+                "status": self.status,
+                "supports": self.supports,
+                "fidelity": self.fidelity,
+                "execution": self.execution,
+                "permissions": self.permissions,
+                "dependencies": self.dependencies,
+                "extensions": self.extensions,
+            }
+        )
+
+
+@dataclass(frozen=True)
+class MigrationPlanV2:
+    """Read-only plan describing a 1.x to 2.0 staging operation."""
+
+    migration_id: str
+    source_version: str
+    source_identity: dict[str, Any]
+    destination_project_id: str
+    plan_hash: str
+    mode: str
+    imported: list[dict[str, Any]]
+    excluded: list[dict[str, Any]]
+    status: str = "planned"
+    warnings: list[str] = field(default_factory=list)
+    rollback_ref: str | None = None
+    extensions: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return _json_copy(
+            {
+                "schema_version": V2_SCHEMA_VERSION,
+                "contract_version": V2_CONTRACT_VERSION,
+                "kind": "migration",
+                "migration_id": self.migration_id,
+                "source_version": self.source_version,
+                "source_identity": self.source_identity,
+                "destination_project_id": self.destination_project_id,
+                "plan_hash": self.plan_hash,
+                "mode": self.mode,
+                "imported": self.imported,
+                "excluded": self.excluded,
+                "warnings": self.warnings,
+                "status": self.status,
+                "rollback_ref": self.rollback_ref,
+                "extensions": self.extensions,
+            }
+        )
 
 
 def normalize_layers(value: tuple[str, ...] | list[str] | None) -> tuple[str, ...]:

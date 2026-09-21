@@ -1,103 +1,23 @@
-# =============================================================================
-# config.yaml — knowledge-rag (servidor MCP de RAG híbrido)
-# =============================================================================
-# Base: configuração local compatível com knowledge-rag 4.8.x.
-# Ajustes específicos do projeto Farol:
-#   * paths relativos ao clone (portável entre Windows, Linux e macOS)
-#   * embedding.profile: "compact"
-#   * search.max_results: 100 (limite alto para Golden/avaliação)
-#
-# O fluxo de decisão do servidor honra KNOWLEDGE_RAG_DIR e permanece fora do
-# operador; este repositório não escolhe ou hospeda um modelo de agente.
-# =============================================================================
-
-paths:
-  documents_dir: "./documents"
-  data_dir: "./data"
-  models_cache_dir: "./models_cache"
-
-documents:
-  supported_formats:
-    - .md
-    - .txt
-    - .pdf
-    - .docx
-    - .py
-    - .c
-    - .h
-    - .cpp
-    - .js
-    - .jsx
-    - .ts
-    - .tsx
-    - .json
-    - .yaml
-    - .yml
-    - .rst
-    - .adoc
-    - .html
-    - .htm
-    - .xml
-    - .csv
-    - .ipynb
-    - .xlsx
-    - .pptx
-  exclude_patterns:
-    - "node_modules"
-    - ".venv"
-    - ".venv-rag"
-    - "__pycache__"
-    - ".git"
-    - "dist"
-    - "build"
-    - ".next"
-    - "data"
-    - "models_cache"
-  chunking:
-    chunk_size: 1200
-    chunk_overlap: 250
+# Farol 2.0 package configuration
+# RAGFlow is the only factual backend selected by new packages. Credentials and
+# endpoints are supplied through the external integration environment.
+backend:
+  name: ragflow
+  version: "0.27.2"
+  endpoint_env: DOCOPS_RAGFLOW_ENDPOINT
+  token_env: DOCOPS_RAGFLOW_TOKEN
+  transport: https-or-loopback-development
 
 models:
   embedding:
-    # "compact" (padrão) = BAAI/bge-small-en-v1.5, 384D, foco em conteúdo inglês.
-    # Se a documentação-alvo tiver conteúdo PT-BR + EN, trocar para "multilingual"
-    # (intfloat/multilingual-e5-large, 1024D) e rodar reindex_documents(full_rebuild=True).
-    profile: "compact"
-    gpu: false  # pip install "knowledge-rag[gpu]" + seed gpu: true para aceleração CUDA
-  reranker:
-    # No piloto FastAPI, o RRF híbrido superou o cross-encoder no Golden:
-    # MRR@5 0.8595 / Recall@5 1.0 vs. 0.669 / 0.9286 com rerank.
-    enabled: false
-    model: "Xenova/ms-marco-MiniLM-L-6-v2"
-    top_k_multiplier: 3
+    profile: compact
+    model: BAAI/bge-small-en-v1.5
+    dimensions: 384
 
 search:
   default_results: 5
   max_results: 100
-  collection_name: "knowledge_base"
 
-# Categorias por pasta em documents/ — o piloto consulta o corpus inteiro.
-category_mappings: {}
-
-keyword_routes: {}
-
-# Domain vocabulary is intentionally empty in the generic product config.
-# Configure aliases per corpus and re-evaluate after changing them.
-query_expansions: {}
-
-server:
-  transport: "stdio"  # "stdio" | "sse" | "streamable-http"
-  host: "127.0.0.1"
-  port: 8179
-  auth:
-    bearer_token: ""
-  rate_limit:
-    enabled: false
-    requests_per_minute: 60
-    burst: 10
-  metrics:
-    enabled: false
-    port: 9179
-  logging:
-    format: "text"
-    level: "INFO"
+privacy:
+  originals_private: true
+  network_default: disabled

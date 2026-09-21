@@ -1,4 +1,4 @@
-"""Validate knowledge-rag transport configuration before it can be exposed."""
+"""Validate package transport configuration before it can be exposed."""
 
 from __future__ import annotations
 

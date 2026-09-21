@@ -172,9 +172,8 @@ def audit(*, matrix_path: Path = MATRIX_PATH, workflows_dir: Path = ROOT / ".git
         "release-audit": "scripts/audit_release.py",
         "clean-clone": "scripts/verify_clean_clone.py",
         "contract-conformance": "scripts/check_contracts.py",
-        "run-indexed": "--index-rag",
-        "evaluate-mcp": "--adapter mcp",
-        "reindex-concurrency": "scripts/test_reindex_concurrency.py",
+        "ragflow-profile": "scripts/run_release_gates.py --profile ragflow",
+        "ragflow": "scripts/run_release_gates.py --profile ragflow",
         "wheel-create-validate-evaluate": "scripts/verify_wheel.py",
         "supply-chain": "scripts/generate_supply_chain.py",
         "supply-chain-verify": "scripts/verify_supply_chain.py",
@@ -246,14 +245,12 @@ def audit(*, matrix_path: Path = MATRIX_PATH, workflows_dir: Path = ROOT / ".git
                 "if-no-files-found: error",
             ),
         },
-        "rag": {
+        "ragflow": {
             "code": "integration_artifact_missing",
             "markers": (
                 "actions/upload-artifact@",
                 "name: integration-evidence-${{ github.sha }}",
-                "artifacts/acme/evaluation.json",
-                "artifacts/acme/mcp-smoke.log",
-                "artifacts/acme/concurrency.json",
+                "artifacts/ragflow-release-gates.json",
                 "if-no-files-found: error",
             ),
         },
@@ -261,17 +258,13 @@ def audit(*, matrix_path: Path = MATRIX_PATH, workflows_dir: Path = ROOT / ".git
     for job, requirement in artifact_requirements.items():
         block = executable_blocks.get(job, "")
         safe_rag_artifacts = {
-            "artifacts/acme/evaluation.json",
-            "artifacts/acme/mcp-smoke.log",
-            "artifacts/acme/concurrency.json",
-            "artifacts/acme/manifest.json",
-            "artifacts/acme/rag/index.json",
+            "artifacts/ragflow-release-gates.json",
         }
-        if job == "rag" and any(path not in safe_rag_artifacts for path in _artifact_paths(block)):
+        if job == "ragflow" and any(path not in safe_rag_artifacts for path in _artifact_paths(block)):
             findings.append(
                 {
                     "code": "integration_artifact_unsafe",
-                    "message": "workflow job rag must retain an explicit safe file list, not the full RAG directory",
+                    "message": "workflow job ragflow must retain an explicit safe file list, not the full RAG directory",
                 }
             )
         missing = [marker for marker in requirement["markers"] if marker not in block]
@@ -400,6 +393,7 @@ def audit(*, matrix_path: Path = MATRIX_PATH, workflows_dir: Path = ROOT / ".git
             "supply-chain",
             "supply-chain-verify",
             "rag",
+            "ragflow",
             "candidate-audit",
             "candidate-bundle",
             "candidate-verify",

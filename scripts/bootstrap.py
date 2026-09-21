@@ -2,8 +2,7 @@
 
 Examples:
     python scripts/bootstrap.py                 # project + format helpers
-    python scripts/bootstrap.py --rag           # also install knowledge-rag
-    python scripts/bootstrap.py --dev --rag     # install test/lint tools too
+    python scripts/bootstrap.py --dev           # install test/lint tools too
 """
 
 from __future__ import annotations
@@ -30,14 +29,11 @@ def venv_python(root: Path) -> Path:
     return venv_directory(root) / relative
 
 
-def install_command(python: Path, root: Path, *, rag: bool, formats: bool, dev: bool) -> list[str]:
-    command = [str(python), "-m", "pip", "install", "--editable", str(root)]
+def install_command(python: Path, root: Path, *, rag: bool = False, formats: bool, dev: bool) -> list[str]:
     if rag:
-        # requirements.txt already contains the optional format helpers. Keep
-        # the requirements file as one argument; passing it again as a
-        # positional package makes pip treat the filename as a distribution.
-        command.extend(["--requirement", str(root / "requirements.txt")])
-    elif formats:
+        raise ValueError("the legacy RAG profile was removed; use the opt-in RAGFlow integration profile")
+    command = [str(python), "-m", "pip", "install", "--editable", str(root)]
+    if formats:
         command.extend(["PyYAML==6.0.3", "pypdf==6.16.2", "python-docx==1.2.0"])
     if dev:
         command.extend(
@@ -62,7 +58,6 @@ def pip_upgrade_command(python: Path) -> list[str]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
-    parser.add_argument("--rag", action="store_true", help="install the pinned knowledge-rag integration")
     formats_group = parser.add_mutually_exclusive_group()
     formats_group.add_argument(
         "--formats", dest="formats", action="store_true", help="install optional document format helpers (default)"
@@ -85,7 +80,7 @@ def main(argv: list[str] | None = None) -> int:
     python = venv_python(root)
     if not python.exists():
         venv.EnvBuilder(with_pip=not args.no_install, clear=False).create(python.parent.parent)
-    command = install_command(python, root, rag=args.rag, formats=args.formats, dev=args.dev)
+    command = install_command(python, root, formats=args.formats, dev=args.dev)
     if not args.no_install:
         upgraded = subprocess.run(pip_upgrade_command(python), cwd=root, check=False)
         if upgraded.returncode:
@@ -95,7 +90,7 @@ def main(argv: list[str] | None = None) -> int:
             return completed.returncode
     print(
         json.dumps(
-            {"ok": True, "python": str(python), "rag": args.rag, "formats": args.formats, "dev": args.dev},
+            {"ok": True, "python": str(python), "formats": args.formats, "dev": args.dev},
             ensure_ascii=False,
         )
     )

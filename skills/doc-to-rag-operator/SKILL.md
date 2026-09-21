@@ -63,7 +63,7 @@ validador do pacote. O operador não simula essa etapa com uma IA interna.
 
 - Conceitual/comportamental: carregue a skill e capítulos sob demanda.
 - Factual/literal (assinatura, default, versão, endpoint, configuração,
-  changelog): chame `search_knowledge` via MCP antes de responder.
+  changelog): consulte a evidência RAGFlow pelo adapter autorizado antes de responder.
 - Ambígua ou de alto risco: use skill para racional e RAG para confirmação;
   registre e comunique divergências.
 
@@ -76,16 +76,15 @@ execução.
 O `manifest.json` registra fonte canônica, versão, idioma, licença,
 proveniência, entradas aceitas/ignoradas/erros, métricas e checkpoints.
 `StateStore` reconcilia add/update/remove por `canonical + version + hash`;
-repetir o comando é idempotente. `knowledge-rag` só é iniciado por
-`--index-rag` ou por uma ferramenta explícita, e o cliente encerra somente o
-processo filho que criou.
+repetir o comando é idempotente. RAGFlow só é acionado pelo perfil externo
+autorizado; o core nunca inicia serviço, baixa modelo ou guarda credenciais.
 
 Para o corpus legado:
 
 ```text
-python scripts/update_rag.py plan
-python scripts/update_rag.py apply
-python scripts/update_rag.py status
+python scripts/run_release_gates.py --profile ragflow --json
+python scripts/run_cutover_dual.py --json
+python -m docops doctor --json
 ```
 
 Nunca troque o perfil de embedding sem `reindex_documents(full_rebuild=True)`.
