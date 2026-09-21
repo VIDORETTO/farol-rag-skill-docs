@@ -65,6 +65,7 @@ python scripts/check_support_matrix.py --json
 python scripts/check_contracts.py --json
 python scripts/check_documentation.py --json
 python scripts/check_acceptance_matrix.py --check --json
+python scripts/check_public_seams.py --json
 python scripts/check_farol_v2_surface.py --surface all \
   --allow-path tests/test_cutover_dual.py
 python -m pytest -q
@@ -75,6 +76,9 @@ python scripts/verify_wheel.py
 python scripts/generate_supply_chain.py --root . --wheel dist/<wheel>.whl \
   --output artifacts/supply-chain --profile core
 python scripts/verify_supply_chain.py --root . --evidence artifacts/supply-chain
+python scripts/prepare_candidate.py --root . --output artifacts/candidate-2.0 --profile core
+python scripts/verify_candidate.py --root artifacts/candidate-2.0 --source-root .
+python scripts/audit_release.py --candidate --json
 python scripts/run_release_gates.py --profile core --timeout 3600 --json
 python scripts/run_release_gates.py --profile book-to-skill --timeout 3600 --json
 python scripts/run_release_gates.py --profile ragflow --timeout 3600 --json
