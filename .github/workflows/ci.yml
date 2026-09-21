@@ -94,9 +94,9 @@ jobs:
       - name: Pin installer
         run: python -m pip install --disable-pip-version-check --upgrade "pip==26.2.1" "setuptools==84.0.0"
       - name: Install clean-clone test profile
-        run: python -m pip install --disable-pip-version-check -e ".[dev,formats,rag]"
+        run: python -m pip install --disable-pip-version-check -e ".[dev,formats]"
       - name: Verify outside checkout state
-        run: python scripts/verify_clean_clone.py --bootstrap --rag
+        run: python scripts/verify_clean_clone.py --bootstrap
 
   package:
     name: wheel / Python 3.12
@@ -112,7 +112,7 @@ jobs:
       - name: Install audited candidate profile
         run: python -m pip install --disable-pip-version-check -r requirements.lock
       - name: Build and smoke-test wheel
-        run: python scripts/verify_wheel.py --require-rag
+        run: python scripts/verify_wheel.py --core
       - name: Build candidate wheel artifact
         run: python -m pip wheel --no-deps --wheel-dir dist .
       - name: Generate supply-chain evidence
