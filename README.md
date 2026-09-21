@@ -21,7 +21,10 @@ evidências verificáveis.
   <img alt="RAGFlow externo" src="https://img.shields.io/badge/RAGFlow-external%20%7C%20opt--in-0f766e">
 </p>
 
-**Estado atual:** snapshot Farol 2.0 na branch `farol-v3`; a última release pública do pacote continua sendo [v1.1.0](https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v1.1.0).
+**Versão do pacote:** [v1.1.0](https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v1.1.0)
+
+**Estado do código:** snapshot Farol 2.0 na branch `farol-v3`; a próxima
+release ainda depende do handoff e da publicação manual.
 
 </div>
 
