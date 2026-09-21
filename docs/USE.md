@@ -12,16 +12,18 @@ python -m docops doctor --json
 python -m pytest
 ```
 
-Para o MCP local:
+Para preparar o perfil externo de RAGFlow, use Python 3.13 e instale os extras
+fixados; o bootstrap do core não instala nem inicia esse serviço:
 
 ```text
-python scripts/bootstrap.py --dev --rag
+python -m pip install --editable ".[dev,formats,ragflow,ocr]"
 python scripts/run_release_gates.py --profile ragflow --json
 ```
 
 No Windows use `scripts/bootstrap.ps1`; em Linux/macOS use
 `sh scripts/bootstrap.sh`. `doctor` trata o RAG como capacidade opcional;
-`DOCOPS_REQUIRE_RAG=1 python -m docops doctor --json` torna-o obrigatório.
+`DOCOPS_REQUIRE_RAGFLOW=1 python -m docops doctor --json` torna o RAGFlow
+obrigatório.
 Se o mesmo checkout for acessado por Windows e WSL, o bootstrap detecta um
 `.venv` de outra plataforma e usa `.venv-windows` ou `.venv-posix`, evitando
 que um ambiente nativo seja sobrescrito; esses diretórios são ignorados pelo
@@ -93,10 +95,9 @@ python -m docops config-audit config/network.yaml --json
 
 O auditor exige autenticação, rate limit, métricas e logging JSON para `sse` e
 `streamable-http`, e o servidor recusa iniciar se o bearer token estiver
-ausente. Não coloque esse arquivo no Git. O perfil RAG usa `PersistentClient`
-local. O cache de modelos fica fora do pacote, em
-`~/.cache/docops/models`; ele é estado de execução e nunca integra o artefato
-distribuível.
+ausente. Não coloque esse arquivo no Git. O backend factual da versão 2.0 é
+RAGFlow externo: endpoint, token, SDK e imagem por digest ficam no ambiente de
+integração, fora do pacote. O perfil padrão continua `stdio` local.
 
 ## Avaliação
 

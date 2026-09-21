@@ -2,10 +2,9 @@
 
 **Gerado a partir de:** spec/plan revisão 1 e tickets revisão 1.
 **Baseline:** `81d5dcb2e189d00406cdd9b9e671d94e3f23cd58`
-**Candidato auditado atual:** `93bb8894d816aad3c3b3682ccec317db1da39d45`
-na branch `farol-v2`; o gate core de 2026-09-18 passou 22/22 estágios
-(`1156 passed`, `15 skipped`, zero falhas/not_run), mas o worktree permanece
-dirty e as integrações externas continuam bloqueadas.
+**Snapshot de entrega:** branch `farol-v3`; a árvore candidata foi
+versionada e enviada ao GitHub. A evidência full foi capturada em 20/09/2026
+contra a mesma árvore de implementação antes do handoff documental.
 
 ## Fases e gates
 
@@ -44,9 +43,9 @@ MVP técnico = P0–P4 para corpus sintético autorizado. Farol 2.0 distribuíve
 | [TK-016](tickets/TK-016.md) | Migração 1.x→2.0 | TK-015 | verified |
 | [TK-017](tickets/TK-017.md) | Remover Mercado Livre e editorial | TK-002, TK-016 | verified (remoção executada) |
 | [TK-021](tickets/TK-021.md) | Originais privados e provenance de release | TK-017 | verified |
-| [TK-018](tickets/TK-018.md) | Paridade e autorização de cutover | TK-007–009, TK-015–017 | in_progress (runner dual/recibo prontos; dual-run real `not_run`) |
-| [TK-019](tickets/TK-019.md) | Remover knowledge-rag/Chroma | TK-018 | in_progress (guard; remoção pendente) |
-| [TK-020](tickets/TK-020.md) | Jornada e release candidate 2.0 | TK-017, TK-019 | in_progress (core verde; RAGFlow pendente) |
+| [TK-018](tickets/TK-018.md) | Paridade e autorização de cutover | TK-007–009, TK-015–017 | verified (`cutover_approved`) |
+| [TK-019](tickets/TK-019.md) | Contração do backend legado | TK-018 | verified (legacy/vendor/Chroma removidos da superfície) |
+| [TK-020](tickets/TK-020.md) | Jornada e release candidate 2.0 | TK-017, TK-019 | verified (full gate e handoff) |
 
 ## Grafo
 

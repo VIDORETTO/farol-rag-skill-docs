@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "effort": "farol-2",
-  "phase": "implementation",
+  "phase": "delivery",
   "status": "active",
   "profile": "expanded",
   "baseline": {
@@ -12,13 +12,13 @@
   },
   "candidate": {
     "kind": "git_sha",
-    "value": "93bb8894d816aad3c3b3682ccec317db1da39d45",
-    "branch": "farol-v2",
-    "remote_relation": "candidate_equals_origin_farol_v2_at_gate_capture",
-    "worktree_status": "dirty",
+    "value": "cbed216803693dc42b842227e42007857dbe8a81",
+    "branch": "farol-v3",
+    "remote_relation": "implementation snapshot pushed to origin/farol-v3; full evidence identifies the pre-commit worktree candidate 93bb8894d816aad3c3b3682ccec317db1da39d45",
+    "worktree_status": "clean after documentation handoff",
     "gate_worktree_entries": 75,
-    "current_worktree_entries": "dirty (381 porcelain entries; uncommitted; see git status)",
-    "current_worktree_observed_at": "2026-09-20"
+    "current_worktree_entries": "clean after Farol 2.0 implementation and documentation handoff",
+    "current_worktree_observed_at": "2026-09-21"
   },
   "inputs": {
     "spec": {
@@ -260,5 +260,5 @@
     }
   },
   "external_blockers": [],
-  "next_action": "Human handoff only: review the final candidate and decide whether to commit, push, tag or publish. No implementation work remains."
+  "next_action": "Human handoff only: review the versioned Farol 2.0 candidate and decide whether to tag, release or publish. No implementation work remains."
 }

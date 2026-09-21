@@ -13,10 +13,10 @@ authors = [{ name = "Farol contributors" }]
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/VIDORETTO/agent-knowledge-kit"
-Repository = "https://github.com/VIDORETTO/agent-knowledge-kit"
-Documentation = "https://github.com/VIDORETTO/agent-knowledge-kit/tree/main/docs"
-Issues = "https://github.com/VIDORETTO/agent-knowledge-kit/issues"
+Homepage = "https://github.com/VIDORETTO/farol-rag-skill-docs"
+Repository = "https://github.com/VIDORETTO/farol-rag-skill-docs"
+Documentation = "https://github.com/VIDORETTO/farol-rag-skill-docs/tree/main/docs"
+Issues = "https://github.com/VIDORETTO/farol-rag-skill-docs/issues"
 
 [project.optional-dependencies]
 ragflow = ["ragflow-sdk==0.27.2; python_version >= '3.13' and python_version < '3.14'"]

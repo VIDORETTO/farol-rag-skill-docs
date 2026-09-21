@@ -25,11 +25,16 @@ não definem o escopo 2.0.
 - `todo.md` e `backlog.md` são views; não registrar progresso apenas nelas.
 - `state.json` guarda checkpoint do esforço, não substitui tickets.
 
-## Estado inicial do esforço
+## Estado atual do esforço
 
-Na abertura do esforço, a fronteira executável era TK-001 e TK-002 e nenhuma
-implementação havia sido iniciada. Esse registro é histórico; o estado atual
-fica nos tickets e em `state.json`. RAGFlow e OCR real já possuem execução
-fixada e evidência redigida; `book-to-skill` real continua sendo integração de
-harness e precisa registrar `executed` ou `not_run`. Ausência nunca é contada
-como aprovação.
+O esforço Farol 2.0 está em handoff de entrega. Os 21 tickets (`TK-001` a
+`TK-021`) estão `verified` e a matriz possui 33 critérios de aceite
+`verified`. RAGFlow `0.27.2`, Docling/RapidOCR, `book-to-skill`, dual-run,
+contração do legado, provenance de release e o gate full possuem evidência
+redigida em `evidence/`.
+
+O gate full final de 20 de setembro de 2026 passou `25/25` etapas, com `1045
+passed`, `12 skipped` explícitos e zero falhas, bloqueios ou etapas `not_run`.
+O snapshot versionado foi enviado na branch `farol-v3`. O próximo passo é a
+decisão humana sobre tag, release e publicação; nenhuma dessas ações é feita
+automaticamente pelos scripts.

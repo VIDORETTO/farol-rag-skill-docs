@@ -6,10 +6,10 @@
   "version": "1.1.0",
   "maturity": "stable",
   "license": "MIT",
-  "repository": "https://github.com/VIDORETTO/agent-knowledge-kit",
-  "homepage": "https://github.com/VIDORETTO/agent-knowledge-kit",
-  "issues": "https://github.com/VIDORETTO/agent-knowledge-kit/issues",
-  "documentation": "https://github.com/VIDORETTO/agent-knowledge-kit/tree/main/docs",
+  "repository": "https://github.com/VIDORETTO/farol-rag-skill-docs",
+  "homepage": "https://github.com/VIDORETTO/farol-rag-skill-docs",
+  "issues": "https://github.com/VIDORETTO/farol-rag-skill-docs/issues",
+  "documentation": "https://github.com/VIDORETTO/farol-rag-skill-docs/tree/main/docs",
   "topics": ["agent-skills", "documentation", "knowledge-base", "mcp", "rag"],
   "ownership": {
     "codeowners": ".github/CODEOWNERS",
@@ -23,7 +23,7 @@
     "protections_and_permissions": "authenticated-admin-reviewed",
     "tag": "v1.1.0",
     "commit": "303e995a9cf5c939f11a368865bfb76488e9654d",
-    "url": "https://github.com/VIDORETTO/agent-knowledge-kit/releases/tag/v1.1.0",
+    "url": "https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v1.1.0",
     "published_at": "2026-09-04T20:18:45Z"
   }
 }

@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased — Farol 2.0 candidate (2026-09-21)
+
+- Replaced the legacy local RAG/vendor surface with the external, opt-in
+  RAGFlow `0.27.2` backend and fail-closed integration profiles.
+- Added canonical IR, stable locators, governed extractors, real Docling/RapidOCR
+  OCR, hierarchical taxonomy, multi-skill synthesis, lineage and global routing.
+- Added real RAGFlow lifecycle, mapping, retrieval, rebuild, rollback and cleanup
+  evidence, plus dual-run cutover receipts and legacy contraction checks.
+- Added release provenance for private originals, candidate/wheel/supply-chain
+  verification, acceptance matrix coverage and the final full gate evidence.
+- Updated the current README, architecture, security, dependency, operational,
+  release and handoff documentation to describe Farol 2.0 accurately.
+- This candidate is not a public package release yet; tag, release and
+  publication remain manual decisions.
+
 ## 1.1.0 — 2026-09-04
 
 - Closed post-1.0 reliability tickets 23–29 locally: candidate identity and

@@ -1,4 +1,6 @@
-# Opt-in network profile for knowledge-rag.
+# Opt-in network profile for the Farol MCP service.
+# Factual retrieval in Farol 2.0 uses the external RAGFlow profile; this file
+# controls only the local HTTP/SSE transport and must remain outside the Git.
 # Copy to config/network.yaml, replace the token, audit it, and keep the copy
 # outside version control. The default config.yaml remains local stdio.
 paths:

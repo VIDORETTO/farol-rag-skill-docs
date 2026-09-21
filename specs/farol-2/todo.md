@@ -3,7 +3,7 @@
 View derivada dos tickets. Atualize estado e tarefas no ticket canônico, depois
 regenere esta projeção.
 
-## Próxima fronteira
+## Estado de entrega
 
 - [x] [TK-001](tickets/TK-001.md) — API/parsing/locators RAGFlow v0.27.2, adapter real e cleanup comprovados.
 - [x] [TK-002](tickets/TK-002.md) — expandir contratos fundamentais v2.
@@ -11,8 +11,9 @@ regenere esta projeção.
 
 ## Snapshot de verificação — 2026-09-20 (full final + TK-017–TK-021)
 
-- Branch/candidato: `farol-v2` em `93bb8894d816aad3c3b3682ccec317db1da39d45`;
-  o worktree permanece dirty pelas mudanças não commitadas desta execução.
+- Branch de entrega: `farol-v3`; a evidência foi capturada na árvore candidata
+  baseada em `93bb8894d816aad3c3b3682ccec317db1da39d45` e depois versionada no
+  GitHub. O worktree atual está limpo.
 - Full final (core, book-to-skill, RAGFlow, OCR, wheel, candidate e oráculos):
   `25/25` etapas, `0 failed`, `0 blocked` e `0 not_run`; agregado idempotente
   `1045 passed` e `12 skipped`; pytest `474 passed, 6 skipped`; clone limpo
@@ -40,7 +41,7 @@ regenere esta projeção.
 Esses tickets são independentes. TK-001 não altera produção; TK-002 não remove
 contratos 1.x.
 
-## Bloqueados por dependência
+## Dependências encerradas
 
 ### P1 — Seams e IR
 
@@ -79,7 +80,7 @@ contratos 1.x.
 - [x] TK-020 — jornada, perfis externos, wheel, candidate, auditorias e handoff final verificados.
 - [x] TK-021 — originais privados/provenance de release cobertos; AC-031 sem blocker de rastreabilidade.
 
-## Checklist por ticket
+## Checklist por ticket — template para novos esforços
 
 - [ ] Ler spec/plan e paths na ordem do ticket.
 - [ ] Confirmar baseline e preservar trabalho do usuário.
