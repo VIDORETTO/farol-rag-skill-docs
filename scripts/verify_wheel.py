@@ -91,6 +91,7 @@ def main(argv: list[str] | None = None) -> int:
             capture_output=True,
             text=True,
         )
+        isolated_environment = {**os.environ, "PYTHONPATH": str(target_dir)}
         source = workspace / "source"
         source.mkdir()
         (source / "guide.md").write_text("# Guide\nRetry policy and exact defaults.\n", encoding="utf-8")
@@ -137,7 +138,14 @@ def main(argv: list[str] | None = None) -> int:
         ]
         evaluation: dict[str, object] | None = None
         for command in commands:
-            completed = subprocess.run(command, check=False, cwd=workspace, capture_output=True, text=True)
+            completed = subprocess.run(
+                command,
+                check=False,
+                cwd=workspace,
+                env=isolated_environment,
+                capture_output=True,
+                text=True,
+            )
             if completed.returncode:
                 raise RuntimeError(f"wheel end-to-end command failed: {command}: {command_failure_details(completed)}")
             if command[3] == "evaluate":
