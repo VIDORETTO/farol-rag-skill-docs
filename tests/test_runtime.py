@@ -36,5 +36,6 @@ def test_runtime_contract_reports_the_external_ragflow_profile(tmp_path: Path) -
 def test_venv_config_accepts_native_host_home(tmp_path: Path) -> None:
     directory = tmp_path / ".venv"
     directory.mkdir()
-    (directory / "pyvenv.cfg").write_text("home = C:\\Python314\n", encoding="utf-8")
+    native_home = Path(sys.executable).parent
+    (directory / "pyvenv.cfg").write_text(f"home = {native_home}\n", encoding="utf-8")
     assert venv_config_matches_host(directory)
