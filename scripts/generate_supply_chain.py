@@ -51,6 +51,10 @@ def generate(
 ) -> dict[str, Any]:
     del python, require_model, vendor_root
     root = root.expanduser().resolve()
+    wheel = wheel.expanduser()
+    if not wheel.is_absolute():
+        wheel = root / wheel
+    wheel = wheel.resolve()
     lock = (lock_path or root / "requirements.lock").expanduser().resolve()
     if not lock.is_file() or not wheel.is_file():
         return {"schema_version": 1, "ok": False, "errors": [{"code": "input_missing"}]}
