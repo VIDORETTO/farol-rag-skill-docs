@@ -24,7 +24,7 @@ ocr = [
     "docling==2.129.0; python_version >= '3.13' and python_version < '3.14'",
     "onnxruntime==1.30.0; python_version >= '3.13' and python_version < '3.14'",
 ]
-formats = ["PyYAML==6.0.3", "pypdf==6.16.2", "python-docx==1.2.0"]
+formats = ["PyYAML==6.0.3", "pypdf==6.19.0", "python-docx==1.2.0"]
 dev = ["pytest==9.1.1", "ruff==0.12.7", "pip-audit==2.10.1", "setuptools==84.0.0"]
 
 [project.scripts]
