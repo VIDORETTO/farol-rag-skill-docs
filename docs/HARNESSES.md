@@ -46,7 +46,7 @@ elegível, o resultado deve ser abstenção ou conflito.
 O contrato canônico está em `schemas/harness.schema.json`. A decisão de
 publicação continua manual e não é concedida pelo manifesto.
 
-O snapshot versionado em `farol-v3` contém esse mesmo estado de implementação;
-o commit da branch não altera o resultado dos recibos de 20 de setembro. A
-publicação da versão 2.0 ainda depende de revisão humana, tag e release
-explícitas.
+O estado integrado em `main` contém a implementação da release candidate
+`v2.0.0-rc.1`; o commit de integração não altera o resultado dos recibos de 20
+de setembro. A promoção de uma release estável 2.0 ainda depende de nova
+revisão humana, tag e release explícitas.

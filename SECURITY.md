@@ -18,8 +18,9 @@ pública não prova o estado dessas configurações.
 O escopo inclui o código Python em `docops/`, scripts, workflows, configuração
 de release, templates, schemas, os perfis opcionais e a integração externa
 RAGFlow. O pacote público continua com o identificador técnico
-`consulta-documentacao` na release `v1.1.0`; o snapshot Farol 2.0 ainda é um
-candidato não publicado.
+`consulta-documentacao`. A release estável `v1.1.0` permanece disponível para
+compatibilidade; `v2.0.0-rc.1` é a prévia atual da superfície Farol 2.0 e não
+deve ser tratada como contrato final.
 
 Corpus, índices, caches, ambientes virtuais, tokens, credenciais, artefatos de
 execução e arquivos em `config/network.yaml` são dados locais e não fazem parte

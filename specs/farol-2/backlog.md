@@ -2,9 +2,10 @@
 
 **Gerado a partir de:** spec/plan revisão 1 e tickets revisão 1.
 **Baseline:** `81d5dcb2e189d00406cdd9b9e671d94e3f23cd58`
-**Snapshot de entrega:** branch `farol-v3`; a árvore candidata foi
-versionada e enviada ao GitHub. A evidência full foi capturada em 20/09/2026
-contra a mesma árvore de implementação antes do handoff documental.
+**Snapshot de entrega:** branch `main`, com a release candidate
+`v2.0.0-rc.1` preparada a partir da integração Farol 2.0. A evidência full foi
+capturada em 20/09/2026 contra a mesma árvore de implementação antes do handoff
+documental.
 
 ## Fases e gates
 

@@ -122,19 +122,19 @@ jobs:
       - name: Audit exact candidate file set
         run: python scripts/audit_release.py --candidate --json
       - name: Build unpublished candidate bundle
-        run: python scripts/prepare_candidate.py --root . --output artifacts/candidate-1.1.0
+        run: python scripts/prepare_candidate.py --root . --output artifacts/candidate-2.0.0rc1
       - name: Verify unpublished candidate bundle
-        run: python scripts/verify_candidate.py --root artifacts/candidate-1.1.0
+        run: python scripts/verify_candidate.py --root artifacts/candidate-2.0.0rc1
       - name: Re-measure candidate identity from the checkout
-        run: python scripts/verify_candidate.py --root artifacts/candidate-1.1.0 --source-root .
+        run: python scripts/verify_candidate.py --root artifacts/candidate-2.0.0rc1 --source-root .
       - name: Retain candidate bundle and identity evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: candidate-1.1.0-${{ github.sha }}
-          path: artifacts/candidate-1.1.0
+          name: candidate-2.0.0rc1-${{ github.sha }}
+          path: artifacts/candidate-2.0.0rc1
           if-no-files-found: error
           include-hidden-files: true
           retention-days: 30
       - name: Verify release identity on a pushed main commit
         if: github.event_name == 'workflow_dispatch' && inputs.release_verification == true && github.ref == 'refs/heads/main'
-        run: python scripts/verify_candidate.py --root artifacts/candidate-1.1.0 --source-root . --release
+        run: python scripts/verify_candidate.py --root artifacts/candidate-2.0.0rc1 --source-root . --release

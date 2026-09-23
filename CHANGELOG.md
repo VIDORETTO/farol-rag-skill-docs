@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased — Farol 2.0 candidate (2026-09-21)
+## Unreleased
+
+Mudanças futuras serão registradas aqui antes da próxima release.
+
+## 2.0.0rc1 — 2026-09-22
+
+Release candidate Farol 2.0 (`v2.0.0-rc.1`).
 
 - Replaced the legacy local RAG/vendor surface with the external, opt-in
   RAGFlow `0.27.2` backend and fail-closed integration profiles.
@@ -12,8 +18,10 @@
   verification, acceptance matrix coverage and the final full gate evidence.
 - Updated the current README, architecture, security, dependency, operational,
   release and handoff documentation to describe Farol 2.0 accurately.
-- This candidate is not a public package release yet; tag, release and
-  publication remain manual decisions.
+- Added the first Farol 2.0 release-candidate wheel, candidate bundle,
+  supply-chain evidence and cross-platform clean-clone verification.
+- This is a pre-release: the public stable compatibility release remains
+  `v1.1.0`, and feedback may still change the 2.0 public contract before GA.
 
 ## 1.1.0 — 2026-09-04
 

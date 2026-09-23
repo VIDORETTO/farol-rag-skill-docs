@@ -133,7 +133,7 @@ __all__ = [
     "audit_release_surface",
     "require_cutover_approved",
 ]
-__version__ = "1.1.0"
+__version__ = "2.0.0rc1"
 
 from .api_types import CapabilityV2, KnowledgeProjectV2, MigrationPlanV2, OperationRequestV2, OperationResultV2
 from .backends import KnowledgeBackend, QueryRequest, RagFlowAdapter

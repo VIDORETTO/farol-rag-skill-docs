@@ -21,10 +21,10 @@ evidências verificáveis.
   <img alt="RAGFlow externo" src="https://img.shields.io/badge/RAGFlow-external%20%7C%20opt--in-0f766e">
 </p>
 
-**Versão do pacote:** [v1.1.0](https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v1.1.0)
+**Versão do pacote:** [v2.0.0rc1](https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v2.0.0-rc.1)
 
-**Estado do código:** snapshot Farol 2.0 na branch `farol-v3`; a próxima
-release ainda depende do handoff e da publicação manual.
+**Estado do código:** Farol 2.0 integrado na branch `main`; esta é a release
+candidate `v2.0.0-rc.1` e a publicação continua sendo uma decisão manual.
 
 </div>
 
@@ -76,10 +76,35 @@ contexto, consultar o MCP quando necessário e produzir a resposta final.
 | Runtime | Python 3.11+ |
 | RAG | Backend externo RAGFlow `0.27.2`; integração opt-in com endpoint, token e imagem fixados por digest |
 | OCR | Docling `2.129.0` + ONNX Runtime `1.30.0` + RapidOCR no perfil Python 3.13 |
-| Distribuição | Release pública v1.1.0; o snapshot Farol 2.0 ainda exige handoff e publicação manual |
+| Distribuição | Release candidate v2.0.0-rc.1; v1.1.0 permanece disponível como release estável de compatibilidade |
 | Exemplos públicos | Fixtures sintéticas em <code>documents/fixtures/</code> |
 
 ## Instalação
+
+### Usar a release candidate 2.0
+
+Esta versão inaugura a superfície Farol 2.0 e ainda é uma prévia. Baixe a
+[release candidate v2.0.0-rc.1](https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v2.0.0-rc.1),
+confira o `SHA256SUMS` e instale a wheel em um ambiente virtual:
+
+~~~bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install ./consulta_documentacao-2.0.0rc1-py3-none-any.whl
+farol --help
+~~~
+
+No Windows PowerShell:
+
+~~~powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install .\consulta_documentacao-2.0.0rc1-py3-none-any.whl
+farol --help
+~~~
+
+RAGFlow e OCR permanecem perfis opt-in; a prévia não deve ser usada como
+contrato de compatibilidade final sem revisar as notas da release.
 
 ### Usar a release pública
 
@@ -346,9 +371,10 @@ contração do backend legado foi concluída; a evidência redigida está em
 `artifacts/release-gates-full-20260920-final7/release-gates.json` e nos arquivos
 de `specs/farol-2/evidence/`.
 
-O snapshot foi versionado e enviado na branch `farol-v3`. Não há implementação
-pendente: o próximo passo é a decisão humana sobre tag/release/publicação, que
-continua manual.
+O candidato foi integrado em `main` e a release candidate `v2.0.0-rc.1` foi
+preparada a partir desse estado. Não há implementação pendente; mudanças
+posteriores devem seguir o fluxo de branch, revisão e CI descrito em
+`CONTRIBUTING.md`.
 
 ### Histórico Farol 1.x
 
