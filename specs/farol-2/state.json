@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "effort": "farol-2",
+  "phase": "delivery",
+  "status": "active",
+  "profile": "expanded",
+  "baseline": {
+    "kind": "git_sha",
+    "value": "81d5dcb2e189d00406cdd9b9e671d94e3f23cd58",
+    "branch": "main",
+    "remote_relation": "main_equals_origin_main_at_reconnaissance"
+  },
+  "candidate": {
+    "kind": "git_sha",
+    "value": "cbed216803693dc42b842227e42007857dbe8a81",
+    "branch": "farol-v3",
+    "remote_relation": "implementation snapshot pushed to origin/farol-v3; full evidence identifies the pre-commit worktree candidate 93bb8894d816aad3c3b3682ccec317db1da39d45",
+    "worktree_status": "clean after documentation handoff",
+    "gate_worktree_entries": 75,
+    "current_worktree_entries": "clean after Farol 2.0 implementation and documentation handoff",
+    "current_worktree_observed_at": "2026-09-21"
+  },
+  "inputs": {
+    "spec": {
+      "path": "specs/farol-2/spec.md",
+      "revision": 1
+    },
+    "plan": {
+      "path": "specs/farol-2/plan.md",
+      "revision": 1
+    },
+    "context": {
+      "path": "CONTEXT.md",
+      "revision": 1
+    }
+  },
+  "tickets": {
+    "ready": [],
+    "in_progress": [],
+    "verified": [
+      "TK-002",
+      "TK-003",
+      "TK-005",
+      "TK-006",
+      "TK-008",
+      "TK-009",
+      "TK-010",
+      "TK-012",
+      "TK-015",
+      "TK-016",
+      "TK-017",
+      "TK-001",
+      "TK-004",
+      "TK-007",
+      "TK-013",
+      "TK-014",
+      "TK-011",
+      "TK-018",
+      "TK-019",
+      "TK-020",
+      "TK-021"
+    ],
+    "draft": []
+  },
+  "limitations": [
+    "RAGFlow v0.27.2, DeepDoc/OCR, book-to-skill, dual-run and final release gates have executed receipts on 2026-09-20; publication remains intentionally manual",
+    "the final full release gate passed 25/25 stages with zero failures, blocked stages or not-run stages; it recorded 1045 passed and 12 explicitly skipped checks",
+    "the final full gate was run with --timeout 3600 because the suite exceeds the runner default of 1800 seconds per command in this venv; the runner invokes Ruff through the selected interpreter",
+    "TK-011/TK-017/TK-018/TK-019/TK-020/TK-021 are terminal on the current candidate: real book-to-skill synthesis, editorial and legacy contraction, dual-run receipt, complete release gate, acceptance matrix, and private-original/provenance coverage all passed."
+  ],
+  "verification_runs": {
+    "core": {
+      "candidate": "93bb8894d816aad3c3b3682ccec317db1da39d45",
+      "profile": "core",
+      "status": "passed",
+      "finished_at": "2026-09-18T06:23:45+00:00",
+      "report_artifact": "farol-v2-release-gates-20260918-tk021-final2/release-gates.json",
+      "report_sha256": "d019f38bd2ee61ab63468cbf3b71b69f41c1c933fbe80bccc9d709a47573ff0c",
+      "retention": "temporary session output; not versioned",
+      "worktree_state": "dirty (75 gate entries; 74 current porcelain entries; TK-017 editorial contraction + TK-018 provider-free dual-run/receipt + TK-020 acceptance matrix + TK-021 private-original/provenance coverage + oracle and release-gate fixes)",
+      "stages": 22,
+      "main_suite": {
+        "passed": 542,
+        "skipped": 5,
+        "environment": "project .venv, Python 3.14.2; skips are one opt-in RAGFlow spike and four host-unavailable symlink tests"
+      },
+      "crash_matrix": {
+        "passed": 17
+      },
+      "revocation": {
+        "passed": 25
+      },
+      "aggregate": {
+        "passed": 1158,
+        "skipped": 15,
+        "failed": 0,
+        "blocked": 0,
+        "not_run": 0,
+        "stages": 22
+      },
+      "aggregate_semantics": "gate denominators rebuilt idempotently; 1158 passed = 22 stage credits + 1136 command passes; 15 skipped are the main-suite and clean-clone skips",
+      "local_worktree_suite": {
+        "passed": 542,
+        "skipped": 5,
+        "environment": "project .venv, Python 3.14.2, chromadb present"
+      },
+      "per_command_timeout_seconds": 3600,
+      "clean_clone_suite": {
+        "passed": 537,
+        "skipped": 10,
+        "environment": "isolated clean clone; extra skips are host-unavailable symlink tests"
+      }
+    },
+    "core_history": {
+      "clean_capture_2026_09_12": {
+        "status": "passed",
+        "finished_at": "2026-09-12T01:20:19-03:00",
+        "report_sha256": "621a82bc96945b607d8954b43d1eb905210e59f7ffb7345e0075d214cf0c8c09",
+        "worktree_entries": 3,
+        "stages": 22,
+        "main_suite": {
+          "passed": 455,
+          "skipped": 10
+        },
+        "aggregate": {
+          "passed": 7419,
+          "skipped": 150,
+          "failed": 0,
+          "not_run": 0
+        },
+        "note": "captured at a near-clean worktree before the boundedness diff; the 7419/150 aggregate is the pre-fix non-idempotent accumulator"
+      },
+      "rerun_2026_09_12": {
+        "status": "passed",
+        "finished_at": "2026-09-12T13:32:15+00:00",
+        "report_sha256": "f2a111d979b3d1c5aff4cb3439ecc72d0fb5148e9ccc05524eaaebf6187f6eed",
+        "worktree_entries": 17,
+        "retention": "temporary session output; not versioned"
+      }
+    },
+    "ragflow_preflight": {
+      "candidate": "93bb8894d816aad3c3b3682ccec317db1da39d45",
+      "profile": "ragflow-preflight",
+      "status": "blocked",
+      "reason": "missing_external_inputs",
+      "missing": [
+        "DOCOPS_RAGFLOW_ENDPOINT",
+        "DOCOPS_RAGFLOW_TOKEN",
+        "DOCOPS_RAGFLOW_IMAGE_DIGEST",
+        "DOCOPS_RAGFLOW_SDK_VERSION"
+      ],
+      "report_artifact": "farol-v2-ragflow-preflight-998f5906fc4648cc8515b73b4666f1b4.json",
+      "report_sha256": "325ef82f57743904c41ee90d091962853de548c383c8cd7139096a25d9d642d",
+      "latest_observation": {
+        "finished_at": "2026-09-18",
+        "command": ".venv\\Scripts\\python.exe scripts/run_ragflow_profile.py --json",
+        "exit_code": 1,
+        "status": "blocked",
+        "reason": "missing_external_inputs",
+        "missing": [
+          "DOCOPS_RAGFLOW_ENDPOINT",
+          "DOCOPS_RAGFLOW_TOKEN",
+          "DOCOPS_RAGFLOW_IMAGE_DIGEST",
+          "DOCOPS_RAGFLOW_SDK_VERSION"
+        ],
+        "report_retention": "stdout observed; not versioned"
+      }
+    },
+    "ragflow_real": {
+      "candidate": "93bb8894d816aad3c3b3682ccec317db1da39d45",
+      "finished_at": "2026-09-20T00:00:00-03:00",
+      "status": "passed",
+      "profile": "ragflow",
+      "tests": 2,
+      "skipped": 0,
+      "failed": 0,
+      "runtime": "RAGFlow v0.27.2 + SDK 0.27.2 + TEI BAAI/bge-small-en-v1.5",
+      "evidence": "specs/farol-2/evidence/ragflow-spike.md"
+    },
+    "ocr_real": {
+      "candidate": "93bb8894d816aad3c3b3682ccec317db1da39d45",
+      "finished_at": "2026-09-20T00:00:00-03:00",
+      "status": "passed",
+      "profile": "ocr",
+      "tests": 1,
+      "skipped": 0,
+      "failed": 0,
+      "runtime": "Docling 2.129.0 + ONNX Runtime 1.30.0 + RapidOCR",
+      "evidence": "specs/farol-2/evidence/TK-007.md"
+    },
+    "book_to_skill_real": {
+      "candidate": "93bb8894d816aad3c3b3682ccec317db1da39d45",
+      "finished_at": "2026-09-20T00:00:00-03:00",
+      "status": "passed",
+      "profile": "book-to-skill",
+      "tests": 2,
+      "skipped": 0,
+      "failed": 0,
+      "runtime": "book-to-skill commit 526f362552562d88c1a8bbf8012d2cee93f831d5 + TextWebExtractor + SynthesisEngine",
+      "harness_commit": "526f362552562d88c1a8bbf8012d2cee93f831d5",
+      "ir_revision": "f9b570755fe7771ff91c8723b7adf5e4dca06317802d6c46385f6496117fb5b3",
+      "request_hash": "1fd57c352475efbb7926a30d2b04a57ad7139ae113f0f5896792473b78cf35a2",
+      "output_hash": "79373f1fd679d3c9483372f6e6a64b18be0db0ebac90b35a43c2adafac98b21c",
+      "evidence": "specs/farol-2/evidence/TK-011.md",
+      "report_artifact": "artifacts/book-to-skill-tk011-20260920-rerun"
+    },
+    "cutover_real": {
+      "candidate": "93bb8894d816aad3c3b3682ccec317db1da39d45",
+      "finished_at": "2026-09-20T00:00:00-03:00",
+      "status": "passed",
+      "profile": "cutover",
+      "tests": 2,
+      "skipped": 0,
+      "failed": 0,
+      "golden_revision": "a95036381a6950782bef87b8352a6e5ebca6d2f14b64cfcaec6f8f5fafda605a",
+      "ir_revision": "221588ece807372b476b5355229f71ad764997c8908ee910bdd95c784549b0db",
+      "corpus_digest": "f07561ba82ac699fd4b6efe37d69a2d176e5e266cad7788f9a01be581426c6da",
+      "receipt_hash": "287c83864f37adfd9d84486aeb3da2061350110ec2a40160458802247e153301",
+      "metrics": {
+        "legacy_recall_at_5": 1.0,
+        "legacy_mrr_at_5": 0.7333,
+        "ragflow_recall_at_5": 1.0,
+        "ragflow_mrr_at_5": 1.0,
+        "citation_coverage": 1.0,
+        "lineage_coverage": 1.0,
+        "id_parity": 1.0
+      },
+      "lifecycle": {"queryable": true, "recovery": true, "rollback": true, "cleanup": "passed"},
+      "evidence": "specs/farol-2/evidence/TK-018.md",
+      "report_artifact": "artifacts/cutover-measurement-20260920-final3"
+    },
+    "legacy_contraction_real": {
+      "candidate": "93bb8894d816aad3c3b3682ccec317db1da39d45",
+      "finished_at": "2026-09-20T00:00:00-03:00",
+      "status": "passed",
+      "profile": "legacy-contraction",
+      "tests": 474,
+      "skipped": 6,
+      "failed": 0,
+      "surface_findings": 0,
+      "contracts": 77,
+      "documentation_markdown": 164,
+      "cutover_receipt_hash": "287c83864f37adfd9d84486aeb3da2061350110ec2a40160458802247e153301",
+      "evidence": "specs/farol-2/evidence/TK-019.md"
+    },
+    "release_full_real": {
+      "candidate": "93bb8894d816aad3c3b3682ccec317db1da39d45",
+      "finished_at": "2026-09-20T23:07:29+00:00",
+      "status": "passed",
+      "profile": "full",
+      "stages": 25,
+      "passed": 1045,
+      "skipped": 12,
+      "failed": 0,
+      "blocked": 0,
+      "not_run": 0,
+      "report_artifact": "artifacts/release-gates-full-20260920-final7/release-gates.json",
+      "report_sha256": "EFFE3B18D009CC659326C3F58F7B43FCABBC75540945F7F55B23EEBD0FD29824",
+      "evidence": "specs/farol-2/evidence/TK-020.md"
+    }
+  },
+  "external_blockers": [],
+  "next_action": "Human handoff only: review the versioned Farol 2.0 candidate and decide whether to tag, release or publish. No implementation work remains."
+}

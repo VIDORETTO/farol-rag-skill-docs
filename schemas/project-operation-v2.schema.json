@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/project-operation-v2.schema.json",
+  "title": "Farol 2.0 project operation receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "operation", "inputs", "project_id", "revision", "status"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "kind": {"const": "project_operation", "type": "string"},
+    "operation": {"type": "string"},
+    "inputs": {"type": "object"},
+    "project_id": {"type": "string", "minLength": 1},
+    "revision": {"type": "integer", "minimum": 0},
+    "status": {"type": "string"}
+  }
+}

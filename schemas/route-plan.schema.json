@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/route-plan.schema.json",
+  "title": "Farol 2.0 route plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "route", "query_request", "skill_ids", "reasons", "outcome"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "kind": {"const": "route_plan", "type": "string"},
+    "route": {"enum": ["conceptual", "factual", "hybrid"], "type": "string"},
+    "query_request": {"type": "object"},
+    "skill_ids": {"type": "array", "items": {"type": "string"}},
+    "reasons": {"type": "array", "items": {"type": "string"}},
+    "outcome": {"type": "string"}
+  }
+}

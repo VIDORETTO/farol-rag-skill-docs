@@ -33,7 +33,7 @@ from docops import (
     verify_project_backup,
 )
 from docops.contracts import validate_artifact
-from docops.rag_sync import package_rag_config_text
+from docops.rag_snapshots import package_rag_config_text
 from docops.revisions import content_hash, package_revisions
 from scripts.check_documentation import check_documentation
 
@@ -173,103 +173,7 @@ def test_project_init_persists_answers_and_rejects_stale_revision(tmp_path: Path
     assert (project / "revisions" / finalized["data"]["project_revision_id"] / "brief.json").is_file()
 
 
-def test_proposed_course_intent_stays_pending_until_explicit_confirmation(tmp_path: Path) -> None:
-    project = tmp_path / "project"
-    started = start_project_init(
-        project,
-        {
-            "name": "Intent fixture",
-            "objective": "Explain a synthetic workflow",
-            "deliverables": ["knowledge", "course"],
-        },
-        now="2026-09-08T12:00:00Z",
-    )
-    assert started["ok"] is True
-
-    proposed = answer_project_init(
-        project,
-        {
-            "course_intent": {
-                "value": "sold_on_marketplace",
-                "origin": "agent_proposed",
-            }
-        },
-        expected_revision=started["session_revision"],
-        now="2026-09-08T12:01:00Z",
-    )
-    assert proposed["ok"] is True
-    assert proposed["outcome"] == "needs_input"
-    assert any(item["key"] == "course_intent" for item in proposed["data"]["session"]["pending_questions"])
-
-    confirmed = answer_project_init(
-        project,
-        {
-            "course_intent": {
-                "value": "sold_on_marketplace",
-                "origin": "user_explicit",
-            }
-        },
-        expected_revision=proposed["session_revision"],
-        now="2026-09-08T12:02:00Z",
-    )
-    assert confirmed["ok"] is True
-    assert confirmed["outcome"] == "applied"
-    finalized = finalize_project_init(
-        project,
-        session_id=started["data"]["session"]["session_id"],
-        expected_revision=confirmed["session_revision"],
-        now="2026-09-08T12:03:00Z",
-    )
-    assert finalized["ok"] is True
-
-
-def test_unconfirmed_commercial_values_never_enter_page_offer(tmp_path: Path) -> None:
-    project = tmp_path / "project"
-    started = start_project_init(
-        project,
-        {
-            "name": "Private page fixture",
-            "objective": "Explain a synthetic workflow",
-            "deliverables": ["knowledge", "page"],
-        },
-        now="2026-09-08T12:00:00Z",
-    )
-    assert started["ok"] is True
-
-    proposed = answer_project_init(
-        project,
-        {
-            "commercial_authorization": {"value": True, "origin": "agent_proposed"},
-            "price": {
-                "value": {"amount_decimal": "99.00", "currency": "BRL"},
-                "origin": "agent_proposed",
-            },
-            "guarantee": {"value": "30 dias", "origin": "agent_proposed"},
-            "cta": {"value": "Comprar agora", "origin": "agent_proposed"},
-        },
-        expected_revision=started["session_revision"],
-        now="2026-09-08T12:01:00Z",
-    )
-    assert proposed["ok"] is True
-    assert proposed["outcome"] == "needs_input"
-
-    finalized = finalize_project_init(
-        project,
-        session_id=started["data"]["session"]["session_id"],
-        expected_revision=proposed["session_revision"],
-        now="2026-09-08T12:02:00Z",
-    )
-    assert finalized["ok"] is True
-    revision = project / "revisions" / finalized["data"]["project_revision_id"]
-    page = json.loads((revision / "page.json").read_text(encoding="utf-8"))
-    assert page["status"] == "pending"
-    assert page["offer"]["price"] is None
-    assert page["offer"]["guarantee"] is None
-    assert page["offer"]["cta"] is None
-    assert "page" in finalized["data"]["pending_deliverables"]
-
-
-def test_audience_correction_invalidates_only_dependent_derivatives(tmp_path: Path) -> None:
+def test_audience_correction_propagates_to_the_brief_only(tmp_path: Path) -> None:
     project = tmp_path / "project"
     started = start_project_init(
         project,
@@ -277,7 +181,6 @@ def test_audience_correction_invalidates_only_dependent_derivatives(tmp_path: Pa
             "name": "Audience fixture",
             "objective": "Explain a synthetic workflow",
             "audience": "new sellers",
-            "deliverables": ["knowledge", "course", "page"],
         },
         now="2026-09-08T12:00:00Z",
     )
@@ -286,12 +189,6 @@ def test_audience_correction_invalidates_only_dependent_derivatives(tmp_path: Pa
         project,
         {
             "audience": {"value": "experienced sellers", "origin": "user_explicit"},
-            "course_intent": {"value": "about_marketplace_selling", "origin": "user_explicit"},
-            "commercial_authorization": {"value": True, "origin": "user_explicit"},
-            "price": {
-                "value": {"amount_decimal": "99.00", "currency": "BRL"},
-                "origin": "user_explicit",
-            },
         },
         expected_revision=started["session_revision"],
         now="2026-09-08T12:01:00Z",
@@ -323,7 +220,7 @@ def test_audience_correction_invalidates_only_dependent_derivatives(tmp_path: Pa
                 }
             ],
             "requested_by": "operator",
-            "reason": "correct the audience used by dependent deliverables",
+            "reason": "correct the audience recorded in the brief",
             "dependency_graph": {"nodes": [], "edges": [], "unknown_dependencies": False},
         },
         now="2026-09-08T12:03:00Z",
@@ -333,13 +230,9 @@ def test_audience_correction_invalidates_only_dependent_derivatives(tmp_path: Pa
     assert prepared["ok"] is True, prepared.get("errors")
     target_dir = project / "revisions" / prepared["data"]["receipt"]["project_revision_id"]
     target_brief = json.loads((target_dir / "brief.json").read_text(encoding="utf-8"))
-    target_course = json.loads((target_dir / "course.json").read_text(encoding="utf-8"))
-    target_page = json.loads((target_dir / "page.json").read_text(encoding="utf-8"))
     assert target_brief["audience"] == "new sellers"
-    assert target_page["audience"] == "new sellers"
-    assert "audience" not in target_course
-    assert target_course["status"] == "draft"
-    assert target_page["status"] == "draft"
+    assert not (target_dir / "course.json").exists()
+    assert not (target_dir / "page.json").exists()
 
 
 def test_adoption_is_idempotent_recoverable_and_does_not_infer_rights(tmp_path: Path, monkeypatch) -> None:
@@ -659,15 +552,13 @@ def test_evidence_query_filters_revoked_or_foreign_retrieval_hits(tmp_path: Path
 
 def test_project_revision_artifacts_are_hashed_and_validate_against_normative_contracts(tmp_path: Path):
     project = tmp_path / "project"
-    finalized = _finalized_project(project, deliverables=["knowledge", "course", "page"])
+    finalized = _finalized_project(project)
     revision = project / "revisions" / finalized["data"]["project_revision_id"]
     artifact_map = {
         "project.json": "project",
         "init/session.json": "init-session",
         "revision.json": "project-revision",
         "brief.json": "brief",
-        "course.json": "course",
-        "page.json": "page",
         "decisions.json": "decisions",
         "policy.json": "policy",
         "dependencies.json": "dependencies",
@@ -895,26 +786,23 @@ def test_supervisor_coalesces_events_redacts_work_and_recovers_missed_cycles(tmp
 
 
 def test_presets_are_declarative_and_keep_commercial_authorization_unknown():
-    marketplace = load_project_preset("ml")
     neutral = load_project_preset("neutral")
-    assert marketplace["id"] == "mercado-livre"
+    generic = load_project_preset("generic")
     assert neutral["id"] == "neutral"
-    assert len(marketplace["themes"]) == 17
-    assert marketplace["commercial_claims"] == "unknown"
-    assert "no platform permission is presumed" in marketplace["notes"]
-    assert all(isinstance(theme["queries"], list) and theme["queries"] for theme in marketplace["themes"])
-    assert set(marketplace) == set(neutral)
+    assert neutral["commercial_claims"] == "unknown"
+    assert generic["id"] == "neutral"
+    assert all(isinstance(theme["queries"], list) and theme["queries"] for theme in neutral["themes"])
 
 
 def test_change_preparation_preserves_unchanged_artifacts_byte_for_byte(tmp_path: Path):
     project = tmp_path / "project"
-    finalized = _finalized_project(project, deliverables=["knowledge", "course", "page"])
+    finalized = _finalized_project(project)
     base_revision = finalized["data"]["project_revision_id"]
     base_dir = project / "revisions" / base_revision
     base_policy = json.loads((base_dir / "policy.json").read_text(encoding="utf-8"))
     before = {
         name: (base_dir / name).read_bytes()
-        for name in ("brief.json", "course.json", "page.json", "decisions.json", "dependencies.json")
+        for name in ("brief.json", "decisions.json", "dependencies.json")
         if (base_dir / name).is_file()
     }
     proposed = propose_project_change(
@@ -931,7 +819,7 @@ def test_change_preparation_preserves_unchanged_artifacts_byte_for_byte(tmp_path
                 }
             ],
             "requested_by": "operator",
-            "reason": "keep the generated derivatives unchanged",
+            "reason": "keep the generated knowledge artifacts unchanged",
             "dependency_graph": {"nodes": [], "edges": [], "unknown_dependencies": False},
         },
         now="2026-09-08T12:00:00Z",
@@ -1115,33 +1003,11 @@ def test_project_mutation_cas_and_idempotency_cover_evidence_governance_and_supe
     )
 
 
-def test_derivative_validation_rejects_a_claim_without_eligible_evidence(tmp_path: Path):
+def test_editorial_derivative_seam_is_removed(tmp_path: Path):
     project = tmp_path / "project"
-    finalized = _finalized_project(project, deliverables=["knowledge", "page"])
-    claim = __import__("docops").record_project_claim(
-        project,
-        {
-            "claim_id": "claim-unproven",
-            "text": "unsupported fixture claim",
-            "classification": "opinion",
-            "evidence_refs": [],
-        },
-        now="2026-09-08T12:00:00Z",
-    )
-    assert claim["ok"] is True
-    revision = project / "revisions" / finalized["data"]["project_revision_id"]
-    page_path = revision / "page.json"
-    page = json.loads(page_path.read_text(encoding="utf-8"))
-    page["status"] = "draft"
-    page["sections"] = [{"section_id": "section-1", "claim_ids": ["claim-unproven"], "evidence_refs": []}]
-    page.pop("content_hash", None)
-    page["content_hash"] = content_hash(page)
-    page_path.write_text(json.dumps(page, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    result = __import__("docops").validate_project_derivatives(
-        project, finalized["data"]["project_revision_id"], now="2026-09-08T12:00:00Z"
-    )
-    assert result["ok"] is False
-    assert "ineligible_claim_reference" in result["data"]["derivatives"]["page"]["errors"]
+    _finalized_project(project)
+    assert not hasattr(__import__("docops"), "validate_project_derivatives")
+    assert not hasattr(__import__("docops"), "prepare_project_derivatives")
 
 
 def test_enrichment_is_scoped_budgeted_and_receipt_bound(tmp_path: Path):

@@ -16,7 +16,7 @@
     "audience": {"type": ["string", "null"]},
     "region": {"type": ["string", "null"]},
     "language": {"type": ["string", "null"]},
-    "deliverables": {"type": "array", "items": {"enum": ["knowledge", "course", "page"], "type": "string"}, "uniqueItems": true},
+    "deliverables": {"type": "array", "items": {"enum": ["knowledge"], "type": "string"}, "uniqueItems": true},
     "constraints": {"type": "array", "items": {"type": "string"}},
     "open_decision_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
     "extensions": {"type": "object"}

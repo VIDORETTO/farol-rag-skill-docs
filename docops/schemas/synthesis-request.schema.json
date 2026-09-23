@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/synthesis-request.schema.json",
+  "title": "Farol 2.0 synthesis request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "request_id", "project_revision", "ir_revision", "taxonomy_revision", "adapter", "language", "budget", "topics", "request_hash"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "kind": {"const": "synthesis_request", "type": "string"},
+    "request_id": {"type": "string", "minLength": 1},
+    "project_revision": {"type": "string", "minLength": 1},
+    "ir_revision": {"type": "string", "minLength": 1},
+    "taxonomy_revision": {"type": "string", "minLength": 1},
+    "adapter": {"type": "string", "minLength": 1},
+    "language": {"type": "string", "minLength": 1},
+    "budget": {"type": "object"},
+    "topics": {"type": "array", "items": {"type": "object"}},
+    "request_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

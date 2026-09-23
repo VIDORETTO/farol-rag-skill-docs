@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/taxonomy.schema.json",
+  "title": "Farol 2.0 approved taxonomy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "revision_id", "project_revision", "ir_revision", "nodes", "coverage", "overlaps", "orphans", "approval", "status"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "kind": {"const": "taxonomy", "type": "string"},
+    "revision_id": {"type": "string", "minLength": 1},
+    "project_revision": {"type": "string", "minLength": 1},
+    "ir_revision": {"type": "string", "minLength": 1},
+    "nodes": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "coverage": {"type": "object"},
+    "overlaps": {"type": "array", "items": {"type": "object"}},
+    "orphans": {"type": "array", "items": {"type": "string"}},
+    "approval": {"type": "object"},
+    "status": {"const": "active", "type": "string"}
+  }
+}

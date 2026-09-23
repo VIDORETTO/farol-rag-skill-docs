@@ -176,7 +176,7 @@ def _allowed_vendor_data(relative: Path) -> bool:
     """Allow only the reviewed vendor's static package resources under data/."""
 
     parts = tuple(part.casefold() for part in relative.parts)
-    prefix = ("skills", "vendor", "knowledge-rag", "mcp_server", "data")
+    prefix = ("skills", "vendor", "mcp_server", "data")
     return len(parts) > len(prefix) and parts[: len(prefix)] == prefix
 
 

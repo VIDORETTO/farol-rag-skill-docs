@@ -14,44 +14,10 @@ from pathlib import Path
 import pytest
 
 import docops
-import docops.rag_sync as rag_sync
 import docops.storage as storage
 from docops.lease import PackageLease
 from docops.package_validator import validate_package
 from docops.pipeline import PipelineOptions, apply, plan, run_pipeline
-from docops.pipeline import inspect as inspect_package
-
-
-def _runtime_root(tmp_path: Path) -> Path:
-    runtime = tmp_path / "runtime"
-    vendor = runtime / "skills" / "vendor" / "knowledge-rag" / "mcp_server"
-    vendor.mkdir(parents=True)
-    (vendor / "__init__.py").write_text('__version__ = "4.8.5"\n', encoding="utf-8")
-    return runtime
-
-
-class _FakeMcpClient:
-    server_info = {"name": "knowledge-rag", "version": "4.8.5"}
-
-    def __init__(self, *, fail: bool = False) -> None:
-        self.fail = fail
-
-    def call(self, _method: str, *, name: str, **_kwargs: object) -> dict:
-        if self.fail:
-            return {"error": {"code": "fixture_rag_failure", "message": "fixture failure"}}
-        payload = {
-            "reindex_documents": {"status": "started", "operation": "smart_reindex"},
-            "get_reindex_status": {"active": False, "last_result": {"errors": 0, "total_files": 1}},
-            "get_index_stats": {"stats": {"total_documents": 1, "total_chunks": 1}},
-            "search_knowledge": {"results": [{"source": "guide.md"}]},
-        }[name]
-        return {"result": {"content": [{"text": json.dumps(payload)}]}}
-
-    def diagnostics(self, *, status: str) -> dict[str, object]:
-        return {"status": status, "events": []}
-
-    def close(self) -> None:
-        return
 
 
 def test_plan_reports_new_documents_without_touching_the_destination(tmp_path: Path) -> None:
@@ -304,42 +270,6 @@ def test_operation_plan_captures_an_immutable_request_snapshot(tmp_path: Path) -
     assert operation.request.options.output_dir == output.resolve()
     with pytest.raises(FrozenInstanceError):
         operation.request.options.slug = "mutated-plan"
-
-
-def test_apply_resumes_a_failed_staged_generation_without_touching_active_content(tmp_path: Path, monkeypatch) -> None:
-    source = tmp_path / "source"
-    source.mkdir()
-    guide = source / "guide.md"
-    guide.write_text("# Guide\nBefore.\n", encoding="utf-8")
-    output = tmp_path / "package"
-    assert run_pipeline(source, options=PipelineOptions(output_dir=output, slug="guide", license="MIT")).ok
-    active_before = (output / "rag" / "documents" / "guide.md").read_bytes()
-    guide.write_text("# Guide\nAfter.\n", encoding="utf-8")
-    monkeypatch.setenv("DOCOPS_RAG_PYTHON", sys.executable)
-    runtime_root = _runtime_root(tmp_path)
-    options = PipelineOptions(
-        output_dir=output,
-        slug="guide",
-        license="MIT",
-        mode="update",
-        index_rag=True,
-        runtime_root=runtime_root,
-    )
-    operation = plan(source, options=options)
-
-    monkeypatch.setattr(rag_sync, "start_mcp_server", lambda *_args, **_kwargs: _FakeMcpClient(fail=True))
-    failed = apply(operation)
-
-    assert not failed.ok
-    assert failed.outcome["phase"] == "index"
-    assert (output / "rag" / "documents" / "guide.md").read_bytes() == active_before
-    assert operation.plan_hash in {item["plan_hash"] for item in inspect_package(output)["staging"]}
-
-    monkeypatch.setattr(rag_sync, "start_mcp_server", lambda *_args, **_kwargs: _FakeMcpClient())
-    resumed = apply(operation)
-
-    assert resumed.ok, resumed.errors
-    assert (output / "rag" / "documents" / "guide.md").read_text(encoding="utf-8") == "# Guide\nAfter.\n"
 
 
 def test_failed_post_promotion_validation_restores_the_previous_generation(tmp_path: Path, monkeypatch) -> None:

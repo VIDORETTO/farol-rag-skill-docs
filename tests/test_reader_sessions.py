@@ -289,12 +289,12 @@ def test_reader_cache_is_generation_bound_and_revocation_wins(tmp_path: Path) ->
     assert json.loads(after_revoke.stdout)["errors"][0]["code"] == "reader_session_revoked"
 
 
-def test_mcp_reader_requires_explicit_read_only_capability(tmp_path: Path) -> None:
+def test_non_memory_reader_is_rejected_after_legacy_contraction(tmp_path: Path) -> None:
     _source, package = _package_fixture(tmp_path)
     harness_path = package / "harness.json"
     harness = json.loads(harness_path.read_text(encoding="utf-8"))
-    harness["mcp"]["mode"] = "maintenance"
-    harness["mcp"]["capabilities"] = ["search_knowledge", "add_document"]
+    harness["backend"]["name"] = "other-backend"
+    harness["backend"]["capabilities"] = ["query", "discard"]
     harness_path.write_text(json.dumps(harness), encoding="utf-8")
 
     result = _run_cli(
@@ -306,8 +306,8 @@ def test_mcp_reader_requires_explicit_read_only_capability(tmp_path: Path) -> No
         "--now",
         "2026-09-05T13:00:00Z",
     )
-    assert result.returncode == 1
-    assert json.loads(result.stdout)["errors"][0]["code"] == "reader_capability_missing"
+    assert result.returncode == 2
+    assert "invalid choice" in result.stderr
 
 
 def test_reader_refuses_a_package_with_a_revoked_rag_source(tmp_path: Path) -> None:

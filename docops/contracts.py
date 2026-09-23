@@ -52,8 +52,6 @@ _SCHEMA_FILES = {
     "init-session": "init-session.schema.json",
     "project-revision": "project-revision.schema.json",
     "brief": "brief.schema.json",
-    "course": "course.schema.json",
-    "page": "page.schema.json",
     "decisions": "decisions.schema.json",
     "policy": "policy.schema.json",
     "dependencies": "dependencies.schema.json",
@@ -68,6 +66,33 @@ _SCHEMA_FILES = {
     "delegated-authorization": "delegated-authorization.schema.json",
     "supervisor-status": "supervisor-status.schema.json",
     "project-rag-candidate-receipt": "project-rag-candidate-receipt.schema.json",
+    # Farol 2.0 contracts are additive.  Keep the 1.x names above intact
+    # while giving the new public envelopes explicit identities.
+    "knowledge-project-v2": "knowledge-project-v2.schema.json",
+    "operation-v2": "operation-v2.schema.json",
+    "operation-result-v2": "operation-result-v2.schema.json",
+    "capability": "capability.schema.json",
+    "migration-v2": "migration-v2.schema.json",
+    "ir-document": "ir-document.schema.json",
+    "ir-block": "ir-block.schema.json",
+    "extraction-receipt": "extraction-receipt.schema.json",
+    "backend-mapping": "backend-mapping.schema.json",
+    "taxonomy-proposal": "taxonomy-proposal.schema.json",
+    "taxonomy": "taxonomy.schema.json",
+    "taxonomy-approval": "taxonomy-approval.schema.json",
+    "skill-lineage": "skill-lineage.schema.json",
+    "synthesis-request": "synthesis-request.schema.json",
+    "synthesis-receipt": "synthesis-receipt.schema.json",
+    "route-plan": "route-plan.schema.json",
+    "query-request-v2": "query-request-v2.schema.json",
+    "evidence-result-v2": "evidence-result-v2.schema.json",
+    "backend-config": "backend-config.schema.json",
+    "backend-candidate": "backend-candidate.schema.json",
+    "index-revision": "index-revision.schema.json",
+    "composition-v2": "composition-v2.schema.json",
+    "migration-receipt": "migration-receipt.schema.json",
+    "project-operation-v2": "project-operation-v2.schema.json",
+    "cutover-decision": "cutover-decision.schema.json",
 }
 
 
@@ -263,6 +288,95 @@ def validate_artifact(artifact: str, payload: Any) -> ContractResult:
     errors: list[dict[str, str]] = []
     _validate(payload, schema, schema, "$", errors)
     return ContractResult(not errors, artifact, errors)
+
+
+def validate_contract(
+    artifact: str,
+    payload: Any,
+    *,
+    expected_revision: int | None = None,
+    existing_payload: Mapping[str, Any] | None = None,
+) -> ContractResult:
+    """Validate a public envelope and classify optimistic-concurrency conflicts.
+
+    ``validate_artifact`` remains the low-level schema check used by 1.x.  V2
+    callers use this wrapper so a stale schema, compare-and-swap revision, and
+    reused idempotency key cannot collapse into one generic validation error.
+    The function is deliberately stateless: persistence and single-writer
+    coordination belong to the project module.
+    """
+
+    if not isinstance(payload, Mapping):
+        return ContractResult(
+            False,
+            artifact,
+            [{"code": "schema_invalid", "path": "$", "message": "contract payload must be an object"}],
+        )
+
+    try:
+        schema = load_schema(artifact)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return ContractResult(
+            False,
+            artifact,
+            [{"code": "contract_schema_unavailable", "path": "$", "message": str(exc)}],
+        )
+
+    schema_properties = schema.get("properties") if isinstance(schema, Mapping) else None
+    version_rule = schema_properties.get("schema_version") if isinstance(schema_properties, Mapping) else None
+    expected_schema_version = version_rule.get("const") if isinstance(version_rule, Mapping) else None
+    if expected_schema_version is not None and payload.get("schema_version") != expected_schema_version:
+        return ContractResult(
+            False,
+            artifact,
+            [
+                {
+                    "code": "schema_version_conflict",
+                    "path": "$.schema_version",
+                    "message": f"expected schema version {expected_schema_version}",
+                }
+            ],
+        )
+
+    validation = validate_artifact(artifact, payload)
+    if not validation.ok:
+        return validation
+
+    if expected_revision is not None and payload.get("expected_revision") != expected_revision:
+        return ContractResult(
+            False,
+            artifact,
+            [
+                {
+                    "code": "revision_conflict",
+                    "path": "$.expected_revision",
+                    "message": "expected revision does not match the current project revision",
+                }
+            ],
+        )
+
+    if existing_payload is not None:
+        current_key = payload.get("idempotency_key")
+        previous_key = existing_payload.get("idempotency_key")
+        if isinstance(current_key, str) and current_key and current_key == previous_key:
+            current_canonical = json.dumps(dict(payload), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            previous_canonical = json.dumps(
+                dict(existing_payload), ensure_ascii=False, sort_keys=True, separators=(",", ":")
+            )
+            if current_canonical != previous_canonical:
+                return ContractResult(
+                    False,
+                    artifact,
+                    [
+                        {
+                            "code": "idempotency_conflict",
+                            "path": "$.idempotency_key",
+                            "message": "idempotency key was already used with a different payload",
+                        }
+                    ],
+                )
+
+    return validation
 
 
 def contract_names() -> tuple[str, ...]:

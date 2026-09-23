@@ -12,8 +12,9 @@ def test_harness_manifest_uses_only_relative_paths_and_no_author_machine_path(tm
 
     assert payload["schema_version"] == 1
     assert payload["skills"] == ["skill", "router"]
-    assert payload["mcp"]["transport"] == "stdio"
-    assert payload["mcp"]["cwd"] == "."
+    assert payload["backend"]["name"] == "ragflow"
+    assert payload["backend"]["config"] == "config.yaml"
+    assert payload["backend"]["cwd"] == "."
     assert "Users" not in json.dumps(payload)
 
     path = write_harness_manifest(tmp_path)

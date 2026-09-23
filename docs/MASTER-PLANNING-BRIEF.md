@@ -1,4 +1,9 @@
-# Briefing para estudo e planejamento master
+# Briefing histórico para estudo e planejamento master
+
+> **Supersedido:** este briefing originou o preset Mercado Livre e os derivados
+> curso/página/oferta, que foram excluídos da direção Farol 2.0. Consulte
+> [`specs/farol-2/spec.md`](../specs/farol-2/spec.md). O conteúdo abaixo existe
+> apenas como registro do escopo 1.x até o ticket de contração TK-017.
 
 ## Instrução para a próxima IA
 

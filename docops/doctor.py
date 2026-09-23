@@ -9,14 +9,18 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
+from urllib.parse import urlsplit
 
+from .backends.ragflow import RagFlowAdapter
 from .config_audit import audit_config_file
-from .runtime import _supports_knowledge_rag, discover_rag_python, platform_venv_name, venv_config_matches_host
+from .extractors import default_registry
+from .runtime import platform_venv_name, venv_config_matches_host
 
 
 @dataclass(frozen=True)
@@ -67,7 +71,7 @@ def _candidate_paths(project_root: Path) -> list[tuple[Path, str]]:
         fallback = (Path("Scripts") / "python.exe", Path("Scripts") / "python")
     for venv_name in (platform_specific, ".venv", ".venv-rag", other_platform):
         directory = project_root / venv_name
-        if not venv_config_matches_host(directory):
+        if not directory.is_dir() or (not venv_config_matches_host(directory) and (directory / "pyvenv.cfg").is_file()):
             continue
         source = "project-venv" if venv_name != ".venv-rag" else "rag-venv"
         for relative in native:
@@ -179,35 +183,146 @@ def run_doctor(
         capabilities = {
             "rag": "skipped",
             "network": "not-probed",
-            "harness": "external Agent Skills + MCP",
+            "harness": "external Agent Skills + RAGFlow",
             "operator_skill": "skills/doc-to-rag-operator/SKILL.md",
-            "mcp_transport": "stdio by default; HTTP/SSE requires audited bearer auth",
+            "ragflow_transport": "HTTPS required except explicit loopback development",
         }
         checks["rag"] = {"ok": True, "status": "skipped", "reason": "DOCOPS_SKIP_RAG"}
     else:
-        rag_required = env.get("DOCOPS_REQUIRE_RAG", "").lower() in {"1", "true", "yes"}
-        rag_executable = discover_rag_python(root, environ=env)
-        rag_python = rag_executable.path if rag_executable.exists else None
-        rag_ok = rag_python is not None and rag_executable.source != "missing" and _supports_knowledge_rag(rag_python)
+        rag_required = env.get("DOCOPS_REQUIRE_RAGFLOW", "").lower() in {"1", "true", "yes"}
+        ragflow_check = _ragflow_check(env)
+        rag_ok = ragflow_check.get("status") == "ready"
         checks["rag"] = {
             "ok": rag_ok or not rag_required,
             "status": "available" if rag_ok else "missing",
             "required": rag_required,
-            "python": _display_path(rag_python, root) if rag_python else None,
-            "hint": "Run bootstrap with --rag to install knowledge-rag." if not rag_ok else None,
+            "hint": "Configure the RAGFlow integration profile before indexing." if not rag_ok else None,
         }
         capabilities = {
             "rag": "available" if rag_ok else "missing",
             "network": "not-probed",
-            "harness": "external Agent Skills + MCP",
+            "harness": "external Agent Skills + RAGFlow",
             "operator_skill": "skills/doc-to-rag-operator/SKILL.md",
-            "mcp_transport": "stdio by default; HTTP/SSE requires audited bearer auth",
+            "ragflow_transport": "HTTPS required except explicit loopback development",
         }
+
+    ragflow_check = _ragflow_check(env)
+    checks["ragflow"] = ragflow_check
+    capabilities["ragflow"] = str(ragflow_check["status"])
+
+    extractor_registry = default_registry()
+    checks["extractors"] = {
+        "ok": True,
+        "status": "available",
+        "capabilities": extractor_registry.capabilities(),
+        "execution": "local-only by default",
+    }
+    capabilities["extractors"] = (
+        "native local format adapters plus legacy-text (text-fallback); third-party/remotes require opt-in"
+    )
 
     required_names = ["python", "project_metadata", "dependency_lock"]
     if "config" in checks:
         required_names.append("config")
     if checks["rag"].get("required") is True:
         required_names.append("rag")
+    if checks["ragflow"].get("required") is True:
+        required_names.append("ragflow")
     required_ok = all(checks[name].get("ok", False) is True for name in required_names)
     return DoctorReport(root, required_ok, checks, capabilities)
+
+
+def _ragflow_check(environ: Mapping[str, str]) -> dict[str, object]:
+    """Describe RAGFlow inputs without exposing credentials or probing by default."""
+
+    endpoint = environ.get("DOCOPS_RAGFLOW_ENDPOINT", "").strip()
+    token_env = environ.get("DOCOPS_RAGFLOW_TOKEN_ENV", "DOCOPS_RAGFLOW_TOKEN").strip()
+    token_present = bool(environ.get(token_env, "").strip())
+    sdk_version = environ.get("DOCOPS_RAGFLOW_SDK_VERSION", "").strip()
+    image_digest = environ.get("DOCOPS_RAGFLOW_IMAGE_DIGEST", "").strip()
+    digest_pinned = bool(re.fullmatch(r".+@sha256:[0-9a-fA-F]{64}", image_digest))
+    endpoint_valid = _valid_ragflow_endpoint(endpoint)
+    ready = bool(endpoint and endpoint_valid and token_present and sdk_version == RagFlowAdapter.expected_version)
+    if not endpoint:
+        status = "not_configured"
+        reason = "endpoint_missing"
+    elif not endpoint_valid:
+        status = "unavailable"
+        reason = "endpoint_invalid"
+    elif not token_present:
+        status = "unavailable"
+        reason = "token_missing"
+    elif sdk_version != RagFlowAdapter.expected_version:
+        status = "not_ready"
+        reason = "sdk_version_missing_or_mismatch"
+    elif not digest_pinned:
+        status = "not_ready"
+        reason = "image_digest_missing_or_unpinned"
+    else:
+        status = "configured"
+        reason = "probe_not_requested"
+
+    health = "not_probed"
+    version = sdk_version or RagFlowAdapter.expected_version
+    capabilities: list[str] = []
+    if ready:
+        capabilities = ["dataset", "upload", "parse", "chunks", "retrieval", "snapshot", "discard"]
+        if environ.get("DOCOPS_RAGFLOW_PROBE", "").casefold() in {"1", "true", "yes"}:
+            adapter = RagFlowAdapter(
+                config={
+                    "endpoint": endpoint,
+                    "token_env": token_env,
+                    "allow_insecure_localhost": environ.get("DOCOPS_RAGFLOW_ALLOW_INSECURE_LOCALHOST", "").casefold()
+                    in {"1", "true", "yes"},
+                }
+            )
+            probe = adapter.probe()
+            health = probe.status
+            version = probe.version or version
+            capabilities = list(probe.capabilities) or capabilities
+            reason = str(probe.diagnostics.get("reason") or reason)
+            if health != "healthy":
+                status = "unavailable"
+
+    required = environ.get("DOCOPS_REQUIRE_RAGFLOW", "").casefold() in {"1", "true", "yes"}
+    return {
+        "ok": (
+            health == "healthy" if required else status in {"not_configured", "configured"} and health != "unavailable"
+        ),
+        "required": required,
+        "status": status,
+        "reason": reason,
+        "endpoint": _safe_ragflow_endpoint(endpoint),
+        "authentication": "configured" if token_present else "missing",
+        "token_env": token_env,
+        "version": version,
+        "expected_version": RagFlowAdapter.expected_version,
+        "sdk_version": sdk_version or None,
+        "image_digest_pinned": digest_pinned,
+        "capabilities": capabilities,
+        "health": health,
+        "probe": "explicit"
+        if environ.get("DOCOPS_RAGFLOW_PROBE", "").casefold() in {"1", "true", "yes"}
+        else "disabled",
+    }
+
+
+def _valid_ragflow_endpoint(endpoint: str) -> bool:
+    if not endpoint:
+        return False
+    parsed = urlsplit(endpoint)
+    return parsed.scheme in {"http", "https"} and bool(parsed.hostname)
+
+
+def _safe_ragflow_endpoint(endpoint: str) -> str:
+    if not endpoint:
+        return "<unconfigured>"
+    parsed = urlsplit(endpoint)
+    if not parsed.scheme or not parsed.hostname:
+        return "<invalid>"
+    default_port = 443 if parsed.scheme == "https" else 80
+    try:
+        port = parsed.port or default_port
+    except ValueError:
+        return "<invalid>"
+    return f"{parsed.scheme}://{parsed.hostname}:{port}"

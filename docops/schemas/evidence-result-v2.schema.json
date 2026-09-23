@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/evidence-result-v2.schema.json",
+  "title": "Farol 2.0 evidence result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "index_revision", "query", "hits", "outcome", "metadata"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "kind": {"const": "evidence_result", "type": "string"},
+    "index_revision": {"type": "string", "minLength": 1},
+    "query": {"type": "object"},
+    "hits": {"type": "array", "items": {"type": "object"}},
+    "outcome": {"enum": ["ok", "insufficient_evidence", "conflict"], "type": "string"},
+    "metadata": {"type": "object"}
+  }
+}

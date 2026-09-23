@@ -597,7 +597,7 @@ def evaluate_package(
         errors.append({"code": "top_k_out_of_range", "message": "top_k must be an integer from 1 through 100"})
     ranked_top_k = top_k if valid_top_k else 1
     try:
-        retrieval = adapter_for_package(root, adapter, runtime_root=runtime_root)
+        retrieval = adapter_for_package(root, adapter)
     except (OSError, ValueError, RetrievalError) as exc:
         errors.append({"code": getattr(exc, "code", "adapter_unavailable"), "message": str(exc)})
         retrieval = None

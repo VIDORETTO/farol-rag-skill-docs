@@ -1,6 +1,4 @@
-# Runtime integration for the local MCP RAG server. The operator itself uses
-# only the Python standard library; install this file when RAG is needed.
-knowledge-rag==4.8.5
+# Optional document-format helpers for the provider-free core.
 PyYAML==6.0.3
 pypdf==6.16.2
 python-docx==1.2.0

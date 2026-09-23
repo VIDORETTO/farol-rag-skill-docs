@@ -1,7 +1,6 @@
-# Reproducible direct dependency lock for the optional RAG/formats profile.
-# Transitive wheels are resolved by pip from the exact knowledge-rag release;
-# this file intentionally contains no local paths, credentials or corpora.
-knowledge-rag==4.8.5
+# Reproducible direct dependency lock for the formats/profile tooling.
+# RAGFlow is isolated in the Python 3.13 integration environment and is not a
+# product dependency of the core wheel.
 PyYAML==6.0.3
 pypdf==6.16.2
 python-docx==1.2.0

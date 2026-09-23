@@ -9,38 +9,26 @@ permissions:
   contents: read
 
 jobs:
-  rag:
+  ragflow:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: pip
       - name: Pin installer
         run: python -m pip install --disable-pip-version-check --upgrade "pip==26.2.1" "setuptools==84.0.0"
-      - name: Install RAG integration
-        run: python -m pip install --disable-pip-version-check -e ".[dev,formats,rag]"
-      - name: Build and index synthetic package with the real MCP backend
-        run: python -m docops run documents/fixtures/acme-docs --output artifacts/acme --slug acme --license MIT --index-rag
-      - name: Validate package
-        run: python -m docops validate artifacts/acme --json
-      - name: Evaluate the reviewed Golden Set through MCP
-        run: python -m docops evaluate --package artifacts/acme --cases golden-set/test-cases-fixture.json --adapter mcp --runtime-root . --json > artifacts/acme/evaluation.json
-      - name: MCP smoke
-        run: python scripts/mcp_smoke.py "authentication retries" > artifacts/acme/mcp-smoke.log
-      - name: Concurrent search during reindex
-        run: python scripts/test_reindex_concurrency.py --package artifacts/acme --readers 4 --min-searches 40 --seconds 10 > artifacts/acme/concurrency.json
+      - name: Install RAGFlow integration
+        run: python -m pip install --disable-pip-version-check -e ".[dev,formats,ragflow,ocr]"
+      - name: Run the fail-closed RAGFlow/OCR profiles
+        run: python scripts/run_release_gates.py --profile ragflow --timeout 900 --json > artifacts/ragflow-release-gates.json
       - name: Retain redacted integration evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: integration-evidence-${{ github.sha }}
           path: |
-            artifacts/acme/evaluation.json
-            artifacts/acme/mcp-smoke.log
-            artifacts/acme/concurrency.json
-            artifacts/acme/manifest.json
-            artifacts/acme/rag/index.json
+            artifacts/ragflow-release-gates.json
           if-no-files-found: error
           retention-days: 30

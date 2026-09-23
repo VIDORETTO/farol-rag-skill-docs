@@ -2,7 +2,7 @@
 
 The project layer is deliberately small and provider-free.  It owns private
 project state, immutable revisions, governance overlays and coordination
-receipts; package generation, MCP and publication remain behind their existing
+receipts; package generation, external RAGFlow and publication remain behind their existing
 public seams.
 """
 
@@ -64,8 +64,6 @@ _CHANGE_TYPES = {
     "source_update",
     "source_withdraw",
     "source_revoke",
-    "course_edit",
-    "page_edit",
     "skill_request",
     "policy_change",
     "decision_correct",
@@ -76,8 +74,6 @@ _NODE_KINDS = {
     "claim",
     "rag_document",
     "skill",
-    "lesson",
-    "page_section",
     "decision",
 }
 _VALIDITY_FIELDS = {"from", "until", "checked_at", "review_after"}
@@ -88,8 +84,6 @@ _KIND_TO_CONTRACT = {
     "init_session": "init-session",
     "project_revision": "project-revision",
     "brief": "brief",
-    "course": "course",
-    "page": "page",
     "decisions": "decisions",
     "policy": "policy",
     "dependencies": "dependencies",
@@ -437,12 +431,6 @@ def _confirmed_answer_value(session: Mapping[str, Any], answers: Mapping[str, An
     return copy.deepcopy(answers.get(key))
 
 
-def _is_valid_price(value: Any) -> bool:
-    """Accept only the portable price shape defined by the page contract."""
-
-    return isinstance(value, Mapping) and _is_text(value.get("amount_decimal")) and _is_text(value.get("currency"))
-
-
 def _is_text(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
@@ -454,12 +442,12 @@ def _deliverables(session: Mapping[str, Any], answers: Mapping[str, Any]) -> lis
     if not isinstance(raw, list) or not raw:
         return ["knowledge"]
     values = list(dict.fromkeys(str(item) for item in raw))
-    invalid = sorted(set(values) - {"knowledge", "course", "page"})
+    # Farol 2.0 removed the editorial deliverables; ``knowledge`` is the only
+    # deliverable the project contract carries.
+    invalid = sorted(set(values) - {"knowledge"})
     if invalid:
         raise MasterProjectError("INVALID_INPUT", f"unknown deliverable(s): {', '.join(invalid)}", field="deliverables")
-    if "knowledge" not in values:
-        values.insert(0, "knowledge")
-    return values
+    return ["knowledge"]
 
 
 def _question(key: str, prompt: str, reason: str, blocks: list[str], *, required: bool) -> dict[str, Any]:
@@ -480,47 +468,9 @@ def _pending_questions(session: Mapping[str, Any], answers: Mapping[str, Any]) -
                 required=True,
             )
         )
-    deliverables = _deliverables(session, answers)
-    if "course" in deliverables:
-        intent = answers.get("course_intent")
-        if (
-            not _answer_is_confirmed(session, answers, "course_intent")
-            or not _is_text(intent)
-            or str(intent).casefold() in {"unresolved", "unknown", "ambiguous"}
-        ):
-            result.append(
-                _question(
-                    "course_intent",
-                    "Qual é a intenção confirmada do curso?",
-                    "pending_product_decision",
-                    ["course", "activation"],
-                    required=False,
-                )
-            )
-    if "page" in deliverables:
-        if (
-            not _answer_is_confirmed(session, answers, "commercial_authorization")
-            or answers.get("commercial_authorization") is not True
-        ):
-            result.append(
-                _question(
-                    "commercial_authorization",
-                    "A página terá autorização comercial explícita?",
-                    "blocked_use",
-                    ["page", "public_distribution"],
-                    required=False,
-                )
-            )
-        if not _answer_is_confirmed(session, answers, "price") or not _is_valid_price(answers.get("price")):
-            result.append(
-                _question(
-                    "price",
-                    "Qual preço confirmado deve ser usado, se houver?",
-                    "pending_product_decision",
-                    ["page", "public_distribution"],
-                    required=False,
-                )
-            )
+    # Farol 2.0 keeps a single ``knowledge`` deliverable; validating it here
+    # surfaces an invalid deliverable list as a structured error.
+    _deliverables(session, answers)
     return result
 
 
@@ -668,15 +618,6 @@ def start_project_init(
                 "region",
                 "language",
                 "deliverables",
-                "course_intent",
-                "level",
-                "format",
-                "transformation",
-                "commercial_authorization",
-                "price",
-                "guarantee",
-                "cta",
-                "promise",
                 "constraints",
             ):
                 if key in request:
@@ -812,15 +753,6 @@ def answer_project_init(
                 "region",
                 "language",
                 "deliverables",
-                "course_intent",
-                "level",
-                "format",
-                "transformation",
-                "commercial_authorization",
-                "price",
-                "guarantee",
-                "cta",
-                "promise",
                 "constraints",
             }
             unknown = sorted(set(answer_values) - allowed - {"origin", "evidence_ref"})
@@ -1072,73 +1004,6 @@ def finalize_project_init(
                     "policy": policy,
                     "dependencies": dependencies,
                 }
-                course: dict[str, Any] | None = None
-                if "course" in deliverables:
-                    course_ready = (
-                        _answer_is_confirmed(session, values, "course_intent")
-                        and _is_text(values.get("course_intent"))
-                        and str(values.get("course_intent")).casefold()
-                        not in {
-                            "unresolved",
-                            "unknown",
-                            "ambiguous",
-                        }
-                    )
-                    course = _revision_artifact(
-                        "course",
-                        f"course-{uuid.uuid4().hex}",
-                        revision_id,
-                        {
-                            "project_id": project["project_id"],
-                            "course_id": f"course-{uuid.uuid4().hex}",
-                            "intent": values.get("course_intent") if course_ready else None,
-                            "level": values.get("level"),
-                            "transformation": values.get("transformation"),
-                            "format": values.get("format"),
-                            "modules": [],
-                            "status": "draft" if course_ready else "pending",
-                            "pending_reasons": [] if course_ready else ["course_intent_unresolved"],
-                        },
-                        now=current,
-                    )
-                    artifacts["course"] = course
-                page: dict[str, Any] | None = None
-                if "page" in deliverables:
-                    confirmed_price = _confirmed_answer_value(session, values, "price")
-                    price = confirmed_price if _is_valid_price(confirmed_price) else None
-                    guarantee = _confirmed_answer_value(session, values, "guarantee")
-                    cta = _confirmed_answer_value(session, values, "cta")
-                    page_ready = (
-                        _answer_is_confirmed(session, values, "commercial_authorization")
-                        and values.get("commercial_authorization") is True
-                        and _answer_is_confirmed(session, values, "price")
-                        and price is not None
-                    )
-                    page = _revision_artifact(
-                        "page",
-                        f"page-{uuid.uuid4().hex}",
-                        revision_id,
-                        {
-                            "project_id": project["project_id"],
-                            "page_id": f"page-{uuid.uuid4().hex}",
-                            "goal": values.get("objective"),
-                            "tone": None,
-                            "audience": values.get("audience"),
-                            "sections": [],
-                            "offer": {
-                                "benefits": [],
-                                "proof_refs": [],
-                                "price": copy.deepcopy(price),
-                                "guarantee": guarantee,
-                                "cta": cta,
-                            },
-                            "restrictions": ["no_unverified_claims", "no_invented_price"],
-                            "status": "draft" if page_ready else "pending",
-                            "pending_reasons": [] if page_ready else ["commercial_decision_required"],
-                        },
-                        now=current,
-                    )
-                    artifacts["page"] = page
                 source_governance = _read_json(_governance_path(_package_root(root)))
                 if isinstance(source_governance, dict):
                     governance = _doc(
@@ -1156,7 +1021,7 @@ def finalize_project_init(
                 for kind, artifact in artifacts.items():
                     filename = f"{kind}.json"
                     _write_doc(staging / filename, artifact)
-                    if kind in {"brief", "course", "page"}:
+                    if kind in {"brief"}:
                         _write_projection(
                             staging / f"{kind}.md",
                             kind.title(),
@@ -1221,12 +1086,7 @@ def finalize_project_init(
                     "session": _session_projection(next_session),
                     "project_revision_id": revision_id,
                     "revision_path": f"revisions/{revision_id}",
-                    "pending_deliverables": [
-                        kind
-                        for kind in ("course", "page")
-                        if (revision_dir / f"{kind}.json").is_file()
-                        and _read_json(revision_dir / f"{kind}.json").get("status") == "pending"
-                    ],
+                    "pending_deliverables": [],
                 },
                 next_actions=["project change propose"],
             )
@@ -3041,7 +2901,7 @@ def prepare_project_rag_candidate(
             return replay
         _check_expected_project_revision(project, expected_revision)
         active_package = _package_root(root)
-        from .rag_sync import compare_embedding_profiles, snapshot_rag_package
+        from .rag_snapshots import compare_embedding_profiles, snapshot_rag_package
 
         comparison = compare_embedding_profiles(
             active_package,
@@ -3215,7 +3075,7 @@ def evaluate_project_candidate(
         if candidate.is_symlink() or not candidate.is_dir():
             raise MasterProjectError("INVALID_INPUT", "candidate package must be a regular directory")
         from .evaluator import evaluate_package
-        from .rag_sync import build_rag_snapshot, read_rag_snapshot, validate_rag_snapshot
+        from .rag_snapshots import build_rag_snapshot, read_rag_snapshot, validate_rag_snapshot
 
         resolved_candidate_id = candidate_id
         if resolved_candidate_id is None:
@@ -3538,8 +3398,8 @@ def _impact_for_change(
         classifications.add(
             "factual"
             if kind.startswith("source_") or kind in {"conflict_record", "decision_correct"}
-            else "editorial"
-            if kind in {"course_edit", "page_edit", "skill_request"}
+            else "conceptual"
+            if kind == "skill_request"
             else "mixed"
             if kind == "policy_change"
             else "unknown"
@@ -3564,10 +3424,8 @@ def _impact_for_change(
         item.get("type") in {"source_add", "source_update", "source_withdraw", "source_revoke"} for item in operations
     ):
         checks.update({"rights", "privacy", "retrieval", "revocation"})
-    if any(item.get("type") in {"course_edit", "page_edit", "skill_request"} for item in operations):
+    if any(item.get("type") == "skill_request" for item in operations):
         checks.update({"derivatives", "golden", "editorial_review"})
-    if any(item.get("type") == "page_edit" for item in operations):
-        checks.add("commercial_decision")
     blockers: list[dict[str, Any]] = []
     if graph.get("unknown_dependencies"):
         blockers.append(
@@ -3797,21 +3655,7 @@ def _clone_revision_for_change(
         for operation in operations:
             operation_type = operation["type"]
             payload = dict(operation.get("payload") or {})
-            if operation_type in {"course_edit", "page_edit"}:
-                kind = "course" if operation_type == "course_edit" else "page"
-                artifact = artifacts.get(kind)
-                if artifact is None:
-                    raise MasterProjectError("INVALID_INPUT", f"cannot edit missing {kind} artifact")
-                for key, value in payload.items():
-                    if key in {"id", "kind", "content_hash", "revision_id"}:
-                        continue
-                    if key == "evidence_refs" and isinstance(value, list):
-                        if any(str(ref).find(str(artifact.get("id"))) >= 0 for ref in value):
-                            raise MasterProjectError("INVALID_INPUT", "derivative cannot use itself as proof")
-                    artifact[key] = copy.deepcopy(value)
-                artifact["status"] = "draft"
-                changed_kinds.add(kind)
-            elif operation_type == "decision_correct":
+            if operation_type == "decision_correct":
                 decisions = artifacts.get("decisions")
                 if decisions is None:
                     raise MasterProjectError("INVALID_INPUT", "decision artifact is missing")
@@ -3840,20 +3684,6 @@ def _clone_revision_for_change(
                     if brief is not None:
                         brief["audience"] = copy.deepcopy(corrected_value)
                         changed_kinds.add("brief")
-                    for derivative_kind in ("course", "page"):
-                        derivative = artifacts.get(derivative_kind)
-                        if derivative is None:
-                            continue
-                        if derivative_kind == "page":
-                            derivative["audience"] = copy.deepcopy(corrected_value)
-                        derivative["status"] = "draft"
-                        pending_reasons = [
-                            str(reason) for reason in derivative.get("pending_reasons", []) if isinstance(reason, str)
-                        ]
-                        if "audience_changed" not in pending_reasons:
-                            pending_reasons.append("audience_changed")
-                        derivative["pending_reasons"] = pending_reasons
-                        changed_kinds.add(derivative_kind)
             elif operation_type in {"source_add", "source_update", "source_withdraw", "source_revoke"}:
                 governance = artifacts.get("source-governance")
                 if governance is None:
@@ -3913,7 +3743,7 @@ def _clone_revision_for_change(
                 artifact.pop("content_hash", None)
                 artifact["content_hash"] = content_hash(artifact)
                 _write_doc(staging / f"{kind}.json", artifact)
-                if kind in {"brief", "course", "page"}:
+                if kind in {"brief"}:
                     _write_projection(
                         staging / f"{kind}.md",
                         kind.title(),
@@ -3954,257 +3784,6 @@ def _clone_revision_for_change(
     except Exception:
         shutil.rmtree(staging, ignore_errors=True)
         raise
-
-
-def validate_project_derivatives(
-    project_root: Path | str,
-    revision_id: str | None = None,
-    *,
-    now: datetime | date | str | None = None,
-) -> dict[str, Any]:
-    """Validate course/page derivatives and return explicit pending blockers."""
-
-    root = _root(project_root)
-    try:
-        project = _load_project(root)
-        identifier = (
-            revision_id or project.get("working_project_revision_id") or project.get("active_project_revision_id")
-        )
-        if not isinstance(identifier, str):
-            raise MasterProjectError("DECISION_REQUIRED", "no project revision is available")
-        revision_dir = root / "revisions" / identifier
-        if not revision_dir.is_dir():
-            raise MasterProjectError("INVALID_INPUT", "project revision does not exist")
-        store = _load_evidence(_governance_root(root))
-        current = _datetime(now)
-        known_claims = {str(item.get("claim_id")) for item in store["claims"] if isinstance(item, Mapping)}
-        results: dict[str, Any] = {}
-        blockers: list[dict[str, Any]] = []
-        course_path = revision_dir / "course.json"
-        if course_path.is_file():
-            course = _read_json(course_path)
-            module_ids: set[str] = set()
-            lesson_ids: set[str] = set()
-            errors: list[str] = []
-            contract = validate_artifact("course", course)
-            if not contract.ok:
-                errors.append("course_contract_invalid")
-            for module in course.get("modules", []) if isinstance(course, Mapping) else []:
-                if (
-                    not isinstance(module, Mapping)
-                    or not module.get("module_id")
-                    or module.get("module_id") in module_ids
-                ):
-                    errors.append("duplicate_or_missing_module_id")
-                    continue
-                module_ids.add(str(module["module_id"]))
-                for lesson in module.get("lessons", []) if isinstance(module.get("lessons"), list) else []:
-                    if (
-                        not isinstance(lesson, Mapping)
-                        or not lesson.get("lesson_id")
-                        or lesson.get("lesson_id") in lesson_ids
-                    ):
-                        errors.append("duplicate_or_missing_lesson_id")
-                        continue
-                    lesson_ids.add(str(lesson["lesson_id"]))
-                    if course.get("status") != "pending":
-                        if not _is_text(lesson.get("objective")) and not _is_text(lesson.get("content")):
-                            errors.append("lesson_missing_objective_or_content")
-                        lesson_evidence = lesson.get("evidence_refs")
-                        if not isinstance(lesson_evidence, list) or not lesson_evidence:
-                            errors.append("lesson_missing_evidence")
-                        else:
-                            for ref in lesson_evidence:
-                                if isinstance(ref, str) and ref in known_claims:
-                                    claim = next(
-                                        (
-                                            item
-                                            for item in store["claims"]
-                                            if isinstance(item, Mapping) and item.get("claim_id") == ref
-                                        ),
-                                        None,
-                                    )
-                                    if not isinstance(claim, Mapping) or not _claim_is_eligible(
-                                        claim, root=_governance_root(root), filters={}, now=current
-                                    ):
-                                        errors.append("ineligible_lesson_evidence")
-                                elif isinstance(ref, Mapping):
-                                    source_id = ref.get("source_id")
-                                    if (
-                                        not _is_text(source_id)
-                                        or not _is_text(ref.get("observed_revision"))
-                                        or not _is_text(ref.get("document_id"))
-                                        or not isinstance(ref.get("locator"), Mapping)
-                                    ):
-                                        errors.append("invalid_lesson_evidence")
-                                    elif not source_use_decision(root, str(source_id), "derivatives", now=current).get(
-                                        "allowed"
-                                    ):
-                                        errors.append("ineligible_lesson_evidence")
-                                elif isinstance(ref, str):
-                                    if str(ref).find(str(course.get("id"))) >= 0:
-                                        errors.append("self_referential_proof")
-                                    else:
-                                        errors.append("unknown_lesson_evidence_reference")
-                                else:
-                                    errors.append("invalid_lesson_evidence")
-            status = (
-                "pending"
-                if isinstance(course, Mapping) and course.get("status") == "pending"
-                else "valid"
-                if not errors
-                else "invalid"
-            )
-            results["course"] = {
-                "status": status,
-                "errors": errors,
-                "course_id": course.get("course_id") if isinstance(course, Mapping) else None,
-            }
-            if status == "pending":
-                blockers.append(
-                    {
-                        "code": "DECISION_REQUIRED",
-                        "message": "course intent or transformation is unresolved",
-                        "target_id": course.get("course_id") if isinstance(course, Mapping) else None,
-                    }
-                )
-            if errors:
-                blockers.extend(
-                    {
-                        "code": "INVALID_INPUT",
-                        "message": error,
-                        "target_id": course.get("course_id") if isinstance(course, Mapping) else None,
-                    }
-                    for error in errors
-                )
-        page_path = revision_dir / "page.json"
-        if page_path.is_file():
-            page = _read_json(page_path)
-            errors = []
-            section_ids: set[str] = set()
-            contract = validate_artifact("page", page)
-            if not contract.ok:
-                errors.append("page_contract_invalid")
-            for section in page.get("sections", []) if isinstance(page, Mapping) else []:
-                if (
-                    not isinstance(section, Mapping)
-                    or not section.get("section_id")
-                    or section.get("section_id") in section_ids
-                ):
-                    errors.append("duplicate_or_missing_section_id")
-                    continue
-                section_ids.add(str(section["section_id"]))
-                for claim_id in section.get("claim_ids", []) if isinstance(section.get("claim_ids"), list) else []:
-                    if str(claim_id) not in known_claims:
-                        errors.append("unknown_claim_reference")
-                    else:
-                        claim = next(
-                            (
-                                item
-                                for item in store["claims"]
-                                if isinstance(item, Mapping) and item.get("claim_id") == claim_id
-                            ),
-                            None,
-                        )
-                        if isinstance(claim, Mapping) and not _claim_is_eligible(
-                            claim, root=_governance_root(root), filters={}, now=current
-                        ):
-                            errors.append("ineligible_claim_reference")
-                for evidence_ref in (
-                    section.get("evidence_refs", []) if isinstance(section.get("evidence_refs"), list) else []
-                ):
-                    if str(evidence_ref).find(str(page.get("id"))) >= 0:
-                        errors.append("self_referential_proof")
-                    elif isinstance(evidence_ref, str):
-                        if evidence_ref not in known_claims:
-                            errors.append("unknown_evidence_reference")
-                        else:
-                            claim = next(
-                                (
-                                    item
-                                    for item in store["claims"]
-                                    if isinstance(item, Mapping) and item.get("claim_id") == evidence_ref
-                                ),
-                                None,
-                            )
-                            if not isinstance(claim, Mapping) or not _claim_is_eligible(
-                                claim, root=_governance_root(root), filters={}, now=current
-                            ):
-                                errors.append("ineligible_evidence_reference")
-                    elif isinstance(evidence_ref, Mapping):
-                        source_id = evidence_ref.get("source_id")
-                        if (
-                            not _is_text(source_id)
-                            or not _is_text(evidence_ref.get("observed_revision"))
-                            or not _is_text(evidence_ref.get("document_id"))
-                            or not isinstance(evidence_ref.get("locator"), Mapping)
-                            or not source_use_decision(root, str(source_id), "derivatives", now=current).get("allowed")
-                        ):
-                            errors.append("ineligible_evidence_reference")
-                    else:
-                        errors.append("invalid_evidence_reference")
-                if (
-                    page.get("status") != "pending"
-                    and not section.get("claim_ids")
-                    and not section.get("evidence_refs")
-                ):
-                    errors.append("section_missing_evidence")
-            offer = page.get("offer") if isinstance(page, Mapping) and isinstance(page.get("offer"), Mapping) else {}
-            if offer.get("price") is not None and (
-                not isinstance(offer.get("price"), Mapping)
-                or not _is_text(offer["price"].get("amount_decimal"))
-                or not _is_text(offer["price"].get("currency"))
-            ):
-                errors.append("price_contract_invalid")
-            status = (
-                "pending"
-                if isinstance(page, Mapping) and page.get("status") == "pending"
-                else "valid"
-                if not errors
-                else "invalid"
-            )
-            results["page"] = {
-                "status": status,
-                "errors": errors,
-                "page_id": page.get("page_id") if isinstance(page, Mapping) else None,
-            }
-            if status == "pending":
-                blockers.append(
-                    {
-                        "code": "DECISION_REQUIRED",
-                        "message": "commercial authorization or price is unresolved",
-                        "target_id": page.get("page_id") if isinstance(page, Mapping) else None,
-                    }
-                )
-            if errors:
-                blockers.extend(
-                    {
-                        "code": "INVALID_INPUT",
-                        "message": error,
-                        "target_id": page.get("page_id") if isinstance(page, Mapping) else None,
-                    }
-                    for error in errors
-                )
-        return _envelope(
-            ok=not any(item["code"] == "INVALID_INPUT" for item in blockers),
-            outcome="applied",
-            project_id=str(project["project_id"]),
-            data={"revision_id": identifier, "derivatives": results, "blockers": blockers},
-            next_actions=[],
-        )
-    except MasterProjectError as exc:
-        return _failure(exc)
-
-
-def prepare_project_derivatives(
-    project_root: Path | str,
-    revision_id: str | None = None,
-    *,
-    now: datetime | date | str | None = None,
-) -> dict[str, Any]:
-    """Compatibility seam for validating all optional deliverables."""
-
-    return validate_project_derivatives(project_root, revision_id, now=now)
 
 
 def prepare_project_change(
@@ -4267,7 +3846,6 @@ def prepare_project_change(
                 pass
             current = _iso(now)
             revision_id, revision_dir, revision = _clone_revision_for_change(root, proposal, now=current)
-            derivative_result = validate_project_derivatives(root, revision_id)
             receipt = {
                 "phase": "prepared",
                 "change_id": change_id,
@@ -4276,7 +3854,6 @@ def prepare_project_change(
                 "base_package_ref": copy.deepcopy(proposal.get("base_package_ref")),
                 "revision_hash": revision["content_hash"],
                 "impact_hash": content_hash(impact),
-                "derivative_result": derivative_result.get("data"),
                 "recorded_at": current,
             }
             receipts.setdefault("receipts", []).append(receipt)
@@ -4517,9 +4094,6 @@ def activate_project_change(
                 raise MasterProjectError(
                     "DEPENDENCY_UNKNOWN", "activation requires acknowledged broad dependency review"
                 )
-            derivative = validate_project_derivatives(root, target, now=now)
-            if not derivative.get("ok"):
-                raise MasterProjectError("INVALID_INPUT", "prepared derivatives do not validate")
             if _change_requires_authorization(proposal):
                 if authorization_id:
                     auth = authorize_factual_change(root, change_id, authorization_id, now=now)
@@ -5667,9 +5241,6 @@ def load_project_preset(preset_id: str, *, theme: str | None = None) -> dict[str
 
     identifier = str(preset_id).strip().casefold()
     aliases = {
-        "mercado-livre": "mercado-livre",
-        "mercadolivre": "mercado-livre",
-        "ml": "mercado-livre",
         "neutral": "neutral",
         "generic": "neutral",
         "neutro": "neutral",

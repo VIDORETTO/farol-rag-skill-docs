@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/migration-v2.schema.json",
+  "title": "Farol 1.x to 2.0 migration plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "contract_version", "kind", "migration_id", "source_version", "source_identity", "destination_project_id", "plan_hash", "mode", "imported", "excluded", "warnings", "status", "rollback_ref", "extensions"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "contract_version": {"const": "2.0", "type": "string"},
+    "kind": {"const": "migration", "type": "string"},
+    "migration_id": {"type": "string", "minLength": 1},
+    "source_version": {"pattern": "^1\\.[0-9]+(?:\\.[0-9]+)?$|^1\\.x$", "type": "string"},
+    "source_identity": {"type": "object", "minProperties": 1},
+    "destination_project_id": {"type": "string", "minLength": 1},
+    "plan_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "mode": {"enum": ["plan", "dry-run", "apply"], "type": "string"},
+    "imported": {"type": "array", "items": {"type": "object"}},
+    "excluded": {"type": "array", "items": {"type": "object"}},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "status": {"enum": ["planned", "staged", "validated", "promoted", "rolled_back", "blocked"], "type": "string"},
+    "rollback_ref": {"type": ["string", "null"]},
+    "extensions": {"type": "object"}
+  }
+}

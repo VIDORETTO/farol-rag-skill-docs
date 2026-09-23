@@ -1,7 +1,12 @@
 # Aceitação por ticket
 
-Este registro liga cada gate do roadmap a uma seam verificável. Os testes
-rápidos não iniciam MCP nem baixam modelos; a integração real é opt-in.
+Para o esforço Farol 2.0, a fonte canônica da aceitação é a matriz derivada em
+[`specs/farol-2/acceptance-matrix.md`](../specs/farol-2/acceptance-matrix.md),
+atualizada por `scripts/check_acceptance_matrix.py`. Em 20 de setembro de 2026,
+os 33 critérios (`AC-001..AC-033`) estavam `verified`.
+
+Este arquivo preserva abaixo o registro histórico da aceitação 1.x e seus
+comandos de regressão. Ele não substitui a matriz 2.0 nem autoriza publicação.
 
 | Ticket/gate | Evidência executável |
 |---|---|
@@ -14,7 +19,7 @@ rápidos não iniciam MCP nem baixam modelos; a integração real é opt-in.
 | DOCOPS-009 | `config-audit`, `release_audit`, prompt-injection/SSRF/OCR/auth tests |
 | DOCOPS-010 | workflows CI/integration, schemas, tutorial sintético e checklist de release |
 
-## Comandos locais
+## Registro histórico Farol 1.x — comandos locais
 
 ```text
 python -m pytest -q
@@ -30,11 +35,11 @@ inspecionar o clone temporário. A auditoria `--tracked-only` é a forma correta
 de auditar o conteúdo publicável enquanto caches e ambientes locais existem no
 checkout de trabalho.
 
-## Integração opcional
+## Registro histórico Farol 1.x — integração opcional
 
-Com `python scripts/bootstrap.py --dev --rag`, a execução de release também
-deve passar pelo servidor real, `scripts/mcp_smoke.py`,
-`scripts/test_reindex_concurrency.py` e pelo fluxo sintético
+Com um ambiente Python 3.13 instalado com `.[dev,formats,ragflow,ocr]`, a
+execução de release também deve passar pelo servidor real, pelo perfil de
+integração RAGFlow, pelo perfil de lifecycle/recovery e pelo fluxo sintético
 `docops run` → `validate` → `evaluate`. Uma execução com rede/configuração de
 produção deve também passar `config-audit`; nenhuma etapa publica ou faz
 commit automaticamente.

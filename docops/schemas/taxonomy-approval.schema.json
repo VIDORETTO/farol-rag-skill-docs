@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/taxonomy-approval.schema.json",
+  "title": "Farol 2.0 taxonomy approval",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "approved", "actor", "proposal_hash"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "kind": {"const": "taxonomy_approval", "type": "string"},
+    "approved": {"const": true, "type": "boolean"},
+    "actor": {"type": "string", "minLength": 1},
+    "proposal_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "approved_at": {"type": "string"}
+  }
+}

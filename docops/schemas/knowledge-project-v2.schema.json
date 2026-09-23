@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://consulta-documentacao.invalid/schemas/knowledge-project-v2.schema.json",
+  "title": "Farol 2.0 knowledge project",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "contract_version", "kind", "project_id", "session_id", "revision", "name", "objective", "sources", "taxonomy_revision", "active_composition_id", "status", "created_at", "extensions"],
+  "properties": {
+    "schema_version": {"const": 2, "type": "integer"},
+    "contract_version": {"const": "2.0", "type": "string"},
+    "kind": {"const": "knowledge_project", "type": "string"},
+    "project_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "session_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "revision": {"type": "integer", "minimum": 0},
+    "name": {"type": "string", "minLength": 1, "maxLength": 256},
+    "objective": {"type": "string", "minLength": 1, "maxLength": 10000},
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "canonical", "source_revision", "status", "rights", "privacy", "language", "purpose"],
+        "properties": {
+          "source_id": {"type": "string", "minLength": 1},
+          "canonical": {"type": "string", "minLength": 1},
+          "source_revision": {"type": "string", "minLength": 1},
+          "status": {"enum": ["proposed", "authorized", "acquired", "extracted", "active", "degraded", "quarantined", "failed", "revoked"], "type": "string"},
+          "rights": {"type": "string", "minLength": 1},
+          "privacy": {"type": "string", "minLength": 1},
+          "language": {"type": "string", "minLength": 1},
+          "purpose": {"type": "string", "minLength": 1},
+          "version": {"type": ["string", "null"]},
+          "region": {"type": ["string", "null"]}
+        }
+      },
+      "uniqueItems": true
+    },
+    "taxonomy_revision": {"type": ["string", "null"]},
+    "active_composition_id": {"type": ["string", "null"]},
+    "status": {"enum": ["proposed", "staging", "active", "blocked"], "type": "string"},
+    "created_at": {"type": "string", "minLength": 20},
+    "extensions": {"type": "object"}
+  }
+}
