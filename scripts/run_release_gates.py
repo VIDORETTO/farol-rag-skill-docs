@@ -706,6 +706,7 @@ def _run_stage(
     stage_reason: str | None = None
     for command_index, command in enumerate(stage.commands, start=1):
         command_timeout: float = float(timeout)
+        deadline_limited = False
         if deadline is not None:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
@@ -722,6 +723,7 @@ def _run_stage(
                 )
                 break
             command_timeout = min(command_timeout, remaining)
+            deadline_limited = command_timeout < float(timeout)
         try:
             completed = subprocess.run(
                 list(command),
@@ -756,7 +758,9 @@ def _run_stage(
         except subprocess.TimeoutExpired as exc:
             stage_status = "failed"
             stage_reason = (
-                "pipeline_timeout" if deadline is not None and time.monotonic() >= deadline else "command_timeout"
+                "pipeline_timeout"
+                if deadline_limited or (deadline is not None and time.monotonic() >= deadline)
+                else "command_timeout"
             )
             command_results.append(
                 {
