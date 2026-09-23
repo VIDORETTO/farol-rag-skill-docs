@@ -75,8 +75,8 @@ def test_package_workflow_retains_candidate_evidence() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
 
     assert "actions/upload-artifact@" in workflow
-    assert "path: artifacts/candidate-1.1.0" in workflow
-    assert "candidate-1.1.0-${{ github.sha }}" in workflow
+    assert "path: artifacts/candidate-2.0.0rc1" in workflow
+    assert "candidate-2.0.0rc1-${{ github.sha }}" in workflow
 
 
 def test_release_identity_gate_is_an_explicit_manual_workflow_input() -> None:

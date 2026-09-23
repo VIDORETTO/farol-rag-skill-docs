@@ -11,14 +11,14 @@
     "remote_relation": "main_equals_origin_main_at_reconnaissance"
   },
   "candidate": {
-    "kind": "git_sha",
-    "value": "cbed216803693dc42b842227e42007857dbe8a81",
-    "branch": "farol-v3",
-    "remote_relation": "implementation snapshot pushed to origin/farol-v3; full evidence identifies the pre-commit worktree candidate 93bb8894d816aad3c3b3682ccec317db1da39d45",
-    "worktree_status": "clean after documentation handoff",
+    "kind": "release_candidate",
+    "value": "v2.0.0-rc.1",
+    "branch": "release/farol-2.0.0-rc.1",
+    "remote_relation": "release candidate prepared from origin/main after the Farol 2.0 integration; full evidence identifies the implementation candidate 93bb8894d816aad3c3b3682ccec317db1da39d45",
+    "worktree_status": "clean before release-candidate verification",
     "gate_worktree_entries": 75,
-    "current_worktree_entries": "clean after Farol 2.0 implementation and documentation handoff",
-    "current_worktree_observed_at": "2026-09-21"
+    "current_worktree_entries": "clean before release-candidate verification",
+    "current_worktree_observed_at": "2026-09-22"
   },
   "inputs": {
     "spec": {
@@ -63,7 +63,7 @@
     "draft": []
   },
   "limitations": [
-    "RAGFlow v0.27.2, DeepDoc/OCR, book-to-skill, dual-run and final release gates have executed receipts on 2026-09-20; publication remains intentionally manual",
+    "RAGFlow v0.27.2, DeepDoc/OCR, book-to-skill, dual-run and final release gates have executed receipts on 2026-09-20; promotion from the 2.0 release candidate to GA remains intentionally manual",
     "the final full release gate passed 25/25 stages with zero failures, blocked stages or not-run stages; it recorded 1045 passed and 12 explicitly skipped checks",
     "the final full gate was run with --timeout 3600 because the suite exceeds the runner default of 1800 seconds per command in this venv; the runner invokes Ruff through the selected interpreter",
     "TK-011/TK-017/TK-018/TK-019/TK-020/TK-021 are terminal on the current candidate: real book-to-skill synthesis, editorial and legacy contraction, dual-run receipt, complete release gate, acceptance matrix, and private-original/provenance coverage all passed."
@@ -260,5 +260,5 @@
     }
   },
   "external_blockers": [],
-  "next_action": "Human handoff only: review the versioned Farol 2.0 candidate and decide whether to tag, release or publish. No implementation work remains."
+  "next_action": "Verify the v2.0.0-rc.1 release assets and retain the Farol v3 backup; GA requires separate feedback, evidence and authorization."
 }

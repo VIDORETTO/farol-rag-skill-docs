@@ -1,10 +1,10 @@
 # Release e handoff Farol 2.0
 
-Este é o runbook atual para o candidato Farol 2.0. Scripts e gates produzem
-evidência local, mas não fazem commit, push, tag, merge ou publicação
-automaticamente. A release pública existente continua sendo `v1.1.0`; o
-snapshot atual está na branch `farol-v3` e ainda requer autorização humana para
-virar uma nova release.
+Este é o runbook atual para a release candidate Farol 2.0. Scripts e gates
+produzem evidência local, mas não fazem commit, push, tag, merge ou publicação
+automaticamente. A release estável existente continua sendo `v1.1.0`; o
+candidato `v2.0.0-rc.1` foi integrado em `main` e exige a mesma revisão manual
+de conteúdo, permissões e artefatos antes de qualquer promoção para GA.
 
 ## Estado do candidato
 
@@ -76,8 +76,8 @@ python scripts/verify_wheel.py
 python scripts/generate_supply_chain.py --root . --wheel dist/<wheel>.whl \
   --output artifacts/supply-chain --profile core
 python scripts/verify_supply_chain.py --root . --evidence artifacts/supply-chain
-python scripts/prepare_candidate.py --root . --output artifacts/candidate-2.0 --profile core
-python scripts/verify_candidate.py --root artifacts/candidate-2.0 --source-root .
+python scripts/prepare_candidate.py --root . --output artifacts/candidate-2.0.0rc1 --profile core
+python scripts/verify_candidate.py --root artifacts/candidate-2.0.0rc1 --source-root .
 python scripts/audit_release.py --candidate --json
 python scripts/run_release_gates.py --profile core --timeout 3600 --json
 python scripts/run_release_gates.py --profile book-to-skill --timeout 3600 --json
@@ -116,8 +116,10 @@ mantenedor deve revisar:
 4. licença, provenance, proteção de branch, reviewers e permissões do GitHub;
 5. o conteúdo final do wheel e do candidate bundle.
 
-Os comandos de verificação não concedem autorização de publicação. O resultado
-deve ser registrado no ticket de entrega e no changelog antes da tag.
+Os comandos de verificação não concedem autorização de promoção para GA. Para
+esta RC, o resultado é registrado no changelog e na evidência de release; uma
+eventual `v2.0.0` final deve repetir os gates com o commit final e receber uma
+decisão humana separada.
 
 ## Histórico
 

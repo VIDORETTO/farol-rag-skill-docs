@@ -11,9 +11,10 @@ regenere esta projeção.
 
 ## Snapshot de verificação — 2026-09-20 (full final + TK-017–TK-021)
 
-- Branch de entrega: `farol-v3`; a evidência foi capturada na árvore candidata
+- Branch de entrega: `main`; a release candidate `v2.0.0-rc.1` é derivada da
+  integração Farol 2.0. A evidência full foi capturada na árvore candidata
   baseada em `93bb8894d816aad3c3b3682ccec317db1da39d45` e depois versionada no
-  GitHub. O worktree atual está limpo.
+  GitHub. O worktree atual está limpo antes da preparação da RC.
 - Full final (core, book-to-skill, RAGFlow, OCR, wheel, candidate e oráculos):
   `25/25` etapas, `0 failed`, `0 blocked` e `0 not_run`; agregado idempotente
   `1045 passed` e `12 skipped`; pytest `474 passed, 6 skipped`; clone limpo

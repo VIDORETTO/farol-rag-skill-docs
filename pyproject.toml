@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "consulta-documentacao"
-version = "1.1.0"
+version = "2.0.0rc1"
 description = "Farol — portable, deterministic documentation-to-knowledge orchestration with an external RAGFlow backend."
 readme = "README.md"
 requires-python = ">=3.11"

@@ -35,6 +35,7 @@ redigida em `evidence/`.
 
 O gate full final de 20 de setembro de 2026 passou `25/25` etapas, com `1045
 passed`, `12 skipped` explícitos e zero falhas, bloqueios ou etapas `not_run`.
-O snapshot versionado foi enviado na branch `farol-v3`. O próximo passo é a
-decisão humana sobre tag, release e publicação; nenhuma dessas ações é feita
-automaticamente pelos scripts.
+O candidato foi integrado na branch `main` e está sendo distribuído como a
+release candidate `v2.0.0-rc.1`. Os scripts continuam sem criar tags, releases
+ou publicar artefatos automaticamente; uma promoção posterior para GA exige
+nova evidência e decisão humana.

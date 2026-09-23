@@ -35,7 +35,7 @@ _REQUIRED_ASSETS = {
     "CONTRIBUTING.md",
     "docs/DEPENDENCIES.md",
     "docs/RELEASE.md",
-    "docs/RELEASE-NOTES-1.1.0.md",
+    "docs/RELEASE-NOTES-2.0.0-rc.1.md",
     "docs/SUPPORT-MATRIX.json",
     "community/CODE_OF_CONDUCT.md",
     "community/CODEOWNERS",

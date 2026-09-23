@@ -3,8 +3,8 @@
   "name": "consulta-documentacao",
   "display_name": "Farol",
   "description": "Farol — portable, deterministic documentation-to-knowledge orchestration with an external RAGFlow backend.",
-  "version": "1.1.0",
-  "maturity": "stable",
+  "version": "2.0.0rc1",
+  "maturity": "release-candidate",
   "license": "MIT",
   "repository": "https://github.com/VIDORETTO/farol-rag-skill-docs",
   "homepage": "https://github.com/VIDORETTO/farol-rag-skill-docs",
@@ -17,13 +17,13 @@
   },
   "support": "docs/SUPPORT-MATRIX.json",
   "release": {
-    "status": "published",
+    "status": "pre-release",
     "publication_automated": false,
     "human_authorization_required": true,
     "protections_and_permissions": "authenticated-admin-reviewed",
-    "tag": "v1.1.0",
-    "commit": "303e995a9cf5c939f11a368865bfb76488e9654d",
-    "url": "https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v1.1.0",
-    "published_at": "2026-09-04T20:18:45Z"
+    "tag": "v2.0.0-rc.1",
+    "commit": null,
+    "url": "https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v2.0.0-rc.1",
+    "published_at": null
   }
 }

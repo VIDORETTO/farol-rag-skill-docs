@@ -18,5 +18,5 @@ def test_repository_metadata_is_consistent_and_utf8_clean() -> None:
     assert metadata["version"] == pyproject["version"] == docops.__version__
     assert pyproject["scripts"]["farol"] == pyproject["scripts"]["docops"] == "docops.__main__:main"
     assert f"**Versão do pacote:** [v{docops.__version__}]" in readme
-    assert f"## {docops.__version__} — 2026-09-04" in changelog
+    assert f"## {docops.__version__} —" in changelog
     assert "Ã" not in readme
