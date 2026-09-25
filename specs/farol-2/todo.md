@@ -9,13 +9,37 @@ regenere esta projeção.
 - [x] [TK-002](tickets/TK-002.md) — expandir contratos fundamentais v2.
 - [x] [TK-017](tickets/TK-017.md) — remover Mercado Livre/curso/página/oferta; auditor editorial limpo.
 
+## Estado de prontidão — 2026-09-25
+
+- `TK-020` permanece `in_progress`; `TK-021` foi revalidado e voltou a
+  `verified`: a wheel reconstruída localmente
+  continha três módulos de `build/lib/`; a CI também usava o extra inexistente
+  `rag`, e havia referências a uma release RC ainda não publicada.
+- O build foi isolado dos artefatos ignorados; verificador e workflows foram
+  endurecidos. Regressões passaram; o core gate da árvore local passou 22/22
+  etapas (`1050 passed`, `12 skipped`, zero falhas/bloqueios/not_run). O bundle
+  de fechamento em `artifacts/farol-2.0.0-rc.1-clean-commit-audit-20260925`
+  passou verificação independente; segue como artefato local de um commit não enviado.
+- A claim de suporte Python do README foi alinhada à matriz oficial 3.11–3.13;
+  a revisão manual Standards/Spec não deixou findings locais abertos.
+- Não há tag/release GitHub da RC.1. Full gate no commit final: `not_run`; gate
+  RAGFlow: `blocked` pela falta de serviço e dos quatro inputs externos.
+- Private vulnerability reporting foi habilitado e confirmado por API em
+  2026-09-25; resta o gate RAGFlow externo e CI no SHA remoto final.
+- `main` segue protegido por 13 checks e uma aprovação de code owner; a branch
+  RC não tem proteção nem ruleset. Usar `main` por PR ou decidir proteção da
+  branch RC antes de usá-la como fonte de publicação.
+- O estado dos 21 tickets coincide com `state.json`; os 33 AC do contrato
+  coincidem com a matriz e suas referências de evidência existem. A auditoria
+  `requirements.lock`/ambiente local passou sem findings nesta data.
+
 ## Snapshot de verificação — 2026-09-20 (full final + TK-017–TK-021)
 
 - Branch de entrega: `main`; a release candidate `v2.0.0-rc.1` é derivada da
   integração Farol 2.0. A evidência full foi capturada na árvore candidata
   baseada em `93bb8894d816aad3c3b3682ccec317db1da39d45` e depois versionada no
   GitHub. O worktree atual está limpo antes da preparação da RC.
-- Full final (core, book-to-skill, RAGFlow, OCR, wheel, candidate e oráculos):
+- Full final histórico (core, book-to-skill, RAGFlow, OCR, wheel, candidate e oráculos):
   `25/25` etapas, `0 failed`, `0 blocked` e `0 not_run`; agregado idempotente
   `1045 passed` e `12 skipped`; pytest `474 passed, 6 skipped`; clone limpo
   `474 passed, 6 skipped`; crash matrix `17`; revogação `25`. Report SHA-256
@@ -78,8 +102,8 @@ contratos 1.x.
 
 - [x] TK-018 — dual-run comparativo real e receipt `cutover_approved` verificados.
 - [x] TK-019 — contração de legado executada após receipt aprovado; surface/wheel/supply-chain verificados.
-- [x] TK-020 — jornada, perfis externos, wheel, candidate, auditorias e handoff final verificados.
-- [x] TK-021 — originais privados/provenance de release cobertos; AC-031 sem blocker de rastreabilidade.
+- [ ] TK-020 — core e bundle locais verificados; private reporting habilitado; full gate bloqueado por RAGFlow.
+- [x] TK-021 — wheel builder/verifier isolados; regressões focadas passaram (`9 passed`).
 
 ## Checklist por ticket — template para novos esforços
 

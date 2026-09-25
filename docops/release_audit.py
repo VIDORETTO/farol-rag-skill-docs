@@ -118,7 +118,7 @@ def _candidate_paths(root: Path) -> set[Path] | None:
     except (OSError, subprocess.SubprocessError):
         return None
     raw = completed.stdout.decode("utf-8", errors="replace")
-    return {root / item for item in raw.split("\0") if item}
+    return {path for item in raw.split("\0") if item for path in (root / item,) if path.is_file() or path.is_symlink()}
 
 
 def _explicit_candidate_paths(
@@ -239,6 +239,8 @@ def audit_release(
         candidates = sorted(tracked or set())
     else:
         candidates = sorted(path for path in project_root.rglob("*") if path.is_file() or path.is_symlink())
+    if candidate and not candidates:
+        _finding(findings, "candidate_empty", "<candidate>", "release candidate has no existing files")
     scanned = 0
     nested_git_reported = False
     for path in candidates:

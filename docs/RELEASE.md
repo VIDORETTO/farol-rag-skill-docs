@@ -2,9 +2,10 @@
 
 Este é o runbook atual para a release candidate Farol 2.0. Scripts e gates
 produzem evidência local, mas não fazem commit, push, tag, merge ou publicação
-automaticamente. A release estável existente continua sendo `v1.1.0`; o
-candidato `v2.0.0-rc.1` foi integrado em `main` e exige a mesma revisão manual
-de conteúdo, permissões e artefatos antes de qualquer promoção para GA.
+automaticamente. O código Farol 2.0 está integrado em `main`, mas não há tag ou
+GitHub Release `v2.0.0-rc.1`, nem release estável publicada confirmada neste
+repositório na revisão autenticada de 2026-09-24. Qualquer publicação exige
+revisão manual de conteúdo, permissões e artefatos.
 
 ## Estado do candidato
 
@@ -21,7 +22,20 @@ O relatório redigido está em
 `artifacts/release-gates-full-20260920-final7/release-gates.json`, com SHA-256
 `EFFE3B18D009CC659326C3F58F7B43FCABBC75540945F7F55B23EEBD0FD29824`. O
 artefato é evidência local e não deve ser copiado para um pacote público sem a
-auditoria de retenção correspondente.
+auditoria de retenção correspondente. Esse gate está ligado ao commit de
+implementação `93bb8894d816aad3c3b3682ccec317db1da39d45`, não ao commit de
+preparação `be40e16f09153cfc12e3ea389302793f920c40b2`; a full gate nesse
+candidato continua `not_run` e o preflight RAGFlow está `blocked` pelas quatro
+entradas externas descritas abaixo.
+
+Em 25 de setembro de 2026 UTC, o perfil `core` passou 22/22 etapas na árvore
+local da RC baseada em `be40e16f09153cfc12e3ea389302793f920c40b2`, com 33
+entradas alteradas capturadas antes da execução: `1050 passed`, `12 skipped` e
+zero falhas/bloqueios/not_run. O relatório local está em
+`artifacts/release-gates-20260924-214526-7c34711add8a7bd5/release-gates.json`
+(`9600f5da900b691abb24da839f2ed6cae029d7cbe5df2dd3321f08da2d262c60`). Esse
+core não valida integração RAGFlow, não é execução full e não torna a árvore
+suja elegível para distribuição.
 
 ## Preparação do ambiente
 

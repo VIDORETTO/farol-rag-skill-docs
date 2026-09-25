@@ -7,6 +7,18 @@ import subprocess
 import sys
 from pathlib import Path
 
+from scripts.candidate_identity import git_files
+
+
+def test_candidate_identity_omits_deleted_tracked_paths(tmp_path: Path) -> None:
+    source = tmp_path / "source.txt"
+    source.write_text("candidate source\n", encoding="utf-8")
+    subprocess.run(["git", "init", "--quiet"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "add", "source.txt"], cwd=tmp_path, check=True)
+    source.unlink()
+
+    assert git_files(tmp_path) == []
+
 
 def _prepare_candidate(tmp_path: Path, *, without_ci_evidence: bool = False) -> tuple[Path, dict[str, object]]:
     output = tmp_path / "candidate"

@@ -60,6 +60,20 @@ def test_tracked_only_audit_fails_without_a_git_index(tmp_path: Path) -> None:
     assert any(finding["code"] == "git_index_unavailable" for finding in result.findings)
 
 
+def test_candidate_audit_ignores_deleted_tracked_files_and_rejects_an_empty_tree(tmp_path: Path) -> None:
+    source = tmp_path / "README.md"
+    source.write_text("candidate source\n", encoding="utf-8")
+    subprocess.run(["git", "init", "--quiet"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "add", "README.md"], cwd=tmp_path, check=True)
+    source.unlink()
+
+    result = audit_release(tmp_path, candidate=True)
+
+    assert result.scanned_files == 0
+    assert any(finding["code"] == "candidate_empty" for finding in result.findings)
+    assert not any(finding["code"] == "candidate_file_missing" for finding in result.findings)
+
+
 def test_tracked_candidate_audit_rejects_forced_added_nested_binary_before_decoding(tmp_path: Path) -> None:
     (tmp_path / "nested" / "data").mkdir(parents=True)
     prohibited = tmp_path / "nested" / "data" / "index.bin"

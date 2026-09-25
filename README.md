@@ -16,15 +16,15 @@ evidências verificáveis.
 <p>
   <a href="https://github.com/VIDORETTO/farol-rag-skill-docs/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/VIDORETTO/farol-rag-skill-docs/actions/workflows/ci.yml/badge.svg?branch=main"></a>
   <a href="https://github.com/VIDORETTO/farol-rag-skill-docs/releases"><img alt="Release mais recente" src="https://img.shields.io/github/v/release/VIDORETTO/farol-rag-skill-docs?display_name=tag&sort=semver"></a>
-  <img alt="Python 3.11 ou superior" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
+  <img alt="Python 3.11–3.13; 3.14 tolerado" src="https://img.shields.io/badge/Python-3.11--3.13-3776AB?logo=python&logoColor=white">
   <a href="https://github.com/VIDORETTO/farol-rag-skill-docs/blob/main/LICENSE"><img alt="Licença MIT" src="https://img.shields.io/github/license/VIDORETTO/farol-rag-skill-docs"></a>
   <img alt="RAGFlow externo" src="https://img.shields.io/badge/RAGFlow-external%20%7C%20opt--in-0f766e">
 </p>
 
-**Versão do pacote:** [v2.0.0rc1](https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v2.0.0-rc.1)
+**Versão do pacote:** `2.0.0rc1` (prévia; ainda sem release publicada)
 
-**Estado do código:** Farol 2.0 integrado na branch `main`; esta é a release
-candidate `v2.0.0-rc.1` e a publicação continua sendo uma decisão manual.
+**Estado do código:** Farol 2.0 integrado na branch `main`; não existe tag ou
+GitHub Release `v2.0.0-rc.1`. Qualquer publicação permanece uma decisão manual.
 
 </div>
 
@@ -73,67 +73,18 @@ contexto, consultar o MCP quando necessário e produzir a resposta final.
 | --- | --- |
 | Entrada | Nome, URL, repositório Git, pasta ou arquivo local |
 | Saída | Pacote autocontido com skill, router, corpus, manifesto e harness |
-| Runtime | Python 3.11+ |
+| Python oficialmente suportado | 3.11–3.13; 3.14 é tolerado, mas não está na garantia de suporte |
 | RAG | Backend externo RAGFlow `0.27.2`; integração opt-in com endpoint, token e imagem fixados por digest |
 | OCR | Docling `2.129.0` + ONNX Runtime `1.30.0` + RapidOCR no perfil Python 3.13 |
-| Distribuição | Release candidate v2.0.0-rc.1; v1.1.0 permanece disponível como release estável de compatibilidade |
+| Distribuição | Candidato `2.0.0rc1` no código-fonte; sem release estável publicada neste repositório |
 | Exemplos públicos | Fixtures sintéticas em <code>documents/fixtures/</code> |
 
 ## Instalação
 
-### Usar a release candidate 2.0
-
-Esta versão inaugura a superfície Farol 2.0 e ainda é uma prévia. Baixe a
-[release candidate v2.0.0-rc.1](https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v2.0.0-rc.1),
-confira o `SHA256SUMS` e instale a wheel em um ambiente virtual:
-
-~~~bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install ./consulta_documentacao-2.0.0rc1-py3-none-any.whl
-farol --help
-~~~
-
-No Windows PowerShell:
-
-~~~powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install .\consulta_documentacao-2.0.0rc1-py3-none-any.whl
-farol --help
-~~~
-
-RAGFlow e OCR permanecem perfis opt-in; a prévia não deve ser usada como
-contrato de compatibilidade final sem revisar as notas da release.
-
-### Usar a release pública
-
-> O produto se chama **Farol**. A wheel da release pública `v1.1.0` ainda usa o
-> identificador técnico `consulta-documentacao` para preservar compatibilidade
-> com a distribuição já publicada.
-
-A distribuição pública é feita pelo [GitHub Release v1.1.0](https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v1.1.0).
-Baixe a wheel e instale-a em um ambiente virtual:
-
-~~~bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install ./consulta_documentacao-1.1.0-py3-none-any.whl
-python -m docops --help
-~~~
-
-No Windows PowerShell:
-
-~~~powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install .\\consulta_documentacao-1.1.0-py3-none-any.whl
-python -m docops --help
-~~~
-
-O núcleo não tem dependências obrigatórias além do Python. Para conferir a
-integridade do download, compare o hash da wheel com <code>SHA256SUMS</code>
-publicado na release.
+Ainda não há wheel ou `SHA256SUMS` publicados para instalação. A branch `main`
+contém o candidato `2.0.0rc1`, que não deve ser divulgado como versão estável.
+Quando um artefato for publicado, esta seção deverá apontar para a release
+verificada e para seus checksums.
 
 ### Trabalhar a partir do código-fonte
 
@@ -280,8 +231,8 @@ Para o mapa completo de módulos e fronteiras, consulte
 Use <code>python -m docops ...</code> para garantir que a CLI está ligada ao
 mesmo Python do ambiente ativo. No código atual, o launcher de marca é
 <code>farol ...</code>; <code>docops ...</code> continua disponível como alias de
-compatibilidade. A release publicada <code>v1.1.0</code> ainda deve ser operada
-com <code>python -m docops</code>, pois foi empacotada antes do rebrand.
+compatibilidade. O comando <code>python -m docops</code> também permanece
+disponível para instalações antigas.
 
 ### Comandos do dia a dia
 
@@ -364,17 +315,13 @@ O planejamento normativo e o estado agregado estão em
 canônica, locators, extractors, OCR real, taxonomia hierárquica, múltiplas
 skills, lineage, router global e RAGFlow externo `0.27.2`.
 
-Os 21 tickets do esforço e os 33 critérios de aceite estão `verified`. O gate
-full final registrou `25/25` etapas, `1045 passed`, `12 skipped` e zero falhas,
-bloqueios ou etapas `not_run`. O dual-run terminou em `cutover_approved` e a
-contração do backend legado foi concluída; a evidência redigida está em
-`artifacts/release-gates-full-20260920-final7/release-gates.json` e nos arquivos
-de `specs/farol-2/evidence/`.
-
-O candidato foi integrado em `main` e a release candidate `v2.0.0-rc.1` foi
-preparada a partir desse estado. Não há implementação pendente; mudanças
-posteriores devem seguir o fluxo de branch, revisão e CI descrito em
-`CONTRIBUTING.md`.
+O gate full com `25/25` etapas, `1045 passed` e `12 skipped` foi executado no
+commit de implementação `93bb8894d816aad3c3b3682ccec317db1da39d45`; esse
+resultado não substitui a validação do commit de preparação da RC.1. A
+reconciliação de release e seus bloqueios atuais estão em
+[`specs/farol-2/state.json`](specs/farol-2/state.json) e nas evidências de
+[`specs/farol-2/evidence/`](specs/farol-2/evidence/). A promoção para GA exige
+gates atuais e autorização explícita do mantenedor.
 
 ### Histórico Farol 1.x
 

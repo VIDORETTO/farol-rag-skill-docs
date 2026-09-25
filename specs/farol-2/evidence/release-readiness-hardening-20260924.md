@@ -1,0 +1,172 @@
+# Revisão de prontidão da release — 2026-09-24
+
+Escopo: correções locais de empacotamento, CI, documentação pública e controles
+de release para Farol 2.0. Nenhum commit, push, tag ou release foi criado.
+O acompanhamento autenticado de 2026-09-25 habilitou somente o recebimento
+privado de vulnerabilidades; a alteração está registrada abaixo.
+
+## Defeitos encontrados e correções locais
+
+- O rebuild local da RC reutilizava `build/lib/` ignorado e incluía três módulos
+  1.x que não existem nos arquivos candidatos. `prepare_candidate.py` agora
+  constrói a wheel numa staging temporária apenas com inputs do pacote; o
+  verificador rejeita `docops/mcp_client.py`, `docops/rag_sync.py` e
+  `docops/backends/legacy_knowledge_rag.py`. O diretório local `build/` foi
+  preservado sem alterações.
+- O workflow CI instalava o extra inexistente `rag`; foi corrigido para
+  `ragflow`, e `validate_workflows.py` agora confere grupos extras contra
+  `pyproject.toml`.
+- `.github/workflows/reindex-docs.yml` chamava `scripts/update_rag.py`, removido
+  na superfície Farol 2.0. O workflow foi excluído. `update_docs.ps1` agora
+  informa que é necessário passar `-Sources` em vez de chamar esse script.
+- A integração RAGFlow tinha agenda semanal apesar da indisponibilidade atual
+  do serviço e das credenciais. O disparo manual foi mantido e a agenda removida.
+- A ação de artifacts foi atualizada para `actions/upload-artifact` v7.0.1,
+  SHA `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a`, versão corrente verificada no
+  repositório oficial da action.
+- README, release notes, metadados, runbook e SECURITY não apontam mais para
+  downloads/tag da RC que não existem nem declaram uma release estável atual.
+
+## Verificações observadas
+
+- Testes focados:
+  `.venv-rag\Scripts\python.exe -m pytest -q tests/test_candidate_bundle.py::test_candidate_wheel_build_is_byte_reproducible tests/test_candidate_bundle.py::test_candidate_wheel_ignores_stale_build_lib_modules_and_audits_them tests/test_candidate_bundle.py::test_candidate_bundle_has_new_identity_and_reproducible_release_assets tests/test_candidate_identity.py::test_candidate_identity_omits_deleted_tracked_paths tests/test_release_audit.py::test_candidate_audit_ignores_deleted_tracked_files_and_rejects_an_empty_tree tests/test_workflow_yaml.py tests/test_repository_metadata.py`
+  — `9 passed`.
+- `scripts/validate_workflows.py --json` — `ok=true`, dois workflows ativos.
+- `scripts/check_documentation.py --root . --json` — `ok=true`, 167 arquivos
+  Markdown após registrar esta evidência.
+- Reconciliação de contratos: os 21 estados de ticket coincidem com
+  `state.json`; os 33 AC de `spec.md` coincidem com as 33 linhas da matriz;
+  todos os paths de evidência referidos e todos os tickets `verified` têm
+  evidência presente. `scripts/check_acceptance_matrix.py --check` retornou
+  33 `verified`, sem AC sem atribuição ou findings de backlog. `TK-020` segue
+  `in_progress`/`blocked` pelo gate externo, conforme o ticket.
+- A skill `hybrid-check` foi executada em modos de consistência e convergência
+  manuais porque este checkout não contém `scripts/hybrid.py` nem `.hybrid/`.
+  A revisão reconciliou tickets, ACs, evidências e projeções; os textos de
+  checkpoint que ainda diziam que o bundle estava pendente foram corrigidos.
+  O repositório não tem registry `FD-*` para registrar findings.
+- `scripts/audit_dependencies.py --requirements requirements.lock --local
+  --strict --evidence-dir artifacts/readiness-audit-20260925` retornou
+  `ok=true`: auditorias de lock e ambiente local com exit code 0, zero findings
+  e política `pass`. Lock SHA-256
+  `0d7521e0337029ab512db1bbeb0322dd71e355abd9d4dc56d961e0492571a0fa`;
+  relatório em `artifacts/readiness-audit-20260925/summary.json`.
+- Gate local `core` executado em Windows 11 / Python 3.13.12, branch
+  `release/farol-2.0.0-rc.1`, commit `be40e16f09153cfc12e3ea389302793f920c40b2`
+  com 33 entradas alteradas no worktree capturadas antes da execução. Resultado:
+  22/22 etapas, `1050 passed`, `12 skipped`, zero `failed`, `blocked` ou
+  `not_run`; pytest e clone limpo registraram `479 passed, 6 skipped`, crash
+  matrix `17 passed`, revocation `25 passed`. Relatório:
+  `artifacts/release-gates-20260924-214526-7c34711add8a7bd5/release-gates.json`,
+  SHA-256 `9600f5da900b691abb24da839f2ed6cae029d7cbe5df2dd3321f08da2d262c60`.
+  Este é um gate `core` sobre uma árvore suja, não o full gate nem aprovação
+  para distribuição.
+- Bundle local construído em `artifacts/rc1-readiness-hardening-pass1-20260924`
+  e verificado novamente com `scripts/verify_candidate.py --root ...
+  --source-root .`: `ok=true`, identidade do source correspondente, auditoria
+  sem findings e supply-chain verificada. Digest da candidata
+  `f41c31a3a8f65be3e464c8588dca1ae33f6323220795e2c9ec11ae5ce3613b71`; wheel
+  `consulta_documentacao-2.0.0rc1-py3-none-any.whl`, 392899 bytes, SHA-256
+  `44245568bd811f97cb8592dcd857191377940f8cacf13748b73877d7fe827861`. A wheel
+  não contém `docops/mcp_client.py`, `docops/rag_sync.py` nem
+  `docops/backends/legacy_knowledge_rag.py`. O manifesto registra atestação
+  `not-configured`, publicação `false` e identidade `working-tree-candidate`.
+  Uma cópia de fechamento foi gerada depois deste recibo e verificada
+  independentemente em `artifacts/rc1-readiness-hardening-final-20260924`:
+  digest `ac2e1767694255c8a160d8655c4f5139448d9117d488d8bdf81d1878d582a9ab`,
+  manifesto SHA-256
+  `7617e654444ec05644ff74743ab88fe1d93fae67fcdbe57079e80208c581bab0`,
+  checksums SHA-256
+  `6334de3723c1bbf904e96defc9885127266dd71c5b3b89d12600b79431c5469c`.
+  Essa cópia também é `working-tree-candidate`, sem publicação nem atestação.
+- Depois desta captura, o bundle final foi preparado em
+  `artifacts/farol-2.0.0-rc.1-clean-commit-audit-20260925` e validado pelo
+  verificador independente contra `--source-root .`. A identidade do source e
+  os checksums correspondem, o supply-chain audit passou e a wheel não inclui
+  módulos legados. O recibo do verificador fica junto aos artefatos locais;
+  `state.json` registra o resultado sem copiar hashes autorreferentes. O bundle
+  representa um `local-commit-candidate` com worktree limpo; não há CI remoto
+  para este source, publicação ou atestação.
+- A API autenticada do GitHub não retornou releases estáveis ou RC; a consulta
+  de tags também não encontrou `v1.1.0` ou `v2.0.0-rc.1` neste repositório.
+  Nenhum artefato público para instalação foi confirmado.
+- Revisão autenticada de 2026-09-24: branch protection de `main`, 13 checks obrigatórios,
+  aprovação de code owner, Dependabot, secret scanning e push protection ativos;
+  nenhum alerta aberto retornado. Naquele snapshot, **private vulnerability
+  reporting estava desativado**; foi habilitado e confirmado no follow-up
+  autenticado abaixo.
+- A execução histórica de integração `35500245195`, no SHA antigo
+  `2ff00fcfc581147ba9367b6a2a84dc1b1d6cbab5`, falhou no passo `MCP smoke` com
+  `mcp_eof`; o log de stderr está redigido e não permite diagnóstico adicional.
+  Ela não valida o código atual.
+
+## Atualização autenticada de configuração — 2026-09-25
+
+O objetivo de fechar os bloqueios controláveis pelo repositório autorizou a
+correção desse item. O endpoint autenticado retornou `false` antes da mudança;
+`gh api --method PUT repos/VIDORETTO/farol-rag-skill-docs/private-vulnerability-reporting`
+concluiu sem erro; a consulta de verificação retornou `true`. A configuração
+agora está habilitada e o canal foi atualizado em `SECURITY.md`. A autenticação
+foi fornecida pelo GitHub CLI local; nenhum segredo foi exibido nem registrado
+neste relatório. Não houve commit, push, tag ou release.
+Os requisitos de permissão e o comportamento do recurso seguem a
+[documentação de configuração do GitHub](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configure-for-a-repository).
+
+## Gates e bloqueios
+
+- O gate core local passou; ele está registrado acima e em `state.json`.
+- O full gate RC continua `not_run`: o usuário confirmou que não há serviço nem
+  credenciais disponíveis agora. Faltam `DOCOPS_RAGFLOW_ENDPOINT`,
+  `DOCOPS_RAGFLOW_TOKEN`, `DOCOPS_RAGFLOW_IMAGE_DIGEST` e
+  `DOCOPS_RAGFLOW_SDK_VERSION`; o status é `blocked`, nunca aprovado.
+- A RC não tem tag, GitHub Release nem autorização de GA. Publicação continua
+  separada e requer autorização explícita.
+
+## Revisão manual Standards/Spec — revisão 1, 2026-09-25
+
+Baseline de revisão: `be40e16f09153cfc12e3ea389302793f920c40b2`, a branch
+`release/farol-2.0.0-rc.1`. `git diff <baseline>...HEAD` e `git diff --cached`
+estavam vazios; `git diff` continha 31 paths rastreados (incluindo a remoção do
+workflow obsoleto) e `git status --short` mostrava 33 entradas ao incluir dois
+arquivos de evidência novos. O runner híbrido e um `review.md` não existem no
+checkout; a revisão manual leu o contrato, plano, `AGENTS.md`, padrões do repo e
+o diff completo, inclusive arquivos novos.
+
+### Standards
+
+- **STD-01 — resolvido:** `README.md` anunciava Python 3.11+ embora
+  `docs/DEPENDENCIES.md`, `docs/SUPPORT-MATRIX.json` e os workflows declarem
+  3.11–3.13, com 3.14 apenas tolerado. A claim pública agora reproduz o suporte
+  declarado e explicita a condição de 3.14.
+- Nenhum finding Standards local permanece aberto após a correção.
+
+### Spec
+
+- **SPEC-01 — resolvido:** a mesma claim ultrapassava o ambiente do plano
+  técnico (Python 3.11–3.13), enfraquecendo o limite explícito de suporte. O
+  README foi alinhado à matriz aceita.
+- A reconciliação AC→evidência continua sem gaps: 33 critérios verificados e
+  nenhum finding de backlog. Nenhum finding Spec local permanece aberto.
+
+### Evidência e limites
+
+`check_support_matrix.py --json`, `check_acceptance_matrix.py --check`,
+`check_documentation.py --root . --json`, `check_contracts.py --json`,
+`validate_workflows.py --json`, `check_public_seams.py --json` e
+`audit_release.py --candidate --json` passaram após a correção documental.
+TK-020 segue `in_progress`/`blocked` pelo full gate externo: faltam os quatro
+inputs RAGFlow. CI remoto para estas mudanças segue sem execução porque a fonte
+local ainda não foi enviada; push, tag, release e GA não foram feitos.
+
+## Observação de governança GitHub — 2026-09-25
+
+A consulta autenticada confirmou em `main` 13 status checks obrigatórios, uma
+aprovação de code owner e descarte de reviews stale; `enforce_admins=false`,
+conforme o bypass administrativo documentado no checklist. A branch
+`release/farol-2.0.0-rc.1` retornou `Branch not protected` (HTTP 404) e a consulta
+de rulesets do repositório e ancestrais retornou lista vazia. Não alterei a
+configuração. Para publicar a partir da fonte revisada, o caminho protegido é
+abrir PR para `main`; usar diretamente a branch RC exige decisão explícita do
+owner sobre adicionar proteção equivalente. Este é um ponto de governança, não
+um finding de código nos eixos Standards/Spec.

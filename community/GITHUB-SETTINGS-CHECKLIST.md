@@ -32,3 +32,41 @@ performed for the `1.1.0` release; no credential or token is stored here.
 The review was performed through authenticated API endpoints on the date above.
 The public repository remains the source of truth; anonymous checks must not be
 used as a substitute for this record.
+
+## Authenticated review — 2026-09-24
+
+- [x] `main` branch protection still requires all 13 CI checks and one
+  code-owner approval; stale reviews are dismissed. The owner emergency bypass
+  remains explicitly documented above.
+- [x] Dependabot security updates, secret scanning and push protection are
+  enabled. The authenticated API returned no open Dependabot or secret alerts.
+- [x] At this review timestamp, private vulnerability reporting was disabled;
+  see the authenticated follow-up below for the later enablement and check.
+- [x] No `v2.0.0-rc.1` tag or GitHub Release exists as of this review. The
+  candidate remains unpublished; no release action was performed.
+
+This check is evidence for the settings observed on 2026-09-24. It does not
+change repository settings or authorize publishing, tagging or GA promotion.
+
+## Authenticated follow-up — 2026-09-25
+
+- [x] Enabled private vulnerability reporting for
+  `VIDORETTO/farol-rag-skill-docs` through the repository-scoped REST endpoint.
+  The authenticated GET returned `false` before the change; after the PUT, a
+  second GET returned `true`. The signed-in owner was `VIDORETTO`; no token or
+  credential was written to the repository.
+- [x] `SECURITY.md` now directs reporters to GitHub's private report form.
+- [x] Rechecked the release state: the RC remains unpublished; no tag, release
+  or GA promotion was performed.
+- [x] Rechecked branch protection through the authenticated API. `main` still
+  requires 13 status checks, one code-owner approval, and dismissal of stale
+  reviews; admin enforcement is disabled as documented in the historical
+  checklist. The RC branch returned `Branch not protected` (HTTP 404), and the
+  repository/parent ruleset query returned no rulesets. No setting was changed.
+  Before publishing from the RC branch, use a protected PR into `main` or have
+  the owner decide whether to add equivalent protection to the RC branch.
+
+GitHub documents this feature for public repository owners and administrators;
+the [repository configuration guide](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configure-for-a-repository)
+and [enable endpoint](https://docs.github.com/en/rest/repos/repos#enable-private-vulnerability-reporting-for-a-repository)
+describe the setting and API operation.

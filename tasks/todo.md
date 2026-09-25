@@ -1,57 +1,25 @@
-# Checkpoint Farol 2.0 — 2026-09-20
+# Checkpoint Farol 2.0 — 2026-09-25
 
 ## Estado atual
 
-- Branch `farol-v2`, candidato `93bb8894d816aad3c3b3682ccec317db1da39d45`;
-  `origin/farol-v2` aponta para o mesmo SHA. Worktree dirty, sem commit/push
-  autorizado.
-- Gate full final no `.venv-rag` Python 3.13.12: `25/25` estágios, `1045 passed`,
-  `12 skipped`, `0 failed`, `0 blocked`, `0 not_run`. O relatório é
-  `artifacts/release-gates-full-20260920-final7/release-gates.json`, SHA-256
-  `EFFE3B18D009CC659326C3F58F7B43FCABBC75540945F7F55B23EEBD0FD29824`.
-- A suíte principal passou `474 passed, 6 skipped`; clean clone `474 passed,
-  6 skipped`; crash matrix `17 passed`; revogação `25 passed`. Os skips são
-  integrações externas opt-in/symlink indisponível e estão explicitamente registrados.
-- Acceptance matrix atualizada: `verified=33`, `in_progress=0`, `blocked=0`; TK-021 agora
-  cobre AC-031 com teste explícito do bundle privado/provenance. Contratos: 77
-  schemas, sem findings; documentação: 164 Markdown, sem findings; superfície editorial: 337
-  arquivos, sem findings; superfície `legacy/all`: 0 findings.
+- Branch `release/farol-2.0.0-rc.1`; as alterações de prontidão foram consolidadas em commit local limpo, sem push. O manifesto do bundle registra o SHA exato.
+- `TK-020` está `in_progress`; `TK-021` foi revalidado e está `verified`. Builder/verificador da wheel, workflows e claims públicos corrigidos localmente; regressões focadas: `9 passed`.
+- Gate core local passou em árvore suja anterior: 22/22 etapas, 1050 pass, 12 skips, zero falhas/bloqueios/not_run. Bundle de fechamento em `artifacts/farol-2.0.0-rc.1-clean-commit-audit-20260925` foi gerado e verificado contra o commit local limpo; ainda não é release-eligible até os gates externos e CI remota.
+- Revisão manual Standards/Spec registrou uma claim Python ampla demais, alinhou-a à matriz suportada 3.11–3.13 e não deixou findings locais abertos.
+- Full gate RAGFlow `blocked`: o usuário confirmou que não há serviço nem credenciais agora; faltam quatro inputs listados em `state.json`.
+- GitHub continua sem tag/release RC ou release estável. Private vulnerability reporting foi habilitado e confirmado por API nesta retomada.
+- `main` tem proteção (13 checks, uma aprovação de code owner); a branch RC não está protegida. Para a publicação, usar PR para `main` ou decidir explicitamente proteção da branch RC.
+- Backup `farol-v3-backup-2026-09-21` verificado e preservado.
 
-## Entregas confirmadas
+## Próximas ações
 
-- TK-001/TK-004/TK-013/TK-014: RAGFlow v0.27.2 real passou health, dataset,
-  upload, parse, chunks/locators, retrieval, mapping canônico, query,
-  snapshot, rebuild e cleanup; adapter corrigido para o limite real de 100
-  chunks por página.
-- TK-007: Docling 2.129.0 + ONNX Runtime 1.30.0 + RapidOCR processaram PDF
-  escaneado de duas páginas com texto, page/bbox e confiança reais.
+1. Provisionar serviço/inputs RAGFlow e rodar o full gate no SHA limpo local.
+2. Usar PR para `main` protegida (ou obter decisão de proteger a branch RC) e pedir autorização explícita antes do push para CI remoto; release/tag/GA continuam decisões separadas.
 
-- TK-017: contração editorial concluída e auditada; legado `knowledge-rag`/
-  Chroma não foi removido porque isso pertence a TK-019.
-- TK-018: runner dual e recibo `cutover-decision` provider-free fail-closed;
-  o dual-run sem braços medidos retorna `not_run`, preserva o legado e não
-  fabrica `cutover_approved`.
-- TK-020: jornada provider-free, matriz de aceite e pipeline completo
-  core/book-to-skill/RAGFlow/OCR/wheel validados. O runner de release agora
-  executa Ruff pelo interpretador selecionado, sem depender de `PATH` ativado.
-- TK-021: fronteira de originais privados, derivados distribuíveis e
-  provenance de release verificada no bundle candidate.
+## Evidência canônica
 
-## Pendências e bloqueios reais
-
-- TK-011.3 foi concluído: o harness real `book-to-skill` gerou duas skills
-  PT-BR a partir de uma projeção IR temporária; validação, scan, budgets e
-  lineage passaram. Evidência: `specs/farol-2/evidence/TK-011.md`.
-- TK-018 foi concluído com dois braços medidos e receipt atual
-  `cutover_approved`; TK-019 foi concluído em lotes controlados e sua superfície
-  final está limpa.
-
-## Próximo passo
-
-O release gate completo passou e TK-020 está fechado. Publicação, tag, release,
-commit e push continuam fora desta execução.
-
-## Histórico preservado
-
-- [`tasks/archive/todo-history-2026-09-13.md`](archive/todo-history-2026-09-13.md)
-- [`tasks/archive/AGENTS-2026-09-13.md`](archive/AGENTS-2026-09-13.md)
+- `specs/farol-2/state.json`
+- `specs/farol-2/evidence/rc1-assets-and-v3-backup-20260924.md`
+- `specs/farol-2/evidence/release-readiness-hardening-20260924.md`
+- `specs/farol-2/tickets/TK-020.md`
+- `specs/farol-2/tickets/TK-021.md`

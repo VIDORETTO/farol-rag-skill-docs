@@ -116,7 +116,7 @@ def test_support_checker_rejects_package_without_candidate_artifact(tmp_path: Pa
         if path.name == "ci.yml":
             content = content.replace(
                 "      - name: Retain candidate bundle and identity evidence\n"
-                "        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2\n",
+                "        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1\n",
                 "      - name: Candidate artifact deliberately omitted\n        run: true\n",
                 1,
             )
@@ -152,7 +152,7 @@ def test_support_checker_rejects_broad_rag_artifact(tmp_path: Path) -> None:
         if path.name == "integration.yml":
             content += """
       - name: Unsafe broad artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: unsafe
           path: artifacts/ragflow

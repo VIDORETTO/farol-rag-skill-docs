@@ -56,6 +56,11 @@ _REQUIRED_ASSETS = {
 }
 _IDENTITY_STATES = {"working-tree-candidate", "local-commit-candidate", "commit-candidate", "unversioned-clean-clone"}
 _LOCAL_SOURCE_FILES = {".rag_state.json"}
+_FORBIDDEN_WHEEL_MEMBERS = {
+    "docops/mcp_client.py",
+    "docops/rag_sync.py",
+    "docops/backends/legacy_knowledge_rag.py",
+}
 
 
 def _sha256_file(path: Path) -> str:
@@ -94,6 +99,21 @@ def _wheel_code_version(path: Path) -> str | None:
         return None
     match = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']\s*$', source, re.MULTILINE)
     return match.group(1) if match else None
+
+
+def _wheel_surface_errors(path: Path) -> list[dict[str, str]]:
+    try:
+        with zipfile.ZipFile(path) as archive:
+            members = set(archive.namelist())
+    except (OSError, zipfile.BadZipFile):
+        return [{"code": "wheel_unreadable", "message": "candidate wheel is not a readable ZIP archive"}]
+    return [
+        {
+            "code": "wheel_legacy_module_present",
+            "message": f"candidate wheel contains a removed Farol 1.x module: {member}",
+        }
+        for member in sorted(members & _FORBIDDEN_WHEEL_MEMBERS)
+    ]
 
 
 def _checksum_errors(root: Path) -> list[dict[str, str]]:
@@ -341,10 +361,11 @@ def _metadata_errors(bundle_root: Path, manifest: dict[str, Any], version: str) 
     except (OSError, UnicodeError):
         readme = ""
     readme_version = re.search(
-        r"(?m)^\*\*Versão do pacote:\*\*\s+\[v?([0-9]+\.[0-9]+\.[0-9]+(?:[A-Za-z0-9.+-]*))\]",
+        r"(?m)^\*\*Versão do pacote:\*\*\s+(?:\[v?([0-9]+\.[0-9]+\.[0-9]+(?:[A-Za-z0-9.+-]*))\]\([^)]*\)|`v?([0-9]+\.[0-9]+\.[0-9]+(?:[A-Za-z0-9.+-]*))`)",
         readme,
     )
-    if readme_version is None or readme_version.group(1) != version:
+    readme_value = (readme_version.group(1) or readme_version.group(2)) if readme_version else None
+    if readme_value != version:
         errors.append({"code": "readme_version_mismatch", "message": "README product version differs from candidate"})
     try:
         changelog = (bundle_root / "CHANGELOG.md").read_text(encoding="utf-8")
@@ -476,6 +497,8 @@ def verify(
         errors.append({"code": "wheel_missing", "message": "candidate wheel is missing or unsafe"})
     elif wheel_version != version:
         errors.append({"code": "wheel_version_mismatch", "message": "wheel metadata does not match candidate version"})
+    if wheel_path is not None and wheel_path.is_file() and wheel_path.suffix == ".whl":
+        errors.extend(_wheel_surface_errors(wheel_path))
     if wheel_path is not None and wheel_path.is_file() and code_version != version:
         errors.append({"code": "code_version_mismatch", "message": "wheel code version does not match candidate"})
     if isinstance(wheel_value, dict) and wheel_path is not None and wheel_path.is_file():

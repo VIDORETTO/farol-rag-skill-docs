@@ -71,6 +71,7 @@ _LOCAL_SOURCE_DIRS = {
     ".scratch",
 }
 _LOCAL_SOURCE_FILES = {".rag_state.json"}
+_WHEEL_ROOT_INPUTS = {"pyproject.toml", "setup.py", "setup.cfg", "MANIFEST.in", "README.md", "LICENSE"}
 # ZIP archives cannot encode timestamps before 1980.  Using the first valid
 # ZIP timestamp keeps isolated pip builds reproducible on Windows as well as
 # POSIX platforms.
@@ -165,12 +166,42 @@ def _wheel_version(path: Path) -> str:
     raise RuntimeError("the candidate wheel has no version metadata")
 
 
-def _build_wheel(root: Path, python: Path, destination: Path) -> Path:
+def _wheel_source_files(source_files: Iterable[str]) -> tuple[str, ...]:
+    files = tuple(
+        sorted(
+            relative
+            for relative in set(source_files)
+            if relative in _WHEEL_ROOT_INPUTS
+            or relative.startswith("docops/")
+            or relative.startswith("skills/docops-agent/")
+        )
+    )
+    if "pyproject.toml" not in files:
+        raise RuntimeError("the candidate source set has no pyproject.toml wheel configuration")
+    return files
+
+
+def _build_wheel(
+    root: Path,
+    python: Path,
+    destination: Path,
+    *,
+    source_files: Iterable[str] | None = None,
+) -> Path:
+    root = root.expanduser().resolve()
+    candidate_files = tuple(source_files) if source_files is not None else tuple(_source_files(root)[0])
+    files = _wheel_source_files(candidate_files)
     with tempfile.TemporaryDirectory(prefix="docops-candidate-wheel-") as temporary:
-        wheel_dir = Path(temporary)
+        temporary_root = Path(temporary)
+        source_root = temporary_root / "source"
+        wheel_dir = temporary_root / "wheel"
+        for relative in files:
+            source = root / Path(relative)
+            target = source_root / Path(relative)
+            _copy_file(source, target)
         completed = subprocess.run(
-            [str(python), "-m", "pip", "wheel", "--no-deps", "--wheel-dir", str(wheel_dir), str(root)],
-            cwd=str(root),
+            [str(python), "-m", "pip", "wheel", "--no-deps", "--wheel-dir", str(wheel_dir), str(source_root)],
+            cwd=str(source_root),
             check=False,
             capture_output=True,
             env={**os.environ, "SOURCE_DATE_EPOCH": _REPRODUCIBLE_SOURCE_DATE_EPOCH},
@@ -181,7 +212,12 @@ def _build_wheel(root: Path, python: Path, destination: Path) -> Path:
         if completed.returncode or len(wheels) != 1:
 
             def redacted_tail(value: str) -> str:
-                return value[-4000:].replace(str(root), "<project-root>").replace(str(wheel_dir), "<wheel-dir>")
+                return (
+                    value[-4000:]
+                    .replace(str(root), "<project-root>")
+                    .replace(str(source_root), "<candidate-source>")
+                    .replace(str(wheel_dir), "<wheel-dir>")
+                )
 
             details = {
                 "returncode": completed.returncode,
@@ -321,7 +357,7 @@ def build_candidate(
                 raise RuntimeError("model snapshots containing symbolic links are not reproducible")
 
     wheel_destination = output / "wheel"
-    wheel = _build_wheel(root, python, wheel_destination)
+    wheel = _build_wheel(root, python, wheel_destination, source_files=relative_files)
     version = _wheel_version(wheel)
     if version == "1.0.0":
         raise RuntimeError("candidate version must be different from the published 1.0.0")

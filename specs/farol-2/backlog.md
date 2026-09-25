@@ -1,11 +1,20 @@
 # Backlog Farol 2.0
 
-**Gerado a partir de:** spec/plan revisão 1 e tickets revisão 1.
+**Gerado a partir de:** spec/plan revisão 1; tickets TK-020/TK-021 revisão 8/2 e demais tickets revisão 1.
 **Baseline:** `81d5dcb2e189d00406cdd9b9e671d94e3f23cd58`
-**Snapshot de entrega:** branch `main`, com a release candidate
+**Snapshot histórico da implementação (2026-09-20):** branch `main`, com a release candidate
 `v2.0.0-rc.1` preparada a partir da integração Farol 2.0. A evidência full foi
 capturada em 20/09/2026 contra a mesma árvore de implementação antes do handoff
 documental.
+
+**Prontidão local atual (2026-09-25):** branch `release/farol-2.0.0-rc.1`,
+`TK-020` em progresso, mudanças de prontidão revisadas e consolidadas em commit
+local limpo, core e bundle local verificados (bundle final em
+`artifacts/farol-2.0.0-rc.1-clean-commit-audit-20260925`);
+private vulnerability reporting habilitado; full gate RAGFlow
+bloqueado por quatro entradas externas ausentes; CI remoto aguarda autorização
+de push. A branch RC não está protegida; usar PR para `main` ou decidir proteção
+antes de usá-la como fonte direta de publicação. Não há tag nem release remota.
 
 ## Fases e gates
 
@@ -43,10 +52,10 @@ MVP técnico = P0–P4 para corpus sintético autorizado. Farol 2.0 distribuíve
 | [TK-015](tickets/TK-015.md) | Composição/updates/recovery | TK-011, TK-014 | verified |
 | [TK-016](tickets/TK-016.md) | Migração 1.x→2.0 | TK-015 | verified |
 | [TK-017](tickets/TK-017.md) | Remover Mercado Livre e editorial | TK-002, TK-016 | verified (remoção executada) |
-| [TK-021](tickets/TK-021.md) | Originais privados e provenance de release | TK-017 | verified |
+| [TK-021](tickets/TK-021.md) | Originais privados e provenance de release | TK-017 | verified (wheel isolada e regressões aprovadas) |
 | [TK-018](tickets/TK-018.md) | Paridade e autorização de cutover | TK-007–009, TK-015–017 | verified (`cutover_approved`) |
 | [TK-019](tickets/TK-019.md) | Contração do backend legado | TK-018 | verified (legacy/vendor/Chroma removidos da superfície) |
-| [TK-020](tickets/TK-020.md) | Jornada e release candidate 2.0 | TK-017, TK-019 | verified (full gate e handoff) |
+| [TK-020](tickets/TK-020.md) | Jornada e release candidate 2.0 | TK-017, TK-019 | in_progress (full gate atual bloqueado) |
 
 ## Grafo
 

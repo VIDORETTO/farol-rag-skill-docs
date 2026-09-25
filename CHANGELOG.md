@@ -2,7 +2,16 @@
 
 ## Unreleased
 
-Mudanças futuras serão registradas aqui antes da próxima release.
+Preparação adicional da release candidate, ainda não publicada:
+
+- Isolated candidate wheel builds from ignored `build/lib/` output and added an
+  independent check for removed Farol 1.x wheel modules.
+- Corrected CI dependency extras, validated extras against `pyproject.toml`,
+  removed the obsolete corpus reindex workflow and made the remaining RAGFlow
+  gate manual while external credentials are unavailable.
+- Updated candidate installation and security guidance to match the current
+  GitHub release and private vulnerability reporting settings.
+- Updated the pinned artifact action to `actions/upload-artifact` v7.0.1.
 
 ## 2.0.0rc1 — 2026-09-22
 
@@ -20,8 +29,8 @@ Release candidate Farol 2.0 (`v2.0.0-rc.1`).
   release and handoff documentation to describe Farol 2.0 accurately.
 - Added the first Farol 2.0 release-candidate wheel, candidate bundle,
   supply-chain evidence and cross-platform clean-clone verification.
-- This is a pre-release: the public stable compatibility release remains
-  `v1.1.0`, and feedback may still change the 2.0 public contract before GA.
+- This is a pre-release, not a stable GitHub Release; feedback may still change
+  the 2.0 public contract before GA.
 
 ## 1.1.0 — 2026-09-04
 
