@@ -15,9 +15,9 @@
     "value": "v2.0.0-rc.1",
     "branch": "release/farol-2.0.0-rc.1",
     "remote_relation": "release candidate prepared from origin/main after the Farol 2.0 integration; full evidence identifies the implementation candidate 93bb8894d816aad3c3b3682ccec317db1da39d45",
-    "worktree_status": "Reviewed release-readiness changes captured in a local commit on release/farol-2.0.0-rc.1 after be40e16f09153cfc12e3ea389302793f920c40b2; no push, tag, or release; generated bundles remain ignored under artifacts/",
+    "worktree_status": "Reviewed release-readiness changes and gate evidence are captured in local commits on release/farol-2.0.0-rc.1 after be40e16f09153cfc12e3ea389302793f920c40b2; no push, tag, or release; generated bundles remain ignored under artifacts/",
     "gate_worktree_entries": 75,
-    "current_worktree_entries": "33 entries captured in the 2026-09-25 readiness audit were committed locally; final candidate worktree is clean, but not release-eligible until full gate and remote CI",
+    "current_worktree_entries": "33 release-hardening entries captured in the 2026-09-25 readiness audit were committed in 98d2a1d; a follow-up local commit records the clean-core gate evidence; worktree clean after that receipt, but not release-eligible until full gate and remote CI",
     "current_worktree_observed_at": "2026-09-25"
   },
   "inputs": {
@@ -68,9 +68,9 @@
     "the final full release gate passed 25/25 stages with zero failures, blocked stages or not-run stages; it recorded 1045 passed and 12 explicitly skipped checks",
     "the final full gate was run with --timeout 3600 because the suite exceeds the runner default of 1800 seconds per command in this venv; the runner invokes Ruff through the selected interpreter",
     "TK-011/TK-017/TK-018/TK-019 were verified on the implementation candidate; TK-020 remains in_progress and TK-021 was reverified after wheel isolation on 2026-09-24.",
-    "The 2026-09-20 full gate is bound to implementation commit 93bb8894d816aad3c3b3682ccec317db1da39d45, not release-preparation commit be40e16f09153cfc12e3ea389302793f920c40b2. On 2026-09-25 UTC, core passed 22/22 on that RC checkout with 1050 passed, 12 skipped, zero failed/blocked/not_run; this is not the full gate.",
-    "An initial local RC rebuild contained three modules from ignored build/lib output. The builder and independent wheel verifier have been fixed; the new candidate bundle verification is recorded separately.",
-    "As of 2026-09-25, no remote v2.0.0-rc.1 tag or GitHub Release exists. The remote RC branch remains at be40e16f09153cfc12e3ea389302793f920c40b2; reviewed hardening changes are captured in a local commit but remain unpushed. The CI artifact remains unpublished and attestation is not configured. The core profile passed on the earlier dirty RC working tree; the full gate remains blocked on four RAGFlow inputs.",
+    "The 2026-09-20 full gate is bound to implementation commit 93bb8894d816aad3c3b3682ccec317db1da39d45, not release-preparation commit be40e16f09153cfc12e3ea389302793f920c40b2. On 2026-09-25 UTC, core passed 22/22 on the dirty RC checkout and then on clean local commit 98d2a1df0364ab79d82852bca14308d6dc44a22a (1050 passed, 12 skipped, zero failed/blocked/not_run; zero worktree entries). Neither run is the full gate.",
+    "An initial local RC rebuild contained three modules from ignored build/lib output. The builder and independent wheel verifier have been fixed; the final clean-source candidate bundle is pending generation and independent verification.",
+    "As of 2026-09-25, no remote v2.0.0-rc.1 tag or GitHub Release exists. The remote RC branch remains at be40e16f09153cfc12e3ea389302793f920c40b2; reviewed hardening changes and clean-core evidence are captured in local commits but remain unpushed. The CI artifact remains unpublished and attestation is not configured. The full gate remains blocked on four RAGFlow inputs.",
     "GitHub private vulnerability reporting was enabled and GET-verified on 2026-09-25; authenticated setting evidence is recorded in community/GITHUB-SETTINGS-CHECKLIST.md and release-readiness-hardening-20260924.md.",
     "The locked and local dependency audits passed with zero findings on 2026-09-25; lock SHA-256 is 0d7521e0337029ab512db1bbeb0322dd71e355abd9d4dc56d961e0492571a0fa."
   ],
@@ -109,6 +109,44 @@
         "passed": 25
       },
       "per_command_timeout_seconds": 3600,
+      "full_profile": "not_run; RAGFlow external inputs unavailable"
+    },
+    "release_candidate_core_clean_2026_09_25": {
+      "candidate_commit": "98d2a1df0364ab79d82852bca14308d6dc44a22a",
+      "source_state": "clean local commit; zero worktree entries; not pushed",
+      "branch": "release/farol-2.0.0-rc.1",
+      "profile": "core",
+      "status": "passed",
+      "command": ".venv-rag\\Scripts\\python.exe scripts/run_release_gates.py --root . --python .venv-rag\\Scripts\\python.exe --output artifacts/release-gates-clean-commit-98d2a1d --profile core --timeout 3600 --json",
+      "started_at": "2026-09-25T02:05:05+00:00",
+      "finished_at": "2026-09-25T02:13:29+00:00",
+      "report_artifact": "artifacts/release-gates-clean-commit-98d2a1d/release-gates.json",
+      "report_sha256": "629a8231cff7d6f0c09f039503646b401b6255fa2a3dca57f6e70b7aa0bfa2ed",
+      "retention": "local generated evidence under ignored artifacts/; do not copy into distribution",
+      "platform": "Windows 11, Python 3.13.12, AMD64",
+      "stages": 22,
+      "aggregate": {
+        "passed": 1050,
+        "skipped": 12,
+        "failed": 0,
+        "blocked": 0,
+        "not_run": 0
+      },
+      "main_suite": {
+        "passed": 479,
+        "skipped": 6
+      },
+      "clean_clone_suite": {
+        "passed": 479,
+        "skipped": 6
+      },
+      "crash_matrix": {
+        "passed": 17
+      },
+      "revocation": {
+        "passed": 25
+      },
+      "worktree_entries": 0,
       "full_profile": "not_run; RAGFlow external inputs unavailable"
     },
     "release_candidate_bundle_validation": {
@@ -163,11 +201,11 @@
       "finished_date": "2026-09-25"
     },
     "release_candidate_final_bundle_2026_09_25": {
-      "status": "prepared_and_independently_verified",
+      "status": "pending_generation_and_independent_verification",
       "artifact": "artifacts/farol-2.0.0-rc.1-clean-commit-audit-20260925",
       "profile": "core",
-      "source_state": "local-commit-candidate; clean worktree; not pushed; not release-eligible",
-      "verification": "prepare_candidate and independent verify_candidate passed; source identity and bundle checksums matched; supply-chain audit passed; no legacy modules in wheel",
+      "source_state": "to be built from the clean local source after this evidence update; not pushed; not release-eligible",
+      "verification": "pending; run prepare_candidate and independent verify_candidate after the final local evidence commit",
       "publication_performed": false,
       "attestation": "not-configured",
       "full_gate": "blocked_on_RAGFlow_inputs",
@@ -516,7 +554,7 @@
         "DOCOPS_RAGFLOW_IMAGE_DIGEST",
         "DOCOPS_RAGFLOW_SDK_VERSION"
       ],
-      "evidence": "specs/farol-2/evidence/rc1-assets-and-v3-backup-20260924.md"
+      "evidence": "specs/farol-2/evidence/release-readiness-hardening-20260924.md; specs/farol-2/todo.md"
     },
     {
       "scope": "GitHub CI for the final prepared source",

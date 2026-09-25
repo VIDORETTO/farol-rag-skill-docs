@@ -1,6 +1,6 @@
 # Backlog Farol 2.0
 
-**Gerado a partir de:** spec/plan revisão 1; tickets TK-020/TK-021 revisão 8/2 e demais tickets revisão 1.
+**Gerado a partir de:** spec/plan revisão 1; tickets TK-020/TK-021 revisão 9/2 e demais tickets revisão 1.
 **Baseline:** `81d5dcb2e189d00406cdd9b9e671d94e3f23cd58`
 **Snapshot histórico da implementação (2026-09-20):** branch `main`, com a release candidate
 `v2.0.0-rc.1` preparada a partir da integração Farol 2.0. A evidência full foi
@@ -9,8 +9,8 @@ documental.
 
 **Prontidão local atual (2026-09-25):** branch `release/farol-2.0.0-rc.1`,
 `TK-020` em progresso, mudanças de prontidão revisadas e consolidadas em commit
-local limpo, core e bundle local verificados (bundle final em
-`artifacts/farol-2.0.0-rc.1-clean-commit-audit-20260925`);
+local limpo; core verificado em commit limpo (22/22 etapas); bundle final ainda
+aguarda geração e verificação a partir do source consolidado;
 private vulnerability reporting habilitado; full gate RAGFlow
 bloqueado por quatro entradas externas ausentes; CI remoto aguarda autorização
 de push. A branch RC não está protegida; usar PR para `main` ou decidir proteção

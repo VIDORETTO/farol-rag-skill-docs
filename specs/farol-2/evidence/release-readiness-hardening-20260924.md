@@ -170,3 +170,35 @@ configuração. Para publicar a partir da fonte revisada, o caminho protegido é
 abrir PR para `main`; usar diretamente a branch RC exige decisão explícita do
 owner sobre adicionar proteção equivalente. Este é um ponto de governança, não
 um finding de código nos eixos Standards/Spec.
+
+## Core gate no commit limpo — 2026-09-25
+
+Após consolidar a revisão de prontidão em `98d2a1df0364ab79d82852bca14308d6dc44a22a`,
+o worktree estava limpo (zero entradas). O perfil `core` foi executado nesse SHA
+exato; o relatório também confirma `source_commit=98d2a1df0364ab79d82852bca14308d6dc44a22a`
+e `worktree_entries=0`.
+
+Comando observado:
+
+```powershell
+.venv-rag\Scripts\python.exe scripts/run_release_gates.py --root . --python .venv-rag\Scripts\python.exe --output artifacts/release-gates-clean-commit-98d2a1d --profile core --timeout 3600 --json
+```
+
+Resultado: `ok=true`; 22/22 etapas passaram; agregado de 1050 aprovados,
+12 skips explícitos, zero falhas, bloqueios ou etapas não executadas. A suíte
+principal e o clone limpo registraram cada um `479 passed, 6 skipped`; crash
+matrix `17 passed`; revogação `25 passed`. Windows 11, Python 3.13.12, AMD64.
+Início `2026-09-25T02:05:05Z`; conclusão `2026-09-25T02:13:29Z`. Relatório:
+`artifacts/release-gates-clean-commit-98d2a1d/release-gates.json`, SHA-256
+`629a8231cff7d6f0c09f039503646b401b6255fa2a3dca57f6e70b7aa0bfa2ed`.
+
+Esse é somente o perfil `core`. O perfil `full` continua `blocked/not_run` porque
+o usuário confirmou indisponibilidade do serviço e das quatro entradas RAGFlow;
+não foi registrado como sucesso. O CI remoto do source revisado também não foi
+executado: o commit permanece local e push não foi autorizado. Tag, release e
+promoção a GA continuam não executadas.
+
+O bundle final para auditoria local tem geração/verificação independente
+pendente após o commit da atualização desta evidência. A referência do bundle
+será concluída em `state.json`, no ticket TK-020 e nos checkpoints depois de
+observar o artefato e o recibo reais.

@@ -16,16 +16,19 @@ regenere esta projeção.
   continha três módulos de `build/lib/`; a CI também usava o extra inexistente
   `rag`, e havia referências a uma release RC ainda não publicada.
 - O build foi isolado dos artefatos ignorados; verificador e workflows foram
-  endurecidos. Regressões passaram; o core gate da árvore local passou 22/22
-  etapas (`1050 passed`, `12 skipped`, zero falhas/bloqueios/not_run). O bundle
-  de fechamento em `artifacts/farol-2.0.0-rc.1-clean-commit-audit-20260925`
-  passou verificação independente; segue como artefato local de um commit não enviado.
+  endurecidos. Regressões passaram; o core gate passou 22/22 etapas em commit
+  limpo `98d2a1df0364ab79d82852bca14308d6dc44a22a` (`1050 passed`, `12 skipped`,
+  zero falhas/bloqueios/not_run; worktree com zero entradas). O perfil executado
+  foi `core`; isso não substitui o full gate. O bundle final ainda será gerado e
+  verificado a partir do source local consolidado.
 - A claim de suporte Python do README foi alinhada à matriz oficial 3.11–3.13;
   a revisão manual Standards/Spec não deixou findings locais abertos.
 - Não há tag/release GitHub da RC.1. Full gate no commit final: `not_run`; gate
-  RAGFlow: `blocked` pela falta de serviço e dos quatro inputs externos.
+  RAGFlow: `blocked` pela falta de serviço e dos quatro inputs externos. CI no
+  source local final: `not_run`, pois depende de push autorizado.
 - Private vulnerability reporting foi habilitado e confirmado por API em
-  2026-09-25; resta o gate RAGFlow externo e CI no SHA remoto final.
+  2026-09-25; resta gerar/verificar o bundle local, executar o gate RAGFlow
+  externo e rodar CI no SHA remoto final após push autorizado.
 - `main` segue protegido por 13 checks e uma aprovação de code owner; a branch
   RC não tem proteção nem ruleset. Usar `main` por PR ou decidir proteção da
   branch RC antes de usá-la como fonte de publicação.
@@ -102,7 +105,7 @@ contratos 1.x.
 
 - [x] TK-018 — dual-run comparativo real e receipt `cutover_approved` verificados.
 - [x] TK-019 — contração de legado executada após receipt aprovado; surface/wheel/supply-chain verificados.
-- [ ] TK-020 — core e bundle locais verificados; private reporting habilitado; full gate bloqueado por RAGFlow.
+- [ ] TK-020 — core verificado em commit limpo; bundle pendente; private reporting habilitado; full gate bloqueado por RAGFlow.
 - [x] TK-021 — wheel builder/verifier isolados; regressões focadas passaram (`9 passed`).
 
 ## Checklist por ticket — template para novos esforços
