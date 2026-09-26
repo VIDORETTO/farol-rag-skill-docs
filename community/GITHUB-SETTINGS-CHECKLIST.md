@@ -70,3 +70,18 @@ GitHub documents this feature for public repository owners and administrators;
 the [repository configuration guide](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configure-for-a-repository)
 and [enable endpoint](https://docs.github.com/en/rest/repos/repos#enable-private-vulnerability-reporting-for-a-repository)
 describe the setting and API operation.
+
+## Read-only release snapshot — 2026-09-26
+
+- [x] Private vulnerability reporting remains enabled (`GET` returned `true`).
+- [x] `main` remains protected by 13 required checks, one code-owner approval,
+  and stale-review dismissal. The RC branch still has no branch protection
+  (HTTP 404) and no matching repository or parent ruleset.
+- [x] No `v2.0.0-rc.1` tag or GitHub Release exists. PR
+  [#16](https://github.com/VIDORETTO/farol-rag-skill-docs/pull/16) remains open
+  to `main`, but its remote head is still `be40e16f09153cfc12e3ea389302793f920c40b2`;
+  its decision is `REVIEW_REQUIRED`. The green checks completed on 2026-09-23
+  apply to that old head, not local candidate `23a39c31bd09f8098af6d71bd57671d7495d10a9`.
+- No setting was changed and no push, tag, release or GA promotion was
+  performed. Updating the PR head and running CI on the current source requires
+  explicit push authorization.

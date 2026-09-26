@@ -114,7 +114,28 @@ promoção de versão.
 
 ## Próximo passo
 
-Revisar o worktree local e consolidar o conteúdo aprovado. Depois de configurar
-serviço/inputs RAGFlow, executar o full gate no SHA limpo final. O CI remoto exige
-push autorizado; tag, release e promoção a GA continuam decisões explícitas e
-separadas.
+Quando serviço e inputs RAGFlow estiverem disponíveis, executar o full gate no
+source registrado em `state.json`. Depois de autorização explícita de push,
+atualizar o PR #16 para CI no source exato e revisão em `main` protegida; tag,
+release e promoção a GA continuam decisões explícitas e separadas.
+
+## Revalidação do backup Farol v3 — 2026-09-26
+
+Comandos somente de leitura observados:
+
+```powershell
+git rev-parse refs/tags/farol-v3-backup-2026-09-21
+git rev-parse "refs/tags/farol-v3-backup-2026-09-21^{}"
+git rev-parse "refs/tags/farol-v3-backup-2026-09-21^{tree}"
+git rev-parse refs/heads/farol-v3
+git diff --quiet refs/tags/farol-v3-backup-2026-09-21 refs/heads/farol-v3
+git ls-remote origin refs/tags/farol-v3-backup-2026-09-21 refs/tags/farol-v3-backup-2026-09-21^{} refs/heads/farol-v3
+git fsck --connectivity-only --no-reflogs --no-dangling refs/tags/farol-v3-backup-2026-09-21
+```
+
+A tag local continua sendo o objeto `5fa11d68a3faec8ce24337a573fb2f30b20ff226`,
+apontando ao commit `79f9887c52e102351cd5c8d3b5ff7aaab5b7a07d` e à árvore
+`358db1c1a89a3aa8d1ce07b5641e612c681be876`. A branch local `farol-v3` aponta ao
+mesmo commit; `git diff --quiet` e `git fsck --connectivity-only` terminaram com
+código 0. `origin` mantém a mesma branch e tag anotada. Nenhuma ref ou conteúdo
+do backup foi alterado.

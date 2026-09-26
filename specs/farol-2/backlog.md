@@ -1,20 +1,22 @@
 # Backlog Farol 2.0
 
-**Gerado a partir de:** spec/plan revisão 1; tickets TK-020/TK-021 revisão 9/2 e demais tickets revisão 1.
+**Gerado a partir de:** spec/plan revisão 1; tickets TK-020/TK-021 revisão 10/2 e demais tickets revisão 1.
 **Baseline:** `81d5dcb2e189d00406cdd9b9e671d94e3f23cd58`
 **Snapshot histórico da implementação (2026-09-20):** branch `main`, com a release candidate
 `v2.0.0-rc.1` preparada a partir da integração Farol 2.0. A evidência full foi
 capturada em 20/09/2026 contra a mesma árvore de implementação antes do handoff
 documental.
 
-**Prontidão local atual (2026-09-25):** branch `release/farol-2.0.0-rc.1`,
-`TK-020` em progresso, mudanças de prontidão revisadas e consolidadas em commit
-local limpo; core verificado em commit limpo (22/22 etapas); bundle final ainda
-aguarda geração e verificação a partir do source consolidado;
-private vulnerability reporting habilitado; full gate RAGFlow
-bloqueado por quatro entradas externas ausentes; CI remoto aguarda autorização
-de push. A branch RC não está protegida; usar PR para `main` ou decidir proteção
-antes de usá-la como fonte direta de publicação. Não há tag nem release remota.
+**Prontidão local atual (2026-09-26):** branch `release/farol-2.0.0-rc.1`,
+`TK-020` em progresso; core (22/22) e bundle auditável foram verificados no
+source limpo `23a39c31bd09f8098af6d71bd57671d7495d10a9`, digest
+`082749b681a9f40930eaef2da9ea3b67b8307a381035d59159848175b52eff3f`. Private
+vulnerability reporting está habilitado. O full gate RAGFlow está bloqueado
+pela ausência do serviço e quatro entradas; CI do source atual requer push
+autorizado. O PR #16 para `main` está aberto, mas ainda aponta ao commit remoto
+antigo `be40e16f09153cfc12e3ea389302793f920c40b2` e requer review. `main` tem 13
+checks e aprovação de code owner; a branch RC não tem proteção. Não há tag nem
+release remota.
 
 ## Fases e gates
 

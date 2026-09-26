@@ -9,29 +9,34 @@ regenere esta projeção.
 - [x] [TK-002](tickets/TK-002.md) — expandir contratos fundamentais v2.
 - [x] [TK-017](tickets/TK-017.md) — remover Mercado Livre/curso/página/oferta; auditor editorial limpo.
 
-## Estado de prontidão — 2026-09-25
+## Estado de prontidão — 2026-09-26
 
 - `TK-020` permanece `in_progress`; `TK-021` foi revalidado e voltou a
   `verified`: a wheel reconstruída localmente
   continha três módulos de `build/lib/`; a CI também usava o extra inexistente
   `rag`, e havia referências a uma release RC ainda não publicada.
 - O build foi isolado dos artefatos ignorados; verificador e workflows foram
-  endurecidos. Regressões passaram; o core gate passou 22/22 etapas em commit
-  limpo `98d2a1df0364ab79d82852bca14308d6dc44a22a` (`1050 passed`, `12 skipped`,
-  zero falhas/bloqueios/not_run; worktree com zero entradas). O perfil executado
-  foi `core`; isso não substitui o full gate. O bundle final ainda será gerado e
-  verificado a partir do source local consolidado.
+  endurecidos. No source limpo `23a39c31bd09f8098af6d71bd57671d7495d10a9`, o
+  core gate passou 22/22 (`1050 passed`, `12 skipped`, zero
+  falhas/bloqueios/not_run; worktree zero). O bundle foi gerado e verificado
+  independentemente: `ok=true`, sem findings no candidate audit/supply-chain,
+  sem módulos legados na wheel; digest do candidato
+  `082749b681a9f40930eaef2da9ea3b67b8307a381035d59159848175b52eff3f`. Os
+  relatórios, hashes e limitações estão em `state.json` e na evidência de
+  prontidão. O perfil foi `core`, não full.
 - A claim de suporte Python do README foi alinhada à matriz oficial 3.11–3.13;
   a revisão manual Standards/Spec não deixou findings locais abertos.
-- Não há tag/release GitHub da RC.1. Full gate no commit final: `not_run`; gate
-  RAGFlow: `blocked` pela falta de serviço e dos quatro inputs externos. CI no
-  source local final: `not_run`, pois depende de push autorizado.
-- Private vulnerability reporting foi habilitado e confirmado por API em
-  2026-09-25; resta gerar/verificar o bundle local, executar o gate RAGFlow
-  externo e rodar CI no SHA remoto final após push autorizado.
+- Não há tag/release GitHub da RC.1. Full gate no source atual: `not_run`,
+  `blocked` pela falta do serviço e dos quatro inputs RAGFlow. CI do source
+  atual também não foi executada: push requer autorização explícita.
+- Private vulnerability reporting foi habilitado em 2026-09-25 e GET-confirmado
+  novamente em 2026-09-26; restam o full gate RAGFlow e CI remota do source atual
+  depois de push autorizado.
 - `main` segue protegido por 13 checks e uma aprovação de code owner; a branch
-  RC não tem proteção nem ruleset. Usar `main` por PR ou decidir proteção da
-  branch RC antes de usá-la como fonte de publicação.
+  RC não tem proteção nem ruleset, então a revisão deve seguir pelo PR #16 para
+  `main`. Ele está aberto, mas seu head remoto segue em `be40e16`; checks verdes
+  de 2026-09-23 são desse source antigo. A decisão é `REVIEW_REQUIRED`; nenhum
+  check cobre o SHA local `23a39c3`.
 - O estado dos 21 tickets coincide com `state.json`; os 33 AC do contrato
   coincidem com a matriz e suas referências de evidência existem. A auditoria
   `requirements.lock`/ambiente local passou sem findings nesta data.
@@ -105,7 +110,7 @@ contratos 1.x.
 
 - [x] TK-018 — dual-run comparativo real e receipt `cutover_approved` verificados.
 - [x] TK-019 — contração de legado executada após receipt aprovado; surface/wheel/supply-chain verificados.
-- [ ] TK-020 — core verificado em commit limpo; bundle pendente; private reporting habilitado; full gate bloqueado por RAGFlow.
+- [ ] TK-020 — core e bundle verificados em source limpo; full gate bloqueado por RAGFlow; atualização do PR/CI depende de autorização de push.
 - [x] TK-021 — wheel builder/verifier isolados; regressões focadas passaram (`9 passed`).
 
 ## Checklist por ticket — template para novos esforços

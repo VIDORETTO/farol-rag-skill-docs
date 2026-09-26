@@ -202,3 +202,93 @@ O bundle final para auditoria local tem geração/verificação independente
 pendente após o commit da atualização desta evidência. A referência do bundle
 será concluída em `state.json`, no ticket TK-020 e nos checkpoints depois de
 observar o artefato e o recibo reais.
+
+## Source candidato e bundle verificados — 2026-09-26
+
+### Core no source exato do bundle
+
+O perfil `core` foi executado em `23a39c31bd09f8098af6d71bd57671d7495d10a9`,
+o mesmo commit registrado pela identidade do bundle. O relatório confirma
+worktree limpo (`worktree_entries=0`), `ok=true`, 22 etapas e denominadores
+`1050 passed`, `12 skipped`, `0 failed`, `0 blocked`, `0 not_run`. A suíte
+principal e o clone limpo tiveram cada um `479 passed, 6 skipped`; crash matrix
+`17 passed`; revogação `25 passed`. Ambiente: Windows 11, Python 3.13.12, AMD64.
+
+Comando:
+
+```powershell
+.venv-rag\Scripts\python.exe scripts/run_release_gates.py --root . --python .venv-rag\Scripts\python.exe --output artifacts/release-gates-clean-commit-23a39c3 --profile core --timeout 3600 --json
+```
+
+Relatório: `artifacts/release-gates-clean-commit-23a39c3/release-gates.json`,
+SHA-256 `8671273db85621a5fa21f29742176a9bb10999677afe2feb9e93ae6cf1c4ee38`.
+Início `2026-09-26T19:14:23Z`; término `2026-09-26T19:23:09Z`. Isso não executa
+nem substitui o perfil `full`.
+
+### Bundle candidate
+
+Comandos:
+
+```powershell
+.venv-rag\Scripts\python.exe scripts/prepare_candidate.py --root . --output artifacts/farol-2.0.0-rc.1-clean-commit-audit-20260926 --python .venv-rag\Scripts\python.exe --profile core
+.venv-rag\Scripts\python.exe scripts/verify_candidate.py --root artifacts/farol-2.0.0-rc.1-clean-commit-audit-20260926 --source-root .
+```
+
+`prepare_candidate` gerou
+`artifacts/farol-2.0.0-rc.1-clean-commit-audit-20260926` e retornou `ok=true`.
+O verificador independente retornou `ok=true`, `errors=[]`; commit, estado
+`local-commit-candidate` e digest do source coincidem entre checkout,
+`candidate-identity.json` e manifesto. O
+artefato contém 31 arquivos e 596320 bytes; candidate audit sem findings;
+supply-chain verifier sem erros. A wheel `consulta_documentacao-2.0.0rc1-py3-none-any.whl`
+tem 392925 bytes, SHA-256
+`c018bd6096670ea4051f8059e615d95fa53116e705edc55fd071d33cd8c83169`; os três
+módulos Farol 1.x removidos não aparecem nela.
+
+| Evidência | SHA-256 |
+|---|---|
+| Digest do candidato | `082749b681a9f40930eaef2da9ea3b67b8307a381035d59159848175b52eff3f` |
+| `candidate-identity.json` | `45f90390777359762f386e5f5cbc7fef8d940e6605c811f94705b21cc914e51e` |
+| `candidate-manifest.json` | `c20aa8a895890461e7639cdac0fa08b091a65487c97450bdb1f1d77193f90b1e` |
+| `SHA256SUMS` | `47ab540aa4189957b7b3549201577cd4d0bc145121876768bda0de4f2c904b04` |
+| wheel | `c018bd6096670ea4051f8059e615d95fa53116e705edc55fd071d33cd8c83169` |
+| recibo `prepare_candidate.py` | `93e03832eb4e024887d86e10709bf001cfc97e8e3a601d713edbd2c218f55796` |
+| recibo `verify_candidate.py` | `10cbde8c00bc54c1dfe3e57808f777f810311ee987cf814ea21e009ff4bd6b17` |
+
+Os recibos de build/verificação ficam em `artifacts/`, fora do bundle. A
+identidade registra CI remota como `not-observed`, source não alcançável pelo
+remote e atestação `not-configured`; não houve publicação.
+
+### Snapshot autenticado do GitHub
+
+Consultas somente de leitura em 2026-09-26 confirmaram: `main` em
+`a939e0a4b856ea3df86ac5f8055f329ebd15f5fd`; branch RC remota em
+`be40e16f09153cfc12e3ea389302793f920c40b2`; sem tag `v2.0.0-rc.1` ou GitHub
+Release. O [PR #16](https://github.com/VIDORETTO/farol-rag-skill-docs/pull/16)
+segue aberto e mergeable para `main`, mas mantém head `be40e16` e decisão
+`REVIEW_REQUIRED`. Seus checks requeridos passaram em 2026-09-23 para esse head
+antigo; nenhum run cobre o candidato local `23a39c3`.
+
+`main` exige 13 checks, uma aprovação de code owner e descarta reviews stale;
+`enforce_admins=false`. A branch RC continua sem branch protection (HTTP 404) e
+sem ruleset de repositório/ancestral. Private vulnerability reporting retornou
+`true`. Nenhuma configuração foi alterada nesta verificação.
+
+Comandos de leitura observados:
+
+```powershell
+git ls-remote origin refs/heads/release/farol-2.0.0-rc.1 refs/heads/main refs/tags/v2.0.0-rc.1
+gh release list --repo VIDORETTO/farol-rag-skill-docs --limit 20
+gh pr list --repo VIDORETTO/farol-rag-skill-docs --head release/farol-2.0.0-rc.1 --state all --json number,state,title,headRefOid,baseRefName,url
+gh pr view 16 --repo VIDORETTO/farol-rag-skill-docs --json number,state,title,headRefOid,baseRefOid,baseRefName,mergeable,reviewDecision,statusCheckRollup,url
+gh api repos/VIDORETTO/farol-rag-skill-docs/branches/main/protection
+gh api repos/VIDORETTO/farol-rag-skill-docs/branches/release%2Ffarol-2.0.0-rc.1/protection
+gh api repos/VIDORETTO/farol-rag-skill-docs/rulesets --jq length
+gh api repos/VIDORETTO/farol-rag-skill-docs/private-vulnerability-reporting --jq .enabled
+gh run list --repo VIDORETTO/farol-rag-skill-docs --branch release/farol-2.0.0-rc.1 --limit 10
+```
+
+O usuário confirmou que não há serviço RAGFlow nem credenciais disponíveis; o
+full gate permanece `blocked/not_run` pelos quatro inputs listados em
+`state.json`. O source local e a atualização do PR aguardam autorização explícita
+de push. Tag, GitHub Release e promoção a GA não foram feitas.
