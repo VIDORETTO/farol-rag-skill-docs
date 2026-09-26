@@ -198,10 +198,11 @@ não foi registrado como sucesso. O CI remoto do source revisado também não fo
 executado: o commit permanece local e push não foi autorizado. Tag, release e
 promoção a GA continuam não executadas.
 
-O bundle final para auditoria local tem geração/verificação independente
-pendente após o commit da atualização desta evidência. A referência do bundle
-será concluída em `state.json`, no ticket TK-020 e nos checkpoints depois de
-observar o artefato e o recibo reais.
+Na captura deste checkpoint, baseada no core do commit `98d2a1d`, o bundle final
+ainda aguardava geração e verificação independente. Isso foi concluído depois:
+o bundle do source `23a39c3` aparece como intermediário abaixo, e a verificação
+final no source `6878aa4` está registrada na seção final deste recibo. Não resta
+pendência local de geração ou verificação do bundle.
 
 ## Candidate intermediário `23a39c3` — 2026-09-26
 

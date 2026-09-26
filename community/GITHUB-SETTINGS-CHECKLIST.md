@@ -81,7 +81,8 @@ describe the setting and API operation.
   [#16](https://github.com/VIDORETTO/farol-rag-skill-docs/pull/16) remains open
   to `main`, but its remote head is still `be40e16f09153cfc12e3ea389302793f920c40b2`;
   its decision is `REVIEW_REQUIRED`. The green checks completed on 2026-09-23
-  apply to that old head, not local candidate `23a39c31bd09f8098af6d71bd57671d7495d10a9`.
+  apply to that old head, not the current local candidate. Its exact source SHA
+  is recorded in the candidate manifest; no exact-source CI run is observed.
 - No setting was changed and no push, tag, release or GA promotion was
   performed. Updating the PR head and running CI on the current source requires
   explicit push authorization.
