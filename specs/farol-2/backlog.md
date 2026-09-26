@@ -9,8 +9,8 @@ documental.
 
 **Prontidão local atual (2026-09-26):** branch `release/farol-2.0.0-rc.1`,
 `TK-020` em progresso; core (22/22) e bundle auditável foram verificados no
-source limpo `23a39c31bd09f8098af6d71bd57671d7495d10a9`, digest
-`082749b681a9f40930eaef2da9ea3b67b8307a381035d59159848175b52eff3f`. Private
+source limpo `6878aa44f91e61e05d706c044bec5d6439cd26ef`, digest
+`4c822f2f3af2e184f5dc0b1fda27490954134a119edb7990de0d2b07e9adf850`. Private
 vulnerability reporting está habilitado. O full gate RAGFlow está bloqueado
 pela ausência do serviço e quatro entradas; CI do source atual requer push
 autorizado. O PR #16 para `main` está aberto, mas ainda aponta ao commit remoto

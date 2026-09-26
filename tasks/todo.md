@@ -2,13 +2,13 @@
 
 ## Estado atual
 
-- Branch `release/farol-2.0.0-rc.1`; source local limpo `23a39c31bd09f8098af6d71bd57671d7495d10a9`, sem push. Core 22/22 e bundle auditável verificados; digest `082749b681a9f40930eaef2da9ea3b67b8307a381035d59159848175b52eff3f`.
+- Branch `release/farol-2.0.0-rc.1`; source local limpo `6878aa44f91e61e05d706c044bec5d6439cd26ef`, sem push. Core 22/22 e bundle final auditável verificados; digest `4c822f2f3af2e184f5dc0b1fda27490954134a119edb7990de0d2b07e9adf850`.
 - `TK-020` está `in_progress`; `TK-021` foi revalidado e está `verified`. Builder/verificador da wheel, workflows e claims públicos corrigidos localmente; regressões focadas: `9 passed`.
-- Gate core no source do bundle: 22/22 etapas, 1050 pass, 12 skips, zero falhas/bloqueios/not_run; relatório SHA `8671273d…`. Bundle: `artifacts/farol-2.0.0-rc.1-clean-commit-audit-20260926`; verificação independente sem erros; wheel de 392925 bytes, SHA `c018bd60…`. O full gate segue bloqueado pelos inputs RAGFlow.
+- Gate core no source do bundle: 22/22 etapas, 1050 pass, 12 skips, zero falhas/bloqueios/not_run; relatório SHA `ad0850be…`. Bundle: `artifacts/farol-2.0.0-rc.1-final-audit-20260926`; verificação independente sem erros; wheel de 392925 bytes, SHA `c018bd60…`. O full gate segue bloqueado pelos inputs RAGFlow.
 - Revisão manual Standards/Spec registrou uma claim Python ampla demais, alinhou-a à matriz suportada 3.11–3.13 e não deixou findings locais abertos.
 - Full gate RAGFlow `blocked`: o usuário confirmou que não há serviço nem credenciais agora; faltam quatro inputs listados em `state.json`.
 - GitHub continua sem tag/release RC ou release estável. Private vulnerability reporting está habilitado. PR #16 permanece aberto com head remoto antigo (`be40e16`), checks antigos verdes e `REVIEW_REQUIRED`; atualizar o head requer push autorizado.
-- `main` tem proteção (13 checks, uma aprovação de code owner); a branch RC não está protegida. Para a publicação, usar PR para `main` ou decidir explicitamente proteção da branch RC.
+- `main` tem proteção (13 checks, uma aprovação de code owner); a branch RC não está protegida. Para a revisão, atualizar o PR #16 para `main`; seu head está stale e atualizar exige push autorizado.
 - Backup `farol-v3-backup-2026-09-21` verificado e preservado.
 
 ## Próximas ações
