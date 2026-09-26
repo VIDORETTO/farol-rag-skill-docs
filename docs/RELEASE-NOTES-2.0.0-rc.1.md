@@ -32,15 +32,22 @@ O gate full `25/25` foi executado no commit de implementação
 commit de preparação da RC nem desta árvore de trabalho. O estado atual dos
 gates e das limitações está em [`specs/farol-2/state.json`](../specs/farol-2/state.json).
 
-O perfil `core` da árvore local baseada em `be40e16f09153cfc12e3ea389302793f920c40b2`
-passou em 25 de setembro de 2026 UTC: 22/22 etapas, `1050 passed`, `12 skipped`
-e zero falhas/bloqueios/not_run. A árvore tinha 33 entradas alteradas quando o
-gate capturou sua identidade; esse resultado não é full gate e não valida
-RAGFlow. A RC segue sem publicação autorizada.
+Na revalidação de 26 de setembro de 2026, o source local limpo passou o perfil
+`core`: 22/22 etapas, `1050 passed`, `12 skipped` explícitos e zero
+falhas/bloqueios/not_run. O bundle candidate passou pela verificação
+independente, auditoria de candidate e supply-chain; a wheel não contém os três
+módulos Farol 1.x removidos. O `candidate-manifest.json` de cada bundle registra
+o SHA exato do source e os digests dos artefatos.
 
-Não há wheel, checksums ou release para baixar neste momento. Não instale um
-nome de artefato presumido; aguarde a publicação autorizada e confira os
-digests na release correspondente.
+Esse resultado é apenas `core`; não valida a integração real RAGFlow. No
+snapshot de 26 de setembro, o full gate permanecia `blocked/not_run` pela
+indisponibilidade do serviço e das quatro entradas externas. O PR #16 ainda
+apontava para o head antigo, sem CI remoto no source exato. O release candidate
+seguia sem tag, GitHub Release ou artefatos públicos.
+
+Não há wheel, checksums ou release públicos para baixar neste momento. O
+artefato local auditado não é uma distribuição pública; aguarde a publicação
+autorizada e confira os digests no manifesto da release correspondente.
 
 ## Limites da prévia
 

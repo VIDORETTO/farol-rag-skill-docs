@@ -4,10 +4,27 @@ Este é o runbook atual para a release candidate Farol 2.0. Scripts e gates
 produzem evidência local, mas não fazem commit, push, tag, merge ou publicação
 automaticamente. O código Farol 2.0 está integrado em `main`, mas não há tag ou
 GitHub Release `v2.0.0-rc.1`, nem release estável publicada confirmada neste
-repositório na revisão autenticada de 2026-09-24. Qualquer publicação exige
+repositório na revisão autenticada de 2026-09-26. Qualquer publicação exige
 revisão manual de conteúdo, permissões e artefatos.
 
-## Estado do candidato
+## Snapshot atual da candidata — 2026-09-26
+
+O último source local limpo passou o perfil `core` em 22/22 etapas (`1050
+passed`, `12 skipped`, zero falhas/bloqueios/not_run); o bundle e a cadeia de
+suprimentos passaram por verificação independente, sem findings. O manifesto
+do candidato fixa o source e os digests exatos. O perfil `core` não substitui o
+gate `full`.
+
+O `full` permanece `blocked/not_run`: o serviço RAGFlow e os quatro inputs
+`DOCOPS_RAGFLOW_ENDPOINT`, `DOCOPS_RAGFLOW_TOKEN`,
+`DOCOPS_RAGFLOW_IMAGE_DIGEST` e `DOCOPS_RAGFLOW_SDK_VERSION` estão indisponíveis.
+Não há CI remota no source local. Em 26 de setembro, o branch remoto RC ainda
+estava em `be40e16`; o PR #16 permanecia aberto com `REVIEW_REQUIRED`, e os
+checks verdes eram desse SHA antigo. Não existe tag nem GitHub Release RC.1.
+Atualizar o PR exige autorização explícita de push; review/merge em `main`,
+tag, release e promoção a GA continuam decisões separadas.
+
+## Evidência histórica de gates anteriores
 
 Em 20 de setembro de 2026, a execução full final registrou:
 

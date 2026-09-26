@@ -323,6 +323,14 @@ reconciliação de release e seus bloqueios atuais estão em
 [`specs/farol-2/evidence/`](specs/farol-2/evidence/). A promoção para GA exige
 gates atuais e autorização explícita do mantenedor.
 
+Na revalidação local de 26 de setembro de 2026, o core passou 22/22 etapas em
+source limpo e o bundle foi preparado e verificado independentemente. Isso não
+substitui o full gate: a validação RAGFlow permanece bloqueada pela
+indisponibilidade do serviço e das quatro entradas externas, e o source ainda
+aguarda CI remota e revisão no PR protegido. O candidato continua sem tag ou
+release pública; consulte o estado e o manifesto para SHA, digest e recibos
+exatos.
+
 ### Histórico Farol 1.x
 
 O estado atual do repositório inclui a implementação e a evidência local das
