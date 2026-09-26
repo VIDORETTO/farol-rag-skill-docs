@@ -2,9 +2,9 @@
 
 ## Estado atual
 
-- Branch `release/farol-2.0.0-rc.1`; source local limpo `6878aa44f91e61e05d706c044bec5d6439cd26ef`, sem push. Core 22/22 e bundle final auditável verificados; digest `4c822f2f3af2e184f5dc0b1fda27490954134a119edb7990de0d2b07e9adf850`.
+- Branch `release/farol-2.0.0-rc.1`; source local limpo `cbee436d5e42aeb81f7c27006f65406e724fa4a9`, sem push. Core 22/22 e bundle final auditável verificados; digest `023d4ef786f8d2f43ae9d5c90672a58085a0b8f3db83fb7919417dea79ce387b`.
 - `TK-020` está `in_progress`; `TK-021` foi revalidado e está `verified`. Builder/verificador da wheel, workflows e claims públicos corrigidos localmente; regressões focadas: `9 passed`.
-- Gate core no source do bundle: 22/22 etapas, 1050 pass, 12 skips, zero falhas/bloqueios/not_run; relatório SHA `ad0850be…`. Bundle: `artifacts/farol-2.0.0-rc.1-final-audit-20260926`; verificação independente sem erros; wheel de 392925 bytes, SHA `c018bd60…`. O full gate segue bloqueado pelos inputs RAGFlow.
+- Gate core no source do bundle: 22/22 etapas, 1050 pass, 12 skips, zero falhas/bloqueios/not_run; relatório SHA `e01c3eca…`. Bundle: `artifacts/farol-2.0.0-rc.1-cbee436-final-audit-20260926`; verificação independente sem erros; wheel de 392925 bytes, SHA `c018bd60…`. O full gate segue bloqueado pelos inputs RAGFlow.
 - Revisão manual Standards/Spec registrou uma claim Python ampla demais, alinhou-a à matriz suportada 3.11–3.13 e não deixou findings locais abertos.
 - Full gate RAGFlow `blocked`: o usuário confirmou que não há serviço nem credenciais agora; faltam quatro inputs listados em `state.json`.
 - GitHub continua sem tag/release RC ou release estável. Private vulnerability reporting está habilitado. PR #16 permanece aberto com head remoto antigo (`be40e16`), checks antigos verdes e `REVIEW_REQUIRED`; atualizar o head requer push autorizado.

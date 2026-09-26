@@ -299,7 +299,12 @@ full gate permanece `blocked/not_run` pelos quatro inputs listados em
 `state.json`. O source local e a atualização do PR aguardam autorização explícita
 de push. Tag, GitHub Release e promoção a GA não foram feitas.
 
-## Candidate final local — source `6878aa4` — 2026-09-26
+## Candidate local anteriormente final — source `6878aa4` — 2026-09-26
+
+Este source foi final na verificação anterior. Depois da revisão documental,
+corrigimos a referência de candidato na checklist GitHub empacotada. O source
+atualizado `cbee436`, com nova execução do core e do bundle, está documentado
+na última seção deste recibo.
 
 ### Core no source exato
 
@@ -361,3 +366,82 @@ O PR #16 segue aberto e mergeable para `main`, mas com head `be40e16` e decisão
 `REVIEW_REQUIRED`; os checks verdes são de 2026-09-23 e não cobrem `6878aa4`.
 O branch source local não foi enviado. O full gate segue `blocked/not_run` por
 indisponibilidade confirmada do serviço e dos quatro inputs RAGFlow.
+
+## Candidate final local — source `cbee436` — 2026-09-26
+
+### Core no source exato
+
+Após corrigir a referência de candidato na checklist GitHub distribuída, o
+perfil `core` foi executado no source limpo
+`cbee436d5e42aeb81f7c27006f65406e724fa4a9`. O relatório confirmou `ok=true`,
+22 etapas, `1050 passed`, `12 skipped`, zero `failed`, `blocked` ou `not_run`,
+e zero entradas no worktree. Suíte principal e clone limpo: `479 passed, 6
+skipped` cada; crash matrix: 17; revogação: 25. Ambiente: Windows 11, Python
+3.13.12, AMD64. O perfil full segue `not_run` por bloqueio RAGFlow.
+
+Comando:
+
+```powershell
+.venv-rag\Scripts\python.exe scripts/run_release_gates.py --root . --python .venv-rag\Scripts\python.exe --output artifacts/release-gates-clean-commit-cbee436 --profile core --timeout 3600 --json
+```
+
+Relatório: `artifacts/release-gates-clean-commit-cbee436/release-gates.json`,
+SHA-256 `e01c3eca91f791515552a42a3b575a419bb3e7940974618f50887bec207f6eee`.
+Início `2026-09-26T20:01:59Z`; término `2026-09-26T20:10:09Z`.
+
+### Bundle auditável
+
+Comandos:
+
+```powershell
+.venv-rag\Scripts\python.exe scripts\prepare_candidate.py --root . --output artifacts\farol-2.0.0-rc.1-cbee436-final-audit-20260926 --python .venv-rag\Scripts\python.exe --profile core
+.venv-rag\Scripts\python.exe scripts\verify_candidate.py --root artifacts\farol-2.0.0-rc.1-cbee436-final-audit-20260926 --source-root .
+```
+
+Preparação e verificação independente retornaram `ok=true`; `errors=[]`,
+source commit/digest conferidos e supply-chain aprovado. Candidate audit sem
+findings. O bundle contém 31 arquivos, 597298 bytes, digest
+`023d4ef786f8d2f43ae9d5c90672a58085a0b8f3db83fb7919417dea79ce387b`.
+Checklist GitHub no bundle e na fonte tem SHA-256 idêntico
+`02cb992a723d69fce258104a2d4c0cbc4adcaeb4b6f465757961b0f6fe2c2b66`.
+
+| Evidência | SHA-256 |
+|---|---|
+| `candidate-identity.json` | `9a23e354f5a0438c86621df4f5b70d1199724bb8e80f6656efdfb03b8f698ca7` |
+| `candidate-manifest.json` | `9ccc8aa1764127a5f445852aceb342efa749c4eb9980eb195bd4d444998144b9` |
+| `SHA256SUMS` | `124b787e2f6ffdb66989a157efe52e6fff6c2fdf45d2a270c958214c07194335` |
+| Recibo `prepare_candidate.py` | `76f9d65d640ba967b1baf05ae5a6ac1b3cbbbb296f5f0c89d6df4f2d98d59b5a` |
+| Recibo `verify_candidate.py` | `94ae508dec7b9ec05eefd751d5562735abde62e9ab42f84d9963a12c56e438984` |
+| Wheel `consulta_documentacao-2.0.0rc1-py3-none-any.whl` | `c018bd6096670ea4051f8059e615d95fa53116e705edc55fd071d33cd8c83169` |
+
+A wheel tem 392925 bytes e não contém `docops/mcp_client.py`,
+`docops/rag_sync.py` nem `docops/backends/legacy_knowledge_rag.py`. Recibos
+ficam em `artifacts/`, fora do bundle. Remote reachability/CI seguem
+`unverified`/`not-observed`; atestação `not-configured`; publicação não feita.
+
+### GitHub após o candidate final
+
+Consultas de leitura em 2026-09-26 confirmaram `main` em
+`a939e0a4b856ea3df86ac5f8055f329ebd15f5fd` e a branch RC remota em
+`be40e16f09153cfc12e3ea389302793f920c40b2`; tag e GitHub Release RC seguem
+ausentes. O PR #16 está aberto e mergeable para `main`, com decisão
+`REVIEW_REQUIRED`; os dois runs CI retornados pertencem ao SHA antigo `be40e16`
+e não cobrem `cbee436`. A atualização do PR aguarda autorização explícita de
+push. Private vulnerability reporting está habilitado; nenhuma configuração
+remota foi alterada.
+
+O full gate continua `blocked/not_run`: o usuário confirmou indisponibilidade
+do serviço e das quatro entradas RAGFlow listadas em `state.json`. Tag, release
+e promoção a GA continuam decisões separadas e não executadas.
+
+### Reconciliação de contratos e documentação
+
+Após registrar o candidate e atualizar os checkpoints, as verificações locais
+de consistência passaram: `check_acceptance_matrix.py --check` reportou 33 AC
+verificados e nenhum finding; `check_documentation.py --root . --json` checou
+167 Markdown sem findings; `check_contracts.py --json` e
+`validate_workflows.py --json` retornaram `ok=true`, com 2 workflows; os
+checks de support matrix e public seams não apontaram findings; e
+`audit_release.py --candidate --json` retornou `ok=true`, 578 arquivos
+verificados e zero findings. Essas verificações cobriram também o registro
+documental atualizado; não alteraram o payload do bundle source `cbee436`.

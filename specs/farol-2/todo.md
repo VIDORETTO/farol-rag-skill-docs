@@ -16,12 +16,12 @@ regenere esta projeção.
   continha três módulos de `build/lib/`; a CI também usava o extra inexistente
   `rag`, e havia referências a uma release RC ainda não publicada.
 - O build foi isolado dos artefatos ignorados; verificador e workflows foram
-  endurecidos. No source limpo `6878aa44f91e61e05d706c044bec5d6439cd26ef`, o
+  endurecidos. No source limpo `cbee436d5e42aeb81f7c27006f65406e724fa4a9`, o
   core gate passou 22/22 (`1050 passed`, `12 skipped`, zero
   falhas/bloqueios/not_run; worktree zero). O bundle foi gerado e verificado
   independentemente: `ok=true`, sem findings no candidate audit/supply-chain,
   sem módulos legados na wheel; digest do candidato
-  `4c822f2f3af2e184f5dc0b1fda27490954134a119edb7990de0d2b07e9adf850`. Os
+  `023d4ef786f8d2f43ae9d5c90672a58085a0b8f3db83fb7919417dea79ce387b`. Os
   relatórios, hashes e limitações estão em `state.json` e na evidência de
   prontidão. O perfil foi `core`, não full.
 - A claim de suporte Python do README foi alinhada à matriz oficial 3.11–3.13;
@@ -36,7 +36,7 @@ regenere esta projeção.
   RC não tem proteção nem ruleset, então a revisão deve seguir pelo PR #16 para
   `main`. Ele está aberto, mas seu head remoto segue em `be40e16`; checks verdes
   de 2026-09-23 são desse source antigo. A decisão é `REVIEW_REQUIRED`; nenhum
-  check cobre o SHA local `6878aa4`.
+  check cobre o SHA local `cbee436`.
 - O estado dos 21 tickets coincide com `state.json`; os 33 AC do contrato
   coincidem com a matriz e suas referências de evidência existem. A auditoria
   `requirements.lock`/ambiente local passou sem findings nesta data.
