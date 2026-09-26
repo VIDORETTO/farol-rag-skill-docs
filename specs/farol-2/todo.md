@@ -16,14 +16,18 @@ regenere esta projeção.
   continha três módulos de `build/lib/`; a CI também usava o extra inexistente
   `rag`, e havia referências a uma release RC ainda não publicada.
 - O build foi isolado dos artefatos ignorados; verificador e workflows foram
-  endurecidos. No source limpo `cbee436d5e42aeb81f7c27006f65406e724fa4a9`, o
+  endurecidos. No source limpo `129d517a899e5ed39b1d48666ae736de246e09a6`, o
   core gate passou 22/22 (`1050 passed`, `12 skipped`, zero
   falhas/bloqueios/not_run; worktree zero). O bundle foi gerado e verificado
   independentemente: `ok=true`, sem findings no candidate audit/supply-chain,
   sem módulos legados na wheel; digest do candidato
-  `023d4ef786f8d2f43ae9d5c90672a58085a0b8f3db83fb7919417dea79ce387b`. Os
+  `e3bd485758d4ecf751e5c6e740b678f410f5d8f74eb5cf164199d53a0ff46017`. Os
   relatórios, hashes e limitações estão em `state.json` e na evidência de
   prontidão. O perfil foi `core`, não full.
+- Os perfis locais `book-to-skill` e OCR também passaram em worktree limpo do
+  mesmo source: duas skills com 5 claims de lineage e 13 arquivos temporários;
+  OCR 1/1, sem rede. São evidências isoladas, fora do agregado core e sem efeito
+  sobre o bloqueio do full gate RAGFlow.
 - A claim de suporte Python do README foi alinhada à matriz oficial 3.11–3.13;
   a revisão manual Standards/Spec não deixou findings locais abertos.
 - Não há tag/release GitHub da RC.1. Full gate no source atual: `not_run`,
@@ -36,7 +40,7 @@ regenere esta projeção.
   RC não tem proteção nem ruleset, então a revisão deve seguir pelo PR #16 para
   `main`. Ele está aberto, mas seu head remoto segue em `be40e16`; checks verdes
   de 2026-09-23 são desse source antigo. A decisão é `REVIEW_REQUIRED`; nenhum
-  check cobre o SHA local `cbee436`.
+  check cobre o SHA local `129d517`.
 - O estado dos 21 tickets coincide com `state.json`; os 33 AC do contrato
   coincidem com a matriz e suas referências de evidência existem. A auditoria
   `requirements.lock`/ambiente local passou sem findings nesta data.

@@ -367,7 +367,12 @@ O PR #16 segue aberto e mergeable para `main`, mas com head `be40e16` e decisão
 O branch source local não foi enviado. O full gate segue `blocked/not_run` por
 indisponibilidade confirmada do serviço e dos quatro inputs RAGFlow.
 
-## Candidate final local — source `cbee436` — 2026-09-26
+## Candidate local anteriormente final — source `cbee436` — 2026-09-26
+
+Esta verificação fechou o candidate após corrigir a checklist GitHub. A revisão
+posterior encontrou que README, runbook e notas da RC ainda exibiam somente
+gates antigos; os textos foram atualizados, revalidados e incluídos no source
+`129d517` abaixo.
 
 ### Core no source exato
 
@@ -434,6 +439,76 @@ O full gate continua `blocked/not_run`: o usuário confirmou indisponibilidade
 do serviço e das quatro entradas RAGFlow listadas em `state.json`. Tag, release
 e promoção a GA continuam decisões separadas e não executadas.
 
+## Candidate final local — source `129d517` — 2026-09-26
+
+### Core no source exato
+
+Após atualizar o README, o runbook de release e as notas da RC, o perfil `core`
+foi executado no source limpo
+`129d517a899e5ed39b1d48666ae736de246e09a6`. O relatório confirmou `ok=true`,
+22 etapas, `1050 passed`, `12 skipped`, zero `failed`, `blocked` ou `not_run`,
+e zero entradas no worktree. Suíte principal e clone limpo: `479 passed, 6
+skipped` cada; crash matrix: 17; revogação: 25. Ambiente: Windows 11, Python
+3.13.12, AMD64. O perfil full segue `not_run` por bloqueio RAGFlow.
+
+Comando:
+
+```powershell
+.venv-rag\Scripts\python.exe scripts/run_release_gates.py --root . --python .venv-rag\Scripts\python.exe --output artifacts/release-gates-clean-commit-129d517 --profile core --timeout 3600 --json
+```
+
+Relatório: `artifacts/release-gates-clean-commit-129d517/release-gates.json`,
+SHA-256 `ccf3b1c50cd1d27028cdcdc21a1adfabbc6400390cb79e4dfb4c80f477ec4da2`.
+Início `2026-09-26T20:28:35Z`; término `2026-09-26T20:37:06Z`.
+
+### Bundle auditável
+
+Comandos:
+
+```powershell
+.venv-rag\Scripts\python.exe scripts\prepare_candidate.py --root . --output artifacts\farol-2.0.0-rc.1-129d517-final-audit-20260926 --python .venv-rag\Scripts\python.exe --profile core
+.venv-rag\Scripts\python.exe scripts\verify_candidate.py --root artifacts\farol-2.0.0-rc.1-129d517-final-audit-20260926 --source-root .
+```
+
+Preparação e verificação independente retornaram `ok=true`; `errors=[]`,
+source commit/digest conferidos e supply-chain aprovado. Candidate audit sem
+findings. O bundle contém 31 arquivos, 599428 bytes, digest
+`e3bd485758d4ecf751e5c6e740b678f410f5d8f74eb5cf164199d53a0ff46017`.
+Checklist GitHub no bundle e na fonte tem SHA-256 idêntico
+`02cb992a723d69fce258104a2d4c0cbc4adcaeb4b6f465757961b0f6fe2c2b66`.
+
+| Evidência | SHA-256 |
+|---|---|
+| `candidate-identity.json` | `931cf298314d53b0914dff3946e700cdb7a1d5d27178fe730380ee648b401639` |
+| `candidate-manifest.json` | `c9ad233b4b7298b7e2a462ff78ddfed498477805550fbcbaff465b3032b7740b` |
+| `SHA256SUMS` | `b4fd4b958a5a6cae0c459b9ecad0d8ba463e94210de6b6bd378bcb4517b800e5` |
+| Recibo `prepare_candidate.py` | `10e3741ace8af6ef9f63f9d71a160439f34e2084a684adc036a757c9d90cd50c` |
+| Recibo `verify_candidate.py` | `e305399064fd82e33ef06a4d4e34ba6483c2612465c8b56a1575261eb9c922c9` |
+| Wheel `consulta_documentacao-2.0.0rc1-py3-none-any.whl` | `34cb4aa803d7ecf581ce51291dde410e5558d513aba5a026875aa113bc7886af` |
+
+A wheel tem 393132 bytes e 161 membros; verificação do arquivo ZIP confirmou
+ausência de `docops/mcp_client.py`, `docops/rag_sync.py` e
+`docops/backends/legacy_knowledge_rag.py`. Os recibos ficam em `artifacts/`,
+fora do bundle. Atestação `not-configured`; CI remoto do source
+`129d517` `not-observed`; nenhuma publicação foi feita.
+
+### GitHub após o candidate final
+
+Consultas de leitura em 2026-09-26 confirmaram `main` em
+`a939e0a4b856ea3df86ac5f8055f329ebd15f5fd` e a branch RC remota em
+`be40e16f09153cfc12e3ea389302793f920c40b2`; tag e GitHub Release RC seguem
+ausentes. O PR #16 continua aberto e mergeable para `main`, com decisão
+`REVIEW_REQUIRED`. Os dois runs CI retornados foram aprovados em 2026-09-23,
+mas ambos são do SHA antigo `be40e16` e não cobrem `129d517`. No instante da
+consulta, a branch local estava sete commits à frente; nenhum foi enviado.
+Private vulnerability reporting permanece habilitado e nenhuma configuração
+remota foi alterada.
+
+O full gate continua `blocked/not_run`: o usuário confirmou indisponibilidade
+do serviço e das quatro entradas RAGFlow listadas em `state.json`. Atualizar o
+PR exige autorização explícita de push. Tag, release e promoção a GA continuam
+decisões separadas e não executadas.
+
 ### Reconciliação de contratos e documentação
 
 Após registrar o candidate e atualizar os checkpoints, as verificações locais
@@ -444,4 +519,31 @@ verificados e nenhum finding; `check_documentation.py --root . --json` checou
 checks de support matrix e public seams não apontaram findings; e
 `audit_release.py --candidate --json` retornou `ok=true`, 578 arquivos
 verificados e zero findings. Essas verificações cobriram também o registro
-documental atualizado; não alteraram o payload do bundle source `cbee436`.
+documental atualizado; não alteraram o payload do bundle source `129d517`.
+
+### Perfis específicos no source limpo `129d517` — 2026-09-26
+
+Além do core gate, os perfis `book-to-skill` e OCR foram repetidos de forma
+independente a partir de um worktree detached limpo no mesmo source
+`129d517a899e5ed39b1d48666ae736de246e09a6`. Estes recibos não são etapas
+adicionais do agregado core e não substituem o full gate RAGFlow.
+
+O perfil `book-to-skill` passou (`ok=true`) com o harness MIT no commit
+`526f362552562d88c1a8bbf8012d2cee93f831d5`, fixture sintética
+`documents/fixtures/acme-docs`, duas skills validadas (`acme-api-reliability`,
+`acme-api-release`), cinco claims de lineage e 13 arquivos temporários. Os
+outputs não foram retidos e não houve mudança de estado externo. O recibo
+`artifacts/book-to-skill-129d517-final-stdout.txt` tem SHA-256
+`165e9217ee9d1739f091db4f814f0bd959bbd160b70dfeec66d62dea6b299841`.
+
+O perfil OCR passou (`1 passed`, zero skips/falhas, 40,29 s) no teste de PDF
+escaneado sintético com acesso remoto desabilitado; ambiente Docling 2.129.0 e
+ONNX Runtime 1.30.0. O recibo
+`artifacts/ocr-129d517-final-stdout.txt` tem SHA-256
+`078e98d5b26109183840955f83dedb0ce92eb9d71980546c618d730d600fcacc`. Foram
+observados avisos de depreciação em Docling/Pydantic; nenhum teste falhou.
+
+O usuário confirmou que não há serviço nem credenciais RAGFlow disponíveis.
+Assim, o gate full permanece `blocked/not_run` no candidato atual, faltando
+`DOCOPS_RAGFLOW_ENDPOINT`, `DOCOPS_RAGFLOW_TOKEN`,
+`DOCOPS_RAGFLOW_IMAGE_DIGEST` e `DOCOPS_RAGFLOW_SDK_VERSION`.
