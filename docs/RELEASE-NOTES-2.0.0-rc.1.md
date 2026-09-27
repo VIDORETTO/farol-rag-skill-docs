@@ -44,11 +44,15 @@ sintético sem envio remoto no predecessor documental `c0859b6`. Esses perfis
 são evidência suplementar e não são apresentados como executados no source
 `8f06ee7`.
 
-O perfil `core` e os perfis suplementares não constituem o gate `full`. Em 27
-de setembro, o preflight RAGFlow permaneceu `blocked` por falta do serviço e
-dos quatro inputs, sem iniciar integração. O PR #16 ainda apontava para o head
-remoto antigo e não há CI remota no source local. A RC segue sem tag, GitHub
-Release ou artefatos públicos.
+O perfil `core` e os perfis suplementares não constituem o gate `full`. Na
+retomada de 27 de setembro, o RAGFlow local voltou a funcionar e a integração
+real passou (2 testes, zero skips). A CI do PR #16 passou no commit `1afd00e`.
+As melhorias de instalação e diagnóstico do TK-022 precisam dos gates do novo
+candidato. A RC segue sem tag, GitHub Release ou artefatos públicos.
+
+O [guia de instalação](GETTING-STARTED.md) cobre core, OCR, RAGFlow, credenciais
+próprias, uso em agentes, problemas comuns e desinstalação. O bootstrap aceita
+`--ragflow` e `--ocr`; `doctor --require-ragflow` verifica o serviço configurado.
 
 Não há wheel, checksums ou release públicos para baixar neste momento. O
 artefato local auditado não é uma distribuição pública; aguarde a publicação

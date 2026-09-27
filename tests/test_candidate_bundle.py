@@ -16,6 +16,7 @@ REQUIRED_RELEASE_ASSETS = {
     "community/issue-templates/bug_report.yml",
     "community/issue-templates/feature_request.yml",
     "docs/DEPENDENCIES.md",
+    "docs/GETTING-STARTED.md",
     "docs/RELEASE.md",
     "docs/RELEASE-NOTES-2.0.0-rc.1.md",
     "docs/SUPPORT-MATRIX.json",

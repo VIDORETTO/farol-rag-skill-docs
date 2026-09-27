@@ -38,6 +38,7 @@ _BUNDLE_FILES = (
     ("CODE_OF_CONDUCT.md", "CODE_OF_CONDUCT.md"),
     ("CONTRIBUTING.md", "CONTRIBUTING.md"),
     ("docs/DEPENDENCIES.md", "docs/DEPENDENCIES.md"),
+    ("docs/GETTING-STARTED.md", "docs/GETTING-STARTED.md"),
     ("docs/RELEASE.md", "docs/RELEASE.md"),
     ("docs/RELEASE-NOTES-2.0.0-rc.1.md", "docs/RELEASE-NOTES-2.0.0-rc.1.md"),
     ("docs/SUPPORT-MATRIX.json", "docs/SUPPORT-MATRIX.json"),

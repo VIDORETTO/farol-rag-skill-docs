@@ -30,11 +30,11 @@ Sem ticket dedicado (só o guarda-chuva): nenhum
 | AC-016 | TK-012, TK-014, TK-018, TK-020 | verified | specs/farol-2/evidence/TK-012.md, specs/farol-2/evidence/TK-014.md, specs/farol-2/evidence/TK-018.md, specs/farol-2/evidence/TK-020.md |
 | AC-017 | TK-012, TK-014, TK-020 | verified | specs/farol-2/evidence/TK-012.md, specs/farol-2/evidence/TK-014.md, specs/farol-2/evidence/TK-020.md |
 | AC-018 | TK-011, TK-012, TK-020 | verified | specs/farol-2/evidence/TK-011.md, specs/farol-2/evidence/TK-012.md, specs/farol-2/evidence/TK-020.md |
-| AC-019 | TK-001, TK-013, TK-020 | verified | specs/farol-2/evidence/TK-001.md, specs/farol-2/evidence/TK-013.md, specs/farol-2/evidence/TK-020.md |
+| AC-019 | TK-001, TK-013, TK-020, TK-022 | verified | specs/farol-2/evidence/TK-001.md, specs/farol-2/evidence/TK-013.md, specs/farol-2/evidence/TK-020.md, specs/farol-2/evidence/TK-022.md |
 | AC-020 | TK-001, TK-003, TK-013, TK-014, TK-018, TK-020 | verified | specs/farol-2/evidence/TK-001.md, specs/farol-2/evidence/TK-003.md, specs/farol-2/evidence/TK-013.md, specs/farol-2/evidence/TK-014.md, specs/farol-2/evidence/TK-018.md, specs/farol-2/evidence/TK-020.md |
 | AC-021 | TK-003, TK-004, TK-013, TK-014, TK-019, TK-020 | verified | specs/farol-2/evidence/TK-003.md, specs/farol-2/evidence/TK-004.md, specs/farol-2/evidence/TK-013.md, specs/farol-2/evidence/TK-014.md, specs/farol-2/evidence/TK-019.md, specs/farol-2/evidence/TK-020.md |
 | AC-022 | TK-003, TK-013, TK-020 | verified | specs/farol-2/evidence/TK-003.md, specs/farol-2/evidence/TK-013.md, specs/farol-2/evidence/TK-020.md |
-| AC-023 | TK-003, TK-013, TK-020 | verified | specs/farol-2/evidence/TK-003.md, specs/farol-2/evidence/TK-013.md, specs/farol-2/evidence/TK-020.md |
+| AC-023 | TK-003, TK-013, TK-020, TK-022 | verified | specs/farol-2/evidence/TK-003.md, specs/farol-2/evidence/TK-013.md, specs/farol-2/evidence/TK-020.md, specs/farol-2/evidence/TK-022.md |
 | AC-024 | TK-015, TK-020 | verified | specs/farol-2/evidence/TK-015.md, specs/farol-2/evidence/TK-020.md |
 | AC-025 | TK-010, TK-015, TK-020 | verified | specs/farol-2/evidence/TK-010.md, specs/farol-2/evidence/TK-015.md, specs/farol-2/evidence/TK-020.md |
 | AC-026 | TK-015, TK-018, TK-020 | verified | specs/farol-2/evidence/TK-015.md, specs/farol-2/evidence/TK-018.md, specs/farol-2/evidence/TK-020.md |
@@ -43,5 +43,5 @@ Sem ticket dedicado (só o guarda-chuva): nenhum
 | AC-029 | TK-018, TK-019, TK-020 | verified | specs/farol-2/evidence/TK-018.md, specs/farol-2/evidence/TK-019.md, specs/farol-2/evidence/TK-020.md |
 | AC-030 | TK-005, TK-007, TK-020 | verified | specs/farol-2/evidence/TK-005.md, specs/farol-2/evidence/TK-007.md, specs/farol-2/evidence/TK-020.md |
 | AC-031 | TK-020, TK-021 | verified | specs/farol-2/evidence/TK-020.md, specs/farol-2/evidence/TK-021.md |
-| AC-032 | TK-005, TK-020 | verified | specs/farol-2/evidence/TK-005.md, specs/farol-2/evidence/TK-020.md |
+| AC-032 | TK-005, TK-020, TK-022 | verified | specs/farol-2/evidence/TK-005.md, specs/farol-2/evidence/TK-020.md, specs/farol-2/evidence/TK-022.md |
 | AC-033 | TK-005, TK-009, TK-020 | verified | specs/farol-2/evidence/TK-005.md, specs/farol-2/evidence/TK-009.md, specs/farol-2/evidence/TK-020.md |

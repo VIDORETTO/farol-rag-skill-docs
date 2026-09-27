@@ -22,8 +22,8 @@ RAGFlow é opcional e executado como serviço externo.
 
 **Versão do pacote:** `2.0.0rc1` (RC.1, pré-lançamento; não é uma versão estável)
 
-**Publicação:** não há tag ou GitHub Release `v2.0.0-rc.1`. O gate RAGFlow e a
-validação remota do candidato atual continuam pendentes. Consulte
+**Publicação:** não há tag ou GitHub Release `v2.0.0-rc.1`. O fechamento do
+gate completo e a revisão da release continuam em andamento. Consulte
 [o estado da release](docs/RELEASE.md); nenhuma promoção a GA foi feita.
 
 </div>
@@ -33,6 +33,8 @@ validação remota do candidato atual continuam pendentes. Consulte
 ## Navegação
 
 **Começar:** [requisitos](#requisitos) · [instalação](#instalacao) · [primeiro pacote](#primeiro-pacote)
+
+**Guia do usuário:** [instalar, configurar credenciais e resolver problemas](docs/GETTING-STARTED.md).
 
 **Entender:** [pacote gerado](#o-pacote-gerado) · [arquitetura](#arquitetura) · [segurança](#seguranca-e-limites)
 
@@ -102,11 +104,11 @@ GitHub Release `v2.0.0-rc.1`. Para avaliar o projeto, instale a partir do códig
 ~~~bash
 git clone https://github.com/VIDORETTO/farol-rag-skill-docs.git
 cd farol-rag-skill-docs
-python scripts/bootstrap.py --dev
+python scripts/bootstrap.py
 ~~~
 
-O bootstrap cria o ambiente virtual e instala o perfil de desenvolvimento em
-modo editável. Ative o ambiente criado antes de usar os comandos
+O bootstrap cria o ambiente virtual e instala o core e os formatos de documento.
+Use `--dev` somente para desenvolver o projeto. Ative o ambiente criado antes de usar os comandos
 `python -m docops`:
 
 ~~~powershell
@@ -126,7 +128,7 @@ caminho informado no JSON que ele imprime. Para executar os perfis externos de
 RAGFlow e OCR, ative um ambiente Python 3.13 e instale os extras fixados:
 
 ~~~bash
-python -m pip install --editable ".[dev,formats,ragflow,ocr]"
+python scripts/bootstrap.py --ragflow --ocr
 ~~~
 
 Há wrappers equivalentes em <code>scripts/bootstrap.sh</code> e
@@ -134,6 +136,11 @@ Há wrappers equivalentes em <code>scripts/bootstrap.sh</code> e
 ambiente e remova somente o diretório virtual criado pelo bootstrap; o caminho
 do interpretador aparece no JSON de saída. O código-fonte pode ser removido
 separadamente quando não houver dados que você queira preservar.
+
+Os perfis opcionais usam `.venv-rag` com Python 3.13; ative esse ambiente após
+o bootstrap. OCR é um download maior e só é necessário para documentos escaneados.
+O [guia de primeiro uso](docs/GETTING-STARTED.md) também cobre instalação por
+wheel, credenciais próprias, integração com agentes, atualização e desinstalação.
 
 ## 🚀 Primeiro pacote
 
@@ -390,9 +397,10 @@ not_run). O bundle desse source, com 31 arquivos, foi verificado
 independentemente; manifesto, wheel e supply-chain estão ligados ao mesmo SHA.
 Book-to-skill (23/23) e OCR (1/1, PDF sintético sem envio remoto) passaram no
 predecessor documental `c0859b6`; esses perfis suplementares não substituem o
-full gate RAGFlow, que segue `blocked` pela falta do serviço e dos quatro
-inputs. A CI remota ainda cobre apenas o head antigo do PR #16. A candidata não
-tem tag ou GitHub Release. Consulte o [runbook de release](docs/RELEASE.md) e o
+full gate. Na retomada de 27/09, o RAGFlow local foi recuperado e a integração
+real passou (2 testes, zero skips). A CI do commit `1afd00e` passou seus 26
+checks; as melhorias de instalação do TK-022 exigem evidência nova. A candidata
+ainda não tem tag ou GitHub Release. Consulte o [runbook de release](docs/RELEASE.md) e o
 [estado agregado](specs/farol-2/state.json) para hashes, recibos e limitações.
 
 ### Histórico Farol 1.x

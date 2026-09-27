@@ -108,6 +108,7 @@ def main(argv: list[str] | None = None) -> int:
             encoding="utf-8",
         )
         commands = [
+            [sys.executable, "-m", "docops", "doctor", "--json"],
             [
                 sys.executable,
                 "-m",

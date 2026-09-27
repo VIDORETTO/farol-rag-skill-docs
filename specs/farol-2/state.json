@@ -15,9 +15,9 @@
     "value": "v2.0.0-rc.1",
     "branch": "release/farol-2.0.0-rc.1",
     "remote_relation": "release candidate prepared from origin/main after the Farol 2.0 integration; full evidence identifies the implementation candidate 93bb8894d816aad3c3b3682ccec317db1da39d45",
-    "worktree_status": "Final public-document source eb533951fc8feaa2a469a3d491fa381501e22f08 passed the core gate and produced an independently verified local RC bundle; this follow-up commit records evidence/checkpoint changes only; no push, tag, or release; generated bundles remain ignored under artifacts/",
+    "worktree_status": "TK-022 installation and doctor improvements under verification on baseline 1afd00e; prior evidence remains bound to its recorded source.",
     "gate_worktree_entries": 75,
-    "current_worktree_entries": "Final public-document source eb533951fc8feaa2a469a3d491fa381501e22f08 was clean for the 2026-09-27 core gate and RC bundle; this follow-up local commit records only evidence/checkpoint updates, leaving those artifacts bound to eb53395; branch remains unpushed and is not release-eligible until the RAGFlow full gate, exact-source remote CI, review and merge",
+    "current_worktree_entries": "See git status for the current TK-022 candidate; final full gate pending.",
     "current_worktree_observed_at": "2026-09-27"
   },
   "inputs": {
@@ -59,7 +59,8 @@
       "TK-011",
       "TK-018",
       "TK-019",
-      "TK-021"
+      "TK-021",
+      "TK-022"
     ],
     "draft": []
   },
@@ -72,7 +73,8 @@
     "An initial local RC rebuild contained three modules from ignored build/lib output. The builder and independent wheel verifier have been fixed; clean-source bundles through eb533951fc8feaa2a469a3d491fa381501e22f08 were independently verified without errors. README, release runbook and RC notes document the observed core and external blockers; the latest bundle hashes are recorded in verification_runs.release_readiness_eb53395_2026_09_27.",
     "The GitHub snapshot rechecked on 2026-09-27 still has main at a939e0a4b856ea3df86ac5f8055f329ebd15f5fd and the remote RC branch at be40e16f09153cfc12e3ea389302793f920c40b2. PR #16 is open but blocked/review-required; its 26 checks are from 2026-09-23 and do not cover local source eb53395. Local source/evidence commits remain unpushed. No RC tag or GitHub Release exists. No attestation is configured; the full gate remains blocked on four RAGFlow inputs.",
     "GitHub private vulnerability reporting was enabled and GET-verified on 2026-09-25; authenticated setting evidence is recorded in community/GITHUB-SETTINGS-CHECKLIST.md and release-readiness-hardening-20260924.md.",
-    "The locked and local dependency audits passed with zero findings on 2026-09-25; lock SHA-256 is 0d7521e0337029ab512db1bbeb0322dd71e355abd9d4dc56d961e0492571a0fa."
+    "The locked and local dependency audits passed with zero findings on 2026-09-25; lock SHA-256 is 0d7521e0337029ab512db1bbeb0322dd71e355abd9d4dc56d961e0492571a0fa.",
+    "2026-09-27 evening: prior missing-RAGFlow and unpushed-source blockers were resolved. Local Docker service and private development token are available; integration 2/2 passed. TK-022 changes still require full gate and exact-source CI/review before release."
   ],
   "verification_runs": {
     "release_candidate_core": {
@@ -198,7 +200,10 @@
       "platform": "Windows 11, Python 3.13.12, AMD64",
       "harness_commit": "526f362552562d88c1a8bbf8012d2cee93f831d5",
       "fixture": "documents/fixtures/acme-docs",
-      "skills": ["acme-api-reliability", "acme-api-release"],
+      "skills": [
+        "acme-api-reliability",
+        "acme-api-release"
+      ],
       "lineage_claims": 5,
       "output_files": 13,
       "output_tree_hash": "d6cb135b4a6875e428759c19ab833b9a34db08575603a2b34f293fd955a35b93",
@@ -214,14 +219,19 @@
       "report_artifact": "artifacts/ocr-129d517-final-stdout.txt",
       "report_sha256": "078e98d5b26109183840955f83dedb0ce92eb9d71980546c618d730d600fcacc",
       "platform": "Windows 11, Python 3.13.12, AMD64",
-      "versions": {"docling": "2.129.0", "onnxruntime": "1.30.0"},
+      "versions": {
+        "docling": "2.129.0",
+        "onnxruntime": "1.30.0"
+      },
       "tests": 1,
       "passed": 1,
       "skipped": 0,
       "failed": 0,
       "runtime_seconds": 40.29,
       "remote_access": false,
-      "warnings": ["Docling/Pydantic deprecation warnings; no test failures"]
+      "warnings": [
+        "Docling/Pydantic deprecation warnings; no test failures"
+      ]
     },
     "release_candidate_bundle_validation": {
       "candidate_commit": "be40e16f09153cfc12e3ea389302793f920c40b2",
@@ -404,10 +414,20 @@
         "not_run": 0
       },
       "worktree_entries": 0,
-      "main_suite": {"passed": 479, "skipped": 6},
-      "clean_clone_suite": {"passed": 479, "skipped": 6},
-      "crash_matrix": {"passed": 17},
-      "revocation": {"passed": 25},
+      "main_suite": {
+        "passed": 479,
+        "skipped": 6
+      },
+      "clean_clone_suite": {
+        "passed": 479,
+        "skipped": 6
+      },
+      "crash_matrix": {
+        "passed": 17
+      },
+      "revocation": {
+        "passed": 25
+      },
       "stages_all_passed": true,
       "skip_reasons": [
         "OCR and RAGFlow integrations are opt-in and excluded from core.",
@@ -453,9 +473,14 @@
       "baseline": "be40e16f09153cfc12e3ea389302793f920c40b2",
       "standards_findings_open": 0,
       "spec_findings_open": 0,
-      "resolved_findings": ["README Python support claim narrowed to the declared 3.11-3.13 matrix; 3.14 identified as tolerated only"],
+      "resolved_findings": [
+        "README Python support claim narrowed to the declared 3.11-3.13 matrix; 3.14 identified as tolerated only"
+      ],
       "evidence": "specs/farol-2/evidence/release-readiness-hardening-20260924.md",
-      "limitations": ["scripts/hybrid.py and .hybrid/ are absent; review run manually", "no FD finding registry exists"]
+      "limitations": [
+        "scripts/hybrid.py and .hybrid/ are absent; review run manually",
+        "no FD finding registry exists"
+      ]
     },
     "github_branch_protection_review_2026_09_25": {
       "observed_at": "2026-09-25",
@@ -551,8 +576,16 @@
         "successful": 26,
         "failed_or_pending": 0,
         "workflow_runs": [
-          {"run_id": "35802632753", "checks": 13, "result": "SUCCESS"},
-          {"run_id": "35802649202", "checks": 13, "result": "SUCCESS"}
+          {
+            "run_id": "35802632753",
+            "checks": 13,
+            "result": "SUCCESS"
+          },
+          {
+            "run_id": "35802649202",
+            "checks": 13,
+            "result": "SUCCESS"
+          }
         ],
         "scope": "These checks are attached to the old remote PR head; no checks observed for the local branch or candidate source."
       },
@@ -587,8 +620,16 @@
         "successful": 26,
         "failed_or_pending": 0,
         "workflow_runs": [
-          {"run_id": "35802632753", "checks": 13, "result": "SUCCESS"},
-          {"run_id": "35802649202", "checks": 13, "result": "SUCCESS"}
+          {
+            "run_id": "35802632753",
+            "checks": 13,
+            "result": "SUCCESS"
+          },
+          {
+            "run_id": "35802649202",
+            "checks": 13,
+            "result": "SUCCESS"
+          }
         ],
         "scope": "All checks belong to remote PR head be40e16; none covers local candidate source eb53395."
       },
@@ -631,8 +672,16 @@
         "successful": 26,
         "failed_or_pending": 0,
         "workflow_runs": [
-          {"run_id": "35802632753", "checks": 13, "result": "SUCCESS"},
-          {"run_id": "35802649202", "checks": 13, "result": "SUCCESS"}
+          {
+            "run_id": "35802632753",
+            "checks": 13,
+            "result": "SUCCESS"
+          },
+          {
+            "run_id": "35802649202",
+            "checks": 13,
+            "result": "SUCCESS"
+          }
         ],
         "scope": "All checks belong to remote PR head be40e16; none covers local candidate source eb53395 or local evidence head 9f44b1c."
       },
@@ -867,7 +916,12 @@
         "lineage_coverage": 1.0,
         "id_parity": 1.0
       },
-      "lifecycle": {"queryable": true, "recovery": true, "rollback": true, "cleanup": "passed"},
+      "lifecycle": {
+        "queryable": true,
+        "recovery": true,
+        "rollback": true,
+        "cleanup": "passed"
+      },
       "evidence": "specs/farol-2/evidence/TK-018.md",
       "report_artifact": "artifacts/cutover-measurement-20260920-final3"
     },
@@ -1021,53 +1075,26 @@
         "status": "matches"
       },
       "evidence": "specs/farol-2/evidence/rc1-assets-and-v3-backup-20260924.md"
+    },
+    "local_readiness_resume_20260927": {
+      "baseline": "1afd00e0945d93c2f69087e7767c6a551c02d8ac",
+      "working_tree_changes": "TK-022",
+      "ragflow": {
+        "status": "passed",
+        "passed": 2,
+        "skipped": 0,
+        "failed": 0,
+        "duration_seconds": 23.08
+      },
+      "targeted_tests": {
+        "passed": 29,
+        "failed": 0
+      },
+      "wheel_installed_doctor_generate_validate_evaluate": "passed",
+      "previous_head_remote_ci": "26 checks passed for 1afd00e; not evidence for TK-022 changes",
+      "evidence": "specs/farol-2/evidence/TK-022.md"
     }
   },
-  "external_blockers": [
-    {
-      "scope": "full release gate for v2.0.0-rc.1",
-      "status": "blocked",
-      "reason": "RAGFlow service and credentials are unavailable; user explicitly confirmed this and asked to record a blocker",
-      "run_status": "not_run",
-      "candidate_source_commit": "eb533951fc8feaa2a469a3d491fa381501e22f08",
-      "missing": [
-        "DOCOPS_RAGFLOW_ENDPOINT",
-        "DOCOPS_RAGFLOW_TOKEN",
-        "DOCOPS_RAGFLOW_IMAGE_DIGEST",
-        "DOCOPS_RAGFLOW_SDK_VERSION"
-      ],
-      "latest_observation": {
-        "observed_at": "2026-09-27",
-        "preflight_status": "blocked",
-        "missing": [
-          "DOCOPS_RAGFLOW_ENDPOINT",
-          "DOCOPS_RAGFLOW_TOKEN",
-          "DOCOPS_RAGFLOW_IMAGE_DIGEST",
-          "DOCOPS_RAGFLOW_SDK_VERSION"
-        ],
-        "environment_presence_check": "all four inputs were absent in Process, User and Machine scopes in the 2026-09-27 source-8f check; the final source-eb preflight again listed all four as missing; values were not read or recorded",
-        "local_runtime_check": "Docker daemon unavailable; docker ps could not reach the Docker Desktop Linux engine",
-        "integration_subprocess_started": false,
-        "report_artifact": "artifacts/ragflow-preflight-eb53395-20260927.stdout.json",
-        "report_sha256": "a50d53d4ea37a421af67454942ed7449671bca0bfb42fa9f834f972d5ea19e79"
-      },
-      "evidence": "specs/farol-2/evidence/release-readiness-hardening-20260924.md; specs/farol-2/todo.md"
-    },
-    {
-      "scope": "GitHub CI for the final prepared source",
-      "status": "blocked",
-      "type": "authorization",
-      "reason": "The candidate and evidence remain local; updating PR #16 to trigger CI for the exact source requires explicit push authorization.",
-      "candidate_source_commit": "eb533951fc8feaa2a469a3d491fa381501e22f08",
-      "local_branch_head_at_latest_observation": "9f44b1ce51d7424bd77ad5252d3fcd2564fa7d27",
-      "local_commits_ahead_at_latest_observation": 16,
-      "remote_branch_head": "be40e16f09153cfc12e3ea389302793f920c40b2",
-      "pull_request_number": 16,
-      "pull_request_state": "OPEN; mergeStateStatus=BLOCKED; REVIEW_REQUIRED; head is stale at remote_branch_head",
-      "existing_remote_checks": "26/26 checks passed in two runs on 2026-09-23 for the old PR head; no CI observed for candidate_source_commit or local_branch_head_at_latest_observation",
-      "latest_observation": "Read-only GitHub snapshot at 2026-09-27T11:13:08-03:00, after local evidence commit 9f44b1c (16 commits ahead). Remote main, RC branch, PR head and 26 checks remain unchanged; checks belong to old head be40e16 and cover neither candidate source eb53395 nor local head 9f44b1c. No RC tag or GitHub release was found.",
-      "evidence": "specs/farol-2/evidence/release-readiness-hardening-20260924.md; specs/farol-2/todo.md"
-    }
-  ],
-  "next_action": "When the user provisions RAGFlow and the four required inputs, rerun the full profile against the then-current approved candidate; the latest local public-document candidate is eb533951fc8feaa2a469a3d491fa381501e22f08. After separate explicit authorization to publish the branch, update PR #16 and wait for exact-source GitHub CI and required code-owner review on protected main. Rebuild the release artifact from the eventual approved/merged source. Tag, release and GA promotion remain separate actions requiring explicit authorization."
+  "external_blockers": [],
+  "next_action": "Run full gate on the clean TK-022 candidate with private local RAGFlow inputs, update PR #16, obtain exact-source CI/review, and prepare audited downloadable assets."
 }

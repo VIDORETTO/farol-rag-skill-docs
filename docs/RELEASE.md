@@ -7,7 +7,17 @@ GitHub Release `v2.0.0-rc.1` na consulta de 2026-09-27. A lista de releases do
 GitHub estava vazia nessa consulta. Qualquer publicação exige revisão manual
 de conteúdo, permissões e artefatos.
 
-## Snapshot de prontidão local — 2026-09-27
+## Retomada de instalação e integração — 2026-09-27
+
+O PR #16 recebeu `1afd00e` e seus 26 checks passaram. O serviço RAGFlow local
+foi recuperado, com os quatro inputs disponíveis somente no ambiente privado
+do processo; a integração real passou com 2 testes e zero skips. O TK-022
+corrige instalação, diagnóstico da wheel e configuração opcional, e inclui
+um [guia de primeiro uso](GETTING-STARTED.md). O gate completo será ligado ao
+novo candidato; os resultados históricos abaixo não são aprovação dessas
+mudanças. Revisão, merge e publicação permanecem pendentes.
+
+## Snapshot histórico de prontidão local — 2026-09-27, antes da retomada
 
 No snapshot de validação documentado nesta seção, o gate core foi executado no source limpo
 `8f06ee7d31fbd4431de63f953ca9f843035c6859`: 22/22 etapas, `1050 passed`,

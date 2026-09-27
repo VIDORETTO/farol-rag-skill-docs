@@ -1,5 +1,14 @@
 # Todo Farol 2.0
 
+## Retomada atual — 2026-09-27
+
+- TK-022: instalação e diagnóstico para usuário local em verificação.
+- TK-020: serviço RAGFlow recuperado; integração real 2/2, sem skips.
+- PR #16 em `1afd00e` com 26 checks verdes; novas mudanças exigem CI própria.
+- Próximo: full gate do novo candidato, revisão e entrega.
+
+Os snapshots datados abaixo são históricos anteriores a esta retomada.
+
 View derivada dos tickets. Atualize estado e tarefas no ticket canônico, depois
 regenere esta projeção.
 

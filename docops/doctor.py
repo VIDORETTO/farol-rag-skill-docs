@@ -12,11 +12,15 @@ import os
 import re
 import shutil
 import sys
+import tomllib
 from dataclasses import dataclass
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Mapping
 from urllib.parse import urlsplit
 
+from .agent_skill import find_skill_root
+from .backends.base import BackendError
 from .backends.ragflow import RagFlowAdapter
 from .config_audit import audit_config_file
 from .extractors import default_registry
@@ -146,7 +150,25 @@ def run_doctor(
     root = Path(project_root).resolve()
     env = os.environ if environ is None else environ
     python = discover_python(root, environ=env)
+    try:
+        metadata = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+        checkout = metadata.get("project", {}).get("name") == "consulta-documentacao"
+    except (OSError, ValueError):
+        checkout = (root / "docops" / "__init__.py").is_file()
+    try:
+        installed_version = version("consulta-documentacao")
+    except PackageNotFoundError:
+        installed_version = None
+    try:
+        operator_skill = find_skill_root() / "SKILL.md"
+    except FileNotFoundError:
+        operator_skill = root / "skills" / "docops-agent" / "SKILL.md"
     checks: dict[str, dict[str, object]] = {
+        "installation": {
+            "ok": checkout or installed_version is not None,
+            "mode": "checkout" if checkout else "installed",
+            "version": installed_version,
+        },
         "python": {
             "ok": python.exists,
             "path": _display_path(python.path, root),
@@ -156,7 +178,7 @@ def run_doctor(
         "project_metadata": _file_check(root / "pyproject.toml", "project metadata", project_root=root),
         "dependency_lock": _file_check(root / "requirements.lock", "locked dependencies", project_root=root),
         "operator_skill": _file_check(
-            root / "skills" / "doc-to-rag-operator" / "SKILL.md",
+            operator_skill,
             "operator Agent Skill",
             project_root=root,
         ),
@@ -178,19 +200,19 @@ def run_doctor(
                 "errors": config_result.errors,
             }
 
+    ragflow_check = _ragflow_check(env)
     skip_rag = env.get("DOCOPS_SKIP_RAG", "").lower() in {"1", "true", "yes"}
     if skip_rag:
         capabilities = {
             "rag": "skipped",
             "network": "not-probed",
             "harness": "external Agent Skills + RAGFlow",
-            "operator_skill": "skills/doc-to-rag-operator/SKILL.md",
+            "operator_skill": "skills/docops-agent/SKILL.md",
             "ragflow_transport": "HTTPS required except explicit loopback development",
         }
         checks["rag"] = {"ok": True, "status": "skipped", "reason": "DOCOPS_SKIP_RAG"}
     else:
         rag_required = env.get("DOCOPS_REQUIRE_RAGFLOW", "").lower() in {"1", "true", "yes"}
-        ragflow_check = _ragflow_check(env)
         rag_ok = ragflow_check.get("status") == "ready"
         checks["rag"] = {
             "ok": rag_ok or not rag_required,
@@ -202,13 +224,14 @@ def run_doctor(
             "rag": "available" if rag_ok else "missing",
             "network": "not-probed",
             "harness": "external Agent Skills + RAGFlow",
-            "operator_skill": "skills/doc-to-rag-operator/SKILL.md",
+            "operator_skill": "skills/docops-agent/SKILL.md",
             "ragflow_transport": "HTTPS required except explicit loopback development",
         }
 
-    ragflow_check = _ragflow_check(env)
     checks["ragflow"] = ragflow_check
     capabilities["ragflow"] = str(ragflow_check["status"])
+    if ragflow_check["health"] != "not_probed":
+        capabilities["network"] = "probed"
 
     extractor_registry = default_registry()
     checks["extractors"] = {
@@ -221,7 +244,13 @@ def run_doctor(
         "native local format adapters plus legacy-text (text-fallback); third-party/remotes require opt-in"
     )
 
-    required_names = ["python", "project_metadata", "dependency_lock"]
+    required_names = ["python", "installation"]
+    if checkout:
+        required_names.extend(["project_metadata", "dependency_lock"])
+    else:
+        for name in ("project_metadata", "dependency_lock"):
+            checks[name] = {"ok": True, "status": "not_required", "description": "development checkout only"}
+        required_names.append("operator_skill")
     if "config" in checks:
         required_names.append("config")
     if checks["rag"].get("required") is True:
@@ -241,8 +270,9 @@ def _ragflow_check(environ: Mapping[str, str]) -> dict[str, object]:
     sdk_version = environ.get("DOCOPS_RAGFLOW_SDK_VERSION", "").strip()
     image_digest = environ.get("DOCOPS_RAGFLOW_IMAGE_DIGEST", "").strip()
     digest_pinned = bool(re.fullmatch(r".+@sha256:[0-9a-fA-F]{64}", image_digest))
-    endpoint_valid = _valid_ragflow_endpoint(endpoint)
-    ready = bool(endpoint and endpoint_valid and token_present and sdk_version == RagFlowAdapter.expected_version)
+    allow_local = environ.get("DOCOPS_RAGFLOW_ALLOW_INSECURE_LOCALHOST", "").casefold() in {"1", "true", "yes"}
+    endpoint_valid = _valid_ragflow_endpoint(endpoint, allow_local=allow_local)
+    ready = bool(endpoint_valid and token_present and digest_pinned and sdk_version == RagFlowAdapter.expected_version)
     if not endpoint:
         status = "not_configured"
         reason = "endpoint_missing"
@@ -276,18 +306,26 @@ def _ragflow_check(environ: Mapping[str, str]) -> dict[str, object]:
                     in {"1", "true", "yes"},
                 }
             )
-            probe = adapter.probe()
-            health = probe.status
-            version = probe.version or version
-            capabilities = list(probe.capabilities) or capabilities
-            reason = str(probe.diagnostics.get("reason") or reason)
-            if health != "healthy":
+            try:
+                probe = adapter.probe()
+                health = probe.status
+                version = probe.version or version
+                capabilities = list(probe.capabilities) or capabilities
+                reason = str(probe.diagnostics.get("reason") or reason)
+                status = "ready" if health == "healthy" else "unavailable"
+            except (BackendError, ValueError):
+                health = "unavailable"
                 status = "unavailable"
+                reason = "probe_failed"
+            finally:
+                adapter.close()
 
     required = environ.get("DOCOPS_REQUIRE_RAGFLOW", "").casefold() in {"1", "true", "yes"}
     return {
         "ok": (
-            health == "healthy" if required else status in {"not_configured", "configured"} and health != "unavailable"
+            health == "healthy"
+            if required
+            else status in {"not_configured", "configured", "ready"} and health != "unavailable"
         ),
         "required": required,
         "status": status,
@@ -307,21 +345,22 @@ def _ragflow_check(environ: Mapping[str, str]) -> dict[str, object]:
     }
 
 
-def _valid_ragflow_endpoint(endpoint: str) -> bool:
-    if not endpoint:
+def _valid_ragflow_endpoint(endpoint: str, *, allow_local: bool = False) -> bool:
+    try:
+        RagFlowAdapter._validate_endpoint(endpoint, {"allow_insecure_localhost": allow_local})
+    except (BackendError, ValueError):
         return False
-    parsed = urlsplit(endpoint)
-    return parsed.scheme in {"http", "https"} and bool(parsed.hostname)
+    return True
 
 
 def _safe_ragflow_endpoint(endpoint: str) -> str:
     if not endpoint:
         return "<unconfigured>"
-    parsed = urlsplit(endpoint)
-    if not parsed.scheme or not parsed.hostname:
-        return "<invalid>"
-    default_port = 443 if parsed.scheme == "https" else 80
     try:
+        parsed = urlsplit(endpoint)
+        if not parsed.scheme or not parsed.hostname:
+            return "<invalid>"
+        default_port = 443 if parsed.scheme == "https" else 80
         port = parsed.port or default_port
     except ValueError:
         return "<invalid>"

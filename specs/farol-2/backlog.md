@@ -1,5 +1,13 @@
 # Backlog Farol 2.0
 
+## Retomada de primeiro uso — 2026-09-27
+
+TK-022 cobre instalação, diagnóstico fora do checkout e guia de credenciais.
+O PR #16 foi atualizado para `1afd00e`, com 26 checks aprovados. O serviço
+RAGFlow local foi recuperado e a integração real passou; falta ligar o full
+gate ao novo candidato e concluir revisão/entrega. O snapshot abaixo descreve
+o estado anterior a essa retomada.
+
 **Gerado a partir de:** spec/plan revisão 1; tickets TK-020/TK-021 revisão 18/2 e demais tickets revisão 1.
 **Baseline:** `81d5dcb2e189d00406cdd9b9e671d94e3f23cd58`
 **Snapshot histórico da implementação (2026-09-20):** branch `main`, com a release candidate
