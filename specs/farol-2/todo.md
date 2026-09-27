@@ -55,7 +55,9 @@ regenere esta projeção.
 - Em 2026-09-27, `main` seguia em `a939e0a4`, a branch RC remota em `be40e16` e
   o PR #16 estava `OPEN`, `BLOCKED`, `REVIEW_REQUIRED`. Os 26 checks consultados
   passaram em dois runs de 23/09 no head antigo; tag/release continuam ausentes.
-  O snapshot está em `state.json` e na evidência de prontidão.
+  A reconsulta das 11:13 -03, após `9f44b1c`, confirmou o mesmo estado; a branch
+  local está 16 commits à frente e sem push. O snapshot está em `state.json` e
+  na evidência de prontidão.
 - `main` segue protegido por 13 checks e uma aprovação de code owner; a branch
   RC não tem proteção nem ruleset, então a revisão deve seguir pelo PR #16 para
   `main`. Ele está aberto, mas seu head remoto segue em `be40e16`; checks verdes

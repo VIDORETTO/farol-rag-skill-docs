@@ -602,6 +602,53 @@
       ],
       "evidence": "specs/farol-2/evidence/release-readiness-hardening-20260924.md"
     },
+    "github_readiness_snapshot_after_9f44b1c_2026_09_27": {
+      "repository": "VIDORETTO/farol-rag-skill-docs",
+      "observed_at": "2026-09-27T11:13:08-03:00",
+      "local_branch_head": "9f44b1ce51d7424bd77ad5252d3fcd2564fa7d27",
+      "local_commits_ahead_at_observation": 16,
+      "remote_refs": {
+        "main": "a939e0a4b856ea3df86ac5f8055f329ebd15f5fd",
+        "release/farol-2.0.0-rc.1": "be40e16f09153cfc12e3ea389302793f920c40b2",
+        "farol-v3": "79f9887c52e102351cd5c8d3b5ff7aaab5b7a07d",
+        "v2.0.0-rc.1_tag": "not_found",
+        "farol-v3-backup-2026-09-21_tag_object": "5fa11d68a3faec8ce24337a573fb2f30b20ff226",
+        "farol-v3-backup-2026-09-21_peeled_commit": "79f9887c52e102351cd5c8d3b5ff7aaab5b7a07d",
+        "farol-v3-backup-2026-09-21_tree": "358db1c1a89a3aa8d1ce07b5641e612c681be876"
+      },
+      "pull_request": {
+        "number": 16,
+        "url": "https://github.com/VIDORETTO/farol-rag-skill-docs/pull/16",
+        "state": "OPEN",
+        "base_commit": "a939e0a4b856ea3df86ac5f8055f329ebd15f5fd",
+        "head_commit": "be40e16f09153cfc12e3ea389302793f920c40b2",
+        "merge_state_status": "BLOCKED",
+        "review_decision": "REVIEW_REQUIRED",
+        "updated_at": "2026-09-23T00:39:25Z"
+      },
+      "checks": {
+        "total": 26,
+        "successful": 26,
+        "failed_or_pending": 0,
+        "workflow_runs": [
+          {"run_id": "35802632753", "checks": 13, "result": "SUCCESS"},
+          {"run_id": "35802649202", "checks": 13, "result": "SUCCESS"}
+        ],
+        "scope": "All checks belong to remote PR head be40e16; none covers local candidate source eb53395 or local evidence head 9f44b1c."
+      },
+      "github_releases": [],
+      "settings_changed": false,
+      "commands": [
+        "git ls-remote origin refs/heads/main refs/heads/release/farol-2.0.0-rc.1 refs/heads/farol-v3 refs/tags/v2.0.0-rc.1 refs/tags/farol-v3-backup-2026-09-21",
+        "git ls-remote origin 'refs/tags/farol-v3-backup-2026-09-21' 'refs/tags/farol-v3-backup-2026-09-21^{}'",
+        "gh pr view 16 --json number,state,headRefOid,baseRefOid,reviewDecision,mergeStateStatus,updatedAt,url",
+        "gh pr checks 16 --json name,state,link,workflow,completedAt",
+        "gh release list --limit 100 --json tagName,name,isDraft,publishedAt",
+        "git cat-file -p 5fa11d68a3faec8ce24337a573fb2f30b20ff226",
+        "git show -s --format=%T 79f9887c52e102351cd5c8d3b5ff7aaab5b7a07d"
+      ],
+      "evidence": "specs/farol-2/evidence/release-readiness-hardening-20260924.md"
+    },
     "core": {
       "candidate": "93bb8894d816aad3c3b3682ccec317db1da39d45",
       "profile": "core",
@@ -1012,13 +1059,13 @@
       "type": "authorization",
       "reason": "The candidate and evidence remain local; updating PR #16 to trigger CI for the exact source requires explicit push authorization.",
       "candidate_source_commit": "eb533951fc8feaa2a469a3d491fa381501e22f08",
-      "local_branch_head_at_latest_observation": "c42832e5b348e9507c695e5f11c4db970c47ad22",
-      "local_commits_ahead_at_latest_observation": 14,
+      "local_branch_head_at_latest_observation": "9f44b1ce51d7424bd77ad5252d3fcd2564fa7d27",
+      "local_commits_ahead_at_latest_observation": 16,
       "remote_branch_head": "be40e16f09153cfc12e3ea389302793f920c40b2",
       "pull_request_number": 16,
       "pull_request_state": "OPEN; mergeStateStatus=BLOCKED; REVIEW_REQUIRED; head is stale at remote_branch_head",
       "existing_remote_checks": "26/26 checks passed in two runs on 2026-09-23 for the old PR head; no CI observed for candidate_source_commit or local_branch_head_at_latest_observation",
-      "latest_observation": "Read-only GitHub snapshot on 2026-09-27 recorded local head c42832e (14 commits ahead); final public-document candidate eb53395 was committed afterward (15 commits ahead before the evidence receipt); remote refs/checks remain unchanged and do not cover eb53395; no RC tag or GitHub release was found",
+      "latest_observation": "Read-only GitHub snapshot at 2026-09-27T11:13:08-03:00, after local evidence commit 9f44b1c (16 commits ahead). Remote main, RC branch, PR head and 26 checks remain unchanged; checks belong to old head be40e16 and cover neither candidate source eb53395 nor local head 9f44b1c. No RC tag or GitHub release was found.",
       "evidence": "specs/farol-2/evidence/release-readiness-hardening-20260924.md; specs/farol-2/todo.md"
     }
   ],

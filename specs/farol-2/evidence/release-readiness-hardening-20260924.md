@@ -769,3 +769,22 @@ RAGFlow e seus quatro inputs para executar o full gate no candidato então
 vigente; autorizar separadamente o push para PR/CI/review; depois do merge,
 reconstruir o artefato do source aprovado. Tag, release e GA continuam decisões
 separadas com autorização própria.
+
+### Reconsulta remota após o recibo local `9f44b1c` — 2026-09-27
+
+Às `2026-09-27T11:13:08-03:00`, reconsultei refs, PR, checks e releases depois
+do commit local de evidências `9f44b1ce51d7424bd77ad5252d3fcd2564fa7d27`.
+`main` permaneceu em `a939e0a4b856ea3df86ac5f8055f329ebd15f5fd`; a branch RC
+remota, em `be40e16f09153cfc12e3ea389302793f920c40b2`. A branch local estava
+16 commits à frente. PR #16 permaneceu `OPEN`, `BLOCKED` e
+`REVIEW_REQUIRED`, com head remoto antigo; os 26 checks continuaram verdes nos
+runs `35802632753` e `35802649202`, sem cobrir `eb53395` nem `9f44b1c`. A lista
+de releases continuou vazia e a tag `v2.0.0-rc.1` não existe.
+
+Revalidei os refs do backup v3: a branch `farol-v3` aponta para
+`79f9887c52e102351cd5c8d3b5ff7aaab5b7a07d`; a tag anotada remota aponta ao
+mesmo objeto `5fa11d68a3faec8ce24337a573fb2f30b20ff226`, que aponta ao mesmo
+commit; a árvore é `358db1c1a89a3aa8d1ce07b5641e612c681be876`. O estado remoto
+não avançou. Permanecem necessários o full gate com RAGFlow, push autorizado
+para CI/revisão do source exato e aprovação de code owner; nenhum efeito remoto
+foi realizado.

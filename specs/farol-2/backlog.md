@@ -1,6 +1,6 @@
 # Backlog Farol 2.0
 
-**Gerado a partir de:** spec/plan revisão 1; tickets TK-020/TK-021 revisão 17/2 e demais tickets revisão 1.
+**Gerado a partir de:** spec/plan revisão 1; tickets TK-020/TK-021 revisão 18/2 e demais tickets revisão 1.
 **Baseline:** `81d5dcb2e189d00406cdd9b9e671d94e3f23cd58`
 **Snapshot histórico da implementação (2026-09-20):** branch `main`, com a release candidate
 `v2.0.0-rc.1` preparada a partir da integração Farol 2.0. A evidência full foi
@@ -18,6 +18,8 @@ serviço e quatro entradas; CI do source atual requer push autorizado. O PR #16
 para `main` ainda aponta ao commit remoto antigo `be40e16f09153cfc12e3ea389302793f920c40b2`
 e requer review. `main` tem 13 checks e aprovação de code owner; a branch RC
 não tem proteção. Não há tag nem release remota.
+Reconsulta às 11:13 -03 confirmou esse estado após o recibo local `9f44b1c`;
+a branch local estava 16 commits à frente, ainda sem push.
 
 ## Fases e gates
 

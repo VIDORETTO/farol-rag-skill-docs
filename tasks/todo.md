@@ -19,7 +19,8 @@
 - GitHub: PR #16 segue no head remoto antigo `be40e16`, com `REVIEW_REQUIRED`;
   os 26 checks verdes são de runs antigos. Não há CI para `eb53395`.
   `main` requer 13 checks e uma aprovação de code owner; atualizar o PR requer
-  autorização de push.
+  autorização de push. Reconsulta após `9f44b1c` confirmou 16 commits locais à
+  frente e nenhum avanço remoto.
 - Backup `farol-v3-backup-2026-09-21` verificado e preservado.
 
 ## Próximas ações
