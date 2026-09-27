@@ -4,27 +4,27 @@
 # Farol
 
 <p>
-  <img src="assets/farol-logo-horizontal.png" alt="Farol" width="780">
+  <img src="assets/farol-logo-horizontal.png" alt="Logotipo do Farol: um farol amarelo sobre fundo azul-marinho" width="420">
 </p>
 
-## Documentação confiável para agentes de IA
+**Documentação rastreável e versionada para agentes de IA.**
 
-Transforme uma fonte de documentação em um pacote portátil, versionado e
-consultável — com **IR canônica**, **skills**, **roteador**, RAGFlow opcional e
-evidências verificáveis.
+Converta documentação em um pacote de conhecimento com **IR canônica**,
+**skills**, **roteador**, corpus RAG rastreável e evidências verificáveis.
+RAGFlow é opcional e executado como serviço externo.
 
 <p>
   <a href="https://github.com/VIDORETTO/farol-rag-skill-docs/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/VIDORETTO/farol-rag-skill-docs/actions/workflows/ci.yml/badge.svg?branch=main"></a>
-  <a href="https://github.com/VIDORETTO/farol-rag-skill-docs/releases"><img alt="Release mais recente" src="https://img.shields.io/github/v/release/VIDORETTO/farol-rag-skill-docs?display_name=tag&sort=semver"></a>
   <img alt="Python 3.11–3.13; 3.14 tolerado" src="https://img.shields.io/badge/Python-3.11--3.13-3776AB?logo=python&logoColor=white">
   <a href="https://github.com/VIDORETTO/farol-rag-skill-docs/blob/main/LICENSE"><img alt="Licença MIT" src="https://img.shields.io/github/license/VIDORETTO/farol-rag-skill-docs"></a>
   <img alt="RAGFlow externo" src="https://img.shields.io/badge/RAGFlow-external%20%7C%20opt--in-0f766e">
 </p>
 
-**Versão do pacote:** `2.0.0rc1` (prévia; ainda sem release publicada)
+**Versão do pacote:** `2.0.0rc1` (RC.1, pré-lançamento; não é uma versão estável)
 
-**Estado do código:** Farol 2.0 integrado na branch `main`; não existe tag ou
-GitHub Release `v2.0.0-rc.1`. Qualquer publicação permanece uma decisão manual.
+**Publicação:** não há tag ou GitHub Release `v2.0.0-rc.1`. O gate RAGFlow e a
+validação remota do candidato atual continuam pendentes. Consulte
+[o estado da release](docs/RELEASE.md); nenhuma promoção a GA foi feita.
 
 </div>
 
@@ -32,19 +32,20 @@ GitHub Release `v2.0.0-rc.1`. Qualquer publicação permanece uma decisão manua
 
 ## Navegação
 
-**Começar:** [instalação](#instalacao) · [primeiro pacote](#primeiro-pacote) · [desenvolvimento](#desenvolvimento)
+**Começar:** [requisitos](#requisitos) · [instalação](#instalacao) · [primeiro pacote](#primeiro-pacote)
 
-**Entender:** [arquitetura](#arquitetura) · [segurança](#seguranca-e-limites) · [estrutura do repositório](#estrutura-do-repositorio)
+**Entender:** [pacote gerado](#o-pacote-gerado) · [arquitetura](#arquitetura) · [segurança](#seguranca-e-limites)
 
-**Aprofundar:** [documentação](#documentacao) · [estado Farol 2.0](#estado-farol-20) · [contribuição](CONTRIBUTING.md)
+**Desenvolver:** [CLI e API](#cli-e-api) · [configuração](#configuracao) · [desenvolvimento](#desenvolvimento) · [estrutura](#estrutura-do-repositorio)
 
-**Comunidade:** [governança](community/GOVERNANCE.md) · [suporte](community/SUPPORT.md)
+**Comunidade:** [contribuir](#contribuir) · [suporte](#suporte) · [governança](community/GOVERNANCE.md)
 
-## O que é
+## 🧭 O que é
 
-O <code>Farol</code> é um operador determinístico para construir
-bases de conhecimento para agentes. Ele recebe uma fonte — pasta, arquivo, URL,
-repositório Git ou nome de catálogo — e produz um pacote com:
+O <code>Farol</code> é uma ferramenta de linha de comando Python e uma API para
+construir bases de conhecimento rastreáveis para agentes. Recebe uma fonte —
+pasta, arquivo, URL, repositório Git ou nome de catálogo — e produz um pacote
+portátil com:
 
 | Camada | Papel |
 | --- | --- |
@@ -67,7 +68,7 @@ contexto, consultar o MCP quando necessário e produzir a resposta final.
 - **Recuperação:** staging, leases, checkpoints, journal, backup e rollback preservam a geração ativa.
 - **Portabilidade:** o núcleo funciona localmente, sem modelo, banco ou serviço obrigatório; RAGFlow e OCR são perfis opt-in.
 
-## Visão rápida
+## 📋 Visão rápida
 
 | Item | Estado |
 | --- | --- |
@@ -76,15 +77,25 @@ contexto, consultar o MCP quando necessário e produzir a resposta final.
 | Python oficialmente suportado | 3.11–3.13; 3.14 é tolerado, mas não está na garantia de suporte |
 | RAG | Backend externo RAGFlow `0.27.2`; integração opt-in com endpoint, token e imagem fixados por digest |
 | OCR | Docling `2.129.0` + ONNX Runtime `1.30.0` + RapidOCR no perfil Python 3.13 |
-| Distribuição | Candidato `2.0.0rc1` no código-fonte; sem release estável publicada neste repositório |
+| Distribuição | Pré-lançamento `2.0.0rc1`; sem tag ou GitHub Release `v2.0.0-rc.1` na consulta de 2026-09-27 |
 | Exemplos públicos | Fixtures sintéticas em <code>documents/fixtures/</code> |
 
-## Instalação
+## 📋 Requisitos
 
-Ainda não há wheel ou `SHA256SUMS` publicados para instalação. A branch `main`
-contém o candidato `2.0.0rc1`, que não deve ser divulgado como versão estável.
-Quando um artefato for publicado, esta seção deverá apontar para a release
-verificada e para seus checksums.
+| Uso | Requisitos |
+| --- | --- |
+| Core e formatos | Python 3.11–3.13 em Ubuntu, Windows ou macOS. O perfil `formats` vem habilitado pelo bootstrap. |
+| Python 3.14 | Tolerado em alguns ambientes; fora da garantia oficial de suporte. |
+| RAGFlow e OCR | Python 3.13. RAGFlow também exige um serviço externo configurado; ambos os perfis são opcionais. |
+
+Confira [a matriz de suporte](docs/SUPPORT-MATRIX.json) para os limites por
+perfil e plataforma.
+
+## 📦 Instalação
+
+O pacote declara a versão `2.0.0rc1`, que é uma release candidate e não deve ser
+divulgada como versão estável. Na consulta de 2026-09-27, não havia tag ou
+GitHub Release `v2.0.0-rc.1`. Para avaliar o projeto, instale a partir do código:
 
 ### Trabalhar a partir do código-fonte
 
@@ -92,21 +103,39 @@ verificada e para seus checksums.
 git clone https://github.com/VIDORETTO/farol-rag-skill-docs.git
 cd farol-rag-skill-docs
 python scripts/bootstrap.py --dev
+~~~
+
+O bootstrap cria o ambiente virtual e instala o perfil de desenvolvimento em
+modo editável. Ative o ambiente criado antes de usar os comandos
+`python -m docops`:
+
+~~~powershell
+.\.venv\Scripts\Activate.ps1
 python -m docops doctor --json
 ~~~
 
-O bootstrap cria o ambiente e instala o perfil de desenvolvimento em modo
-editável. Para executar os perfis externos de RAGFlow e OCR, use um
-interpretador Python 3.13 e instale os extras fixados:
+Em Linux e macOS:
+
+~~~bash
+source .venv/bin/activate
+python -m docops doctor --json
+~~~
+
+Se o bootstrap tiver selecionado um ambiente específico da plataforma, use o
+caminho informado no JSON que ele imprime. Para executar os perfis externos de
+RAGFlow e OCR, ative um ambiente Python 3.13 e instale os extras fixados:
 
 ~~~bash
 python -m pip install --editable ".[dev,formats,ragflow,ocr]"
 ~~~
 
 Há wrappers equivalentes em <code>scripts/bootstrap.sh</code> e
-<code>scripts/bootstrap.ps1</code>.
+<code>scripts/bootstrap.ps1</code>. Para remover a instalação local, desative o
+ambiente e remova somente o diretório virtual criado pelo bootstrap; o caminho
+do interpretador aparece no JSON de saída. O código-fonte pode ser removido
+separadamente quando não houver dados que você queira preservar.
 
-## Primeiro pacote
+## 🚀 Primeiro pacote
 
 O fluxo abaixo usa apenas a fixture sintética pública <code>acme-docs</code>. Ela
 não contém documentação de terceiros e é segura para reproduzir o caminho completo.
@@ -148,18 +177,8 @@ humana antes de virar critério de publicação.
 
 ### 5. Habilitar a integração RAGFlow quando necessário
 
-Configure o perfil externo com credenciais fora do repositório. Em Bash:
-
-~~~bash
-export DOCOPS_RAGFLOW_ENDPOINT=https://...
-export DOCOPS_RAGFLOW_TOKEN=<secret>
-export DOCOPS_RAGFLOW_IMAGE_DIGEST=<repository>@sha256:<64-hex>
-export DOCOPS_RAGFLOW_SDK_VERSION=0.27.2
-python scripts/run_release_gates.py --profile ragflow --json
-~~~
-
-No Windows PowerShell, use `$env:DOCOPS_RAGFLOW_*` com os mesmos valores.
-
+O perfil é opcional e depende de um serviço externo. Consulte
+[Configuração](#configuracao) para os quatro inputs e o exemplo de execução.
 O core não inicia containers nem faz rede. Sem os inputs externos, o perfil
 falha fechado como `blocked`/`not_run`.
 
@@ -171,7 +190,7 @@ falha fechado como `blocked`/`not_run`.
 | “Qual é o default, assinatura ou versão?” | <code>rag/</code>, para o trecho literal com fonte. |
 | “A evidência é ambígua ou sensível?” | Skill para interpretar + RAG para confirmar. |
 
-## O pacote gerado
+## 📦 O pacote gerado
 
 ~~~text
 artifacts/acme/
@@ -195,7 +214,11 @@ O diretório <code>.docops/</code> é estado operacional: não deve ser tratado
 como corpus nem compartilhado sem revisão. O pacote só é consultável quando
 <code>python -m docops validate &lt;pacote&gt;</code> passa.
 
-## Arquitetura
+---
+
+# 🔧 Technical Documentation
+
+## 🏗️ Arquitetura
 
 ~~~mermaid
 flowchart LR
@@ -226,7 +249,7 @@ com estado versionado:
 Para o mapa completo de módulos e fronteiras, consulte
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## CLI e API
+## 🖥️ CLI e API
 
 Use <code>python -m docops ...</code> para garantir que a CLI está ligada ao
 mesmo Python do ambiente ativo. No código atual, o launcher de marca é
@@ -291,7 +314,45 @@ Detalhes de tipos, imutabilidade e compatibilidade entre a distribuição 1.x e 
 contrato 2.0 estão em
 [docs/PYTHON-API.md](docs/PYTHON-API.md).
 
-## Segurança e limites
+## ⚙️ Configuração
+
+O core funciona sem credenciais. Configure RAGFlow somente para executar o
+perfil opcional; mantenha os valores no ambiente local ou no gestor de segredos
+do CI, nunca em arquivos versionados. Use HTTPS para endpoints remotos; loopback
+é permitido apenas no desenvolvimento local explicitamente configurado.
+
+| Variável | Obrigatória no perfil RAGFlow | Valor |
+| --- | --- | --- |
+| `DOCOPS_RAGFLOW_ENDPOINT` | Sim | URL HTTPS do serviço acessível pelo runner; loopback é permitido no desenvolvimento local. |
+| `DOCOPS_RAGFLOW_TOKEN` | Sim | Bearer token; não registre nem compartilhe o valor. |
+| `DOCOPS_RAGFLOW_IMAGE_DIGEST` | Sim | Referência da imagem fixada por `sha256` e digest de 64 caracteres hexadecimais. |
+| `DOCOPS_RAGFLOW_SDK_VERSION` | Sim | Versão do SDK instalada; para este candidato, `0.27.2`. |
+
+Em Bash, substitua cada valor pelo dado real fornecido pelo operador:
+
+~~~bash
+export DOCOPS_RAGFLOW_ENDPOINT='https://ragflow.example.invalid'
+export DOCOPS_RAGFLOW_TOKEN='SUBSTITUA_LOCALMENTE'
+export DOCOPS_RAGFLOW_IMAGE_DIGEST='registry.example/ragflow@sha256:SUBSTITUA_PELO_DIGEST_REAL'
+export DOCOPS_RAGFLOW_SDK_VERSION='0.27.2'
+python scripts/run_release_gates.py --profile ragflow --json
+~~~
+
+No Windows PowerShell:
+
+~~~powershell
+$env:DOCOPS_RAGFLOW_ENDPOINT = 'https://ragflow.example.invalid'
+$env:DOCOPS_RAGFLOW_TOKEN = 'SUBSTITUA_LOCALMENTE'
+$env:DOCOPS_RAGFLOW_IMAGE_DIGEST = 'registry.example/ragflow@sha256:SUBSTITUA_PELO_DIGEST_REAL'
+$env:DOCOPS_RAGFLOW_SDK_VERSION = '0.27.2'
+python scripts/run_release_gates.py --profile ragflow --json
+~~~
+
+Os exemplos são modelos e não passam no gate até que sejam substituídos por
+inputs válidos para uma instância autorizada. Para desenvolvimento local, veja
+o Compose e as restrições de rede em [config/ragflow/README.md](config/ragflow/README.md).
+
+## 🔐 Segurança e limites
 
 O projeto trata documentação como dado, não como instrução executável.
 
@@ -308,7 +369,7 @@ rendering, autenticação de fonte, confirmação de licença e autorizações
 comerciais continuam gates explícitos. O manifesto preserva o bloqueio para que
 um harness ou operador autorizado decida como prosseguir.
 
-## Estado Farol 2.0
+## 📌 Estado Farol 2.0
 
 O planejamento normativo e o estado agregado estão em
 [specs/farol-2/](specs/farol-2/README.md). A implementação atual cobre IR
@@ -323,13 +384,15 @@ reconciliação de release e seus bloqueios atuais estão em
 [`specs/farol-2/evidence/`](specs/farol-2/evidence/). A promoção para GA exige
 gates atuais e autorização explícita do mantenedor.
 
-Na revalidação local de 26 de setembro de 2026, o core passou 22/22 etapas em
-source limpo e o bundle foi preparado e verificado independentemente. Isso não
-substitui o full gate: a validação RAGFlow permanece bloqueada pela
-indisponibilidade do serviço e das quatro entradas externas, e o source ainda
-aguarda CI remota e revisão no PR protegido. O candidato continua sem tag ou
-release pública; consulte o estado e o manifesto para SHA, digest e recibos
-exatos.
+Na revalidação local de 26 de setembro de 2026, o source limpo `129d517` passou
+o core em 22/22 etapas (`1050 passed`, `12 skipped`), e o bundle foi preparado
+e verificado independentemente. Esse resultado não cobre alterações locais
+posteriores nem substitui o full gate. Em 27 de setembro, o preflight RAGFlow
+ficou `blocked` porque o serviço e as quatro entradas externas não estavam
+disponíveis; não iniciou subprocesso de integração. A CI consultada ainda
+cobria apenas o head remoto antigo, e o PR aguardava revisão. O candidato segue
+sem tag ou GitHub Release; veja o [runbook de release](docs/RELEASE.md) e o
+[estado agregado](specs/farol-2/state.json) para a evidência atual.
 
 ### Histórico Farol 1.x
 
@@ -356,10 +419,11 @@ estão em:
 - [docs/master-evolution/IMPLEMENTATION-EVIDENCE.md](docs/master-evolution/IMPLEMENTATION-EVIDENCE.md)
 - [docs/master-evolution/TDD-EXECUTION.md](docs/master-evolution/TDD-EXECUTION.md)
 
-## Desenvolvimento
+## 🧪 Desenvolvimento
 
-Depois de executar <code>python scripts/bootstrap.py --dev</code>, valide
-alterações com o conjunto proporcional abaixo:
+Depois de executar <code>python scripts/bootstrap.py --dev</code>, ative o
+ambiente virtual indicado no JSON do bootstrap e valide alterações com o
+conjunto proporcional abaixo:
 
 ~~~bash
 python -m docops doctor --json
@@ -379,7 +443,7 @@ book-to-skill, RAGFlow, OCR, wheel, candidate e supply-chain. O perfil
 provisionados; qualquer dependência ou recurso ausente falha fechado, sem
 converter integração não executada em aprovação.
 
-## Estrutura do repositório
+## 🗂️ Estrutura do repositório
 
 ~~~text
 docops/                     núcleo, CLI, lifecycle e contratos
@@ -397,7 +461,7 @@ docs/                       arquitetura, uso, planos e runbooks
 Schemas em <code>schemas/</code> são a fonte canônica; a cópia em
 <code>docops/schemas/</code> é sincronizada por <code>scripts/sync_schemas.py</code>.
 
-## Documentação
+## 📚 Documentação
 
 | Quando você quer... | Leia |
 | --- | --- |
@@ -414,7 +478,30 @@ Schemas em <code>schemas/</code> são a fonte canônica; a cópia em
 | Ver limites de suporte | [docs/SUPPORT-MATRIX.json](docs/SUPPORT-MATRIX.json) |
 | Contribuir | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
-## Licença
+## 🤝 Contribuir
+
+Leia [CONTRIBUTING.md](CONTRIBUTING.md) antes de abrir uma alteração. As
+contribuições devem usar fixtures sintéticas, respeitar os contratos públicos
+e passar pelos checks proporcionais à mudança.
+
+## 🆘 Suporte
+
+Para relatar um problema, consulte a [política de suporte](community/SUPPORT.md)
+e inclua versão ou commit, sistema operacional, versão do Python, perfil,
+comando, saída sanitizada e uma reprodução mínima sintética. Não anexe corpus,
+índices, caches, tokens ou credenciais. Vulnerabilidades devem ser reportadas
+privadamente conforme [SECURITY.md](SECURITY.md).
+
+## 🏛️ Releases e governança
+
+As versões e alterações estão no [CHANGELOG](CHANGELOG.md). A publicação segue
+o [runbook de release](docs/RELEASE.md) e requer revisão humana dos gates,
+artefatos e permissões. Consulte também a
+[governança](community/GOVERNANCE.md), a
+[lista de mantenedores](community/MAINTAINERS.md) e o
+[código de conduta](CODE_OF_CONDUCT.md).
+
+## 📄 Licença
 
 O código deste projeto é distribuído sob a [licença MIT](LICENSE). A licença,
 os direitos de redistribuição e a privacidade da documentação processada devem
