@@ -547,3 +547,46 @@ O usuário confirmou que não há serviço nem credenciais RAGFlow disponíveis.
 Assim, o gate full permanece `blocked/not_run` no candidato atual, faltando
 `DOCOPS_RAGFLOW_ENDPOINT`, `DOCOPS_RAGFLOW_TOKEN`,
 `DOCOPS_RAGFLOW_IMAGE_DIGEST` e `DOCOPS_RAGFLOW_SDK_VERSION`.
+
+## Revalidação de prontidão — 2026-09-27
+
+### Preflight RAGFlow
+
+O usuário já havia confirmado indisponibilidade do serviço e das credenciais.
+Na retomada, uma checagem de presença no ambiente atual confirmou que as quatro
+variáveis não estão definidas; nenhum valor foi lido ou registrado. A inspeção
+de `scripts/run_ragflow_profile.py` confirmou que, quando falta qualquer
+entrada, o runner retorna antes de iniciar o subprocesso de testes de
+integração.
+
+Comando executado:
+
+```powershell
+.venv-rag\Scripts\python.exe scripts\run_ragflow_profile.py --json
+```
+
+Resultado observado: exit code 1, `status=blocked`,
+`reason=missing_external_inputs`, as quatro variáveis listadas e nenhum
+subprocesso iniciado. O recibo local ignorado
+`artifacts/ragflow-preflight-20260927.stdout.json` tem SHA-256
+`a50d53d4ea37a421af67454942ed7449671bca0bfb42fa9f834f972d5ea19e79`. O full
+gate continua `not_run`; o preflight não é contado como integração aprovada.
+
+### Snapshot GitHub
+
+Consultas de leitura em 2026-09-27 (`git ls-remote`, `gh pr view 16`,
+`gh pr checks 16` e `gh release list`) confirmaram `main` em
+`a939e0a4b856ea3df86ac5f8055f329ebd15f5fd` e a branch RC remota em
+`be40e16f09153cfc12e3ea389302793f920c40b2`. Não há tag `v2.0.0-rc.1` nem
+release GitHub. O PR #16 segue `OPEN`, `mergeStateStatus=BLOCKED` e
+`REVIEW_REQUIRED`; seu head continua `be40e16`. Os 26 checks consultados
+estavam `SUCCESS` nos runs `35802632753` e `35802649202` (13 cada), ambos
+finalizados em 2026-09-23 e vinculados ao head remoto antigo. Nenhum check foi
+observado para a branch local. No instante da consulta, a branch local estava
+no commit `d88b2211942ccd88b668e51a1d5953445504b7f7`, oito commits à frente do
+remoto; não houve push nem alteração de settings.
+
+O próximo passo continua dependente de duas condições distintas: serviço e
+entradas RAGFlow para executar o full gate em `129d517a899e5ed39b1d48666ae736de246e09a6`;
+autorização explícita de push para atualizar o PR e obter CI/revisão do head
+local. Nenhum tag, release ou promoção a GA foi feito.

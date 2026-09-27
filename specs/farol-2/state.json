@@ -18,7 +18,7 @@
     "worktree_status": "Reviewed release-readiness changes and gate evidence are captured in local commits on release/farol-2.0.0-rc.1 after be40e16f09153cfc12e3ea389302793f920c40b2; no push, tag, or release; generated bundles remain ignored under artifacts/",
     "gate_worktree_entries": 75,
     "current_worktree_entries": "33 release-hardening entries from the 2026-09-25 readiness audit are in 98d2a1d; the final core gate and bundle were verified against clean source 129d517; follow-up local evidence commits record the results; worktree clean after those receipts, but not release-eligible until RAGFlow full gate, exact-source remote CI, review and merge",
-    "current_worktree_observed_at": "2026-09-26"
+    "current_worktree_observed_at": "2026-09-27"
   },
   "inputs": {
     "spec": {
@@ -373,6 +373,48 @@
       "settings_changed": false,
       "evidence": "specs/farol-2/evidence/release-readiness-hardening-20260924.md; community/GITHUB-SETTINGS-CHECKLIST.md"
     },
+    "github_readiness_snapshot_2026_09_27": {
+      "repository": "VIDORETTO/farol-rag-skill-docs",
+      "observed_at": "2026-09-27",
+      "commands": {
+        "remote_refs": "git ls-remote origin refs/heads/main refs/heads/release/farol-2.0.0-rc.1 refs/tags/v2.0.0-rc.1",
+        "pull_request": "gh pr view 16 --json number,state,headRefOid,baseRefOid,reviewDecision,mergeStateStatus,updatedAt,url",
+        "checks": "gh pr checks 16 --json name,state,link,workflow,completedAt",
+        "releases": "gh release list --limit 100 --json tagName,name,isDraft,publishedAt"
+      },
+      "local_candidate_artifact_source": "129d517a899e5ed39b1d48666ae736de246e09a6",
+      "local_branch_head_at_observation": "d88b2211942ccd88b668e51a1d5953445504b7f7",
+      "local_commits_ahead_at_observation": 8,
+      "remote_refs": {
+        "main": "a939e0a4b856ea3df86ac5f8055f329ebd15f5fd",
+        "release/farol-2.0.0-rc.1": "be40e16f09153cfc12e3ea389302793f920c40b2",
+        "v2.0.0-rc.1_tag": "not_found",
+        "github_release_list": []
+      },
+      "pull_request": {
+        "number": 16,
+        "url": "https://github.com/VIDORETTO/farol-rag-skill-docs/pull/16",
+        "state": "OPEN",
+        "base": "main",
+        "base_commit": "a939e0a4b856ea3df86ac5f8055f329ebd15f5fd",
+        "head_commit": "be40e16f09153cfc12e3ea389302793f920c40b2",
+        "merge_state_status": "BLOCKED",
+        "review_decision": "REVIEW_REQUIRED",
+        "updated_at": "2026-09-23T00:39:25Z"
+      },
+      "checks": {
+        "total": 26,
+        "successful": 26,
+        "failed_or_pending": 0,
+        "workflow_runs": [
+          {"run_id": "35802632753", "checks": 13, "result": "SUCCESS"},
+          {"run_id": "35802649202", "checks": 13, "result": "SUCCESS"}
+        ],
+        "scope": "These checks are attached to the old remote PR head; no checks observed for the local branch or candidate source."
+      },
+      "settings_changed": false,
+      "evidence": "specs/farol-2/evidence/release-readiness-hardening-20260924.md"
+    },
     "core": {
       "candidate": "93bb8894d816aad3c3b3682ccec317db1da39d45",
       "profile": "core",
@@ -469,6 +511,24 @@
         ],
         "report_retention": "stdout observed; not versioned"
       }
+    },
+    "ragflow_preflight_2026_09_27": {
+      "candidate_source_commit": "129d517a899e5ed39b1d48666ae736de246e09a6",
+      "observed_at": "2026-09-27",
+      "command": ".venv-rag\\Scripts\\python.exe scripts\\run_ragflow_profile.py --json",
+      "exit_code": 1,
+      "status": "blocked",
+      "reason": "missing_external_inputs",
+      "missing": [
+        "DOCOPS_RAGFLOW_ENDPOINT",
+        "DOCOPS_RAGFLOW_TOKEN",
+        "DOCOPS_RAGFLOW_IMAGE_DIGEST",
+        "DOCOPS_RAGFLOW_SDK_VERSION"
+      ],
+      "integration_subprocess_started": false,
+      "report_artifact": "artifacts/ragflow-preflight-20260927.stdout.json",
+      "report_sha256": "a50d53d4ea37a421af67454942ed7449671bca0bfb42fa9f834f972d5ea19e79",
+      "retention": "ignored local artifact; report hash recorded here"
     },
     "ragflow_real": {
       "candidate": "93bb8894d816aad3c3b3682ccec317db1da39d45",
@@ -690,6 +750,20 @@
         "DOCOPS_RAGFLOW_IMAGE_DIGEST",
         "DOCOPS_RAGFLOW_SDK_VERSION"
       ],
+      "latest_observation": {
+        "observed_at": "2026-09-27",
+        "preflight_status": "blocked",
+        "missing": [
+          "DOCOPS_RAGFLOW_ENDPOINT",
+          "DOCOPS_RAGFLOW_TOKEN",
+          "DOCOPS_RAGFLOW_IMAGE_DIGEST",
+          "DOCOPS_RAGFLOW_SDK_VERSION"
+        ],
+        "environment_presence_check": "all four variables absent; values were not read or recorded",
+        "integration_subprocess_started": false,
+        "report_artifact": "artifacts/ragflow-preflight-20260927.stdout.json",
+        "report_sha256": "a50d53d4ea37a421af67454942ed7449671bca0bfb42fa9f834f972d5ea19e79"
+      },
       "evidence": "specs/farol-2/evidence/release-readiness-hardening-20260924.md; specs/farol-2/todo.md"
     },
     {
@@ -698,10 +772,13 @@
       "type": "authorization",
       "reason": "The candidate and evidence remain local; updating PR #16 to trigger CI for the exact source requires explicit push authorization.",
       "candidate_source_commit": "129d517a899e5ed39b1d48666ae736de246e09a6",
+      "local_branch_head_at_latest_observation": "d88b2211942ccd88b668e51a1d5953445504b7f7",
+      "local_commits_ahead_at_latest_observation": 8,
       "remote_branch_head": "be40e16f09153cfc12e3ea389302793f920c40b2",
       "pull_request_number": 16,
-      "pull_request_state": "OPEN; REVIEW_REQUIRED; head is stale at remote_branch_head",
-      "existing_remote_checks": "passed on 2026-09-23 for the old PR head; no CI observed for candidate_source_commit",
+      "pull_request_state": "OPEN; mergeStateStatus=BLOCKED; REVIEW_REQUIRED; head is stale at remote_branch_head",
+      "existing_remote_checks": "26/26 checks passed in two runs on 2026-09-23 for the old PR head; no CI observed for candidate_source_commit or local_branch_head_at_latest_observation",
+      "latest_observation": "2026-09-27; main and remote RC refs unchanged; no RC tag or GitHub release found",
       "evidence": "specs/farol-2/evidence/release-readiness-hardening-20260924.md; specs/farol-2/todo.md"
     }
   ],

@@ -9,7 +9,7 @@ regenere esta projeção.
 - [x] [TK-002](tickets/TK-002.md) — expandir contratos fundamentais v2.
 - [x] [TK-017](tickets/TK-017.md) — remover Mercado Livre/curso/página/oferta; auditor editorial limpo.
 
-## Estado de prontidão — 2026-09-26
+## Estado de prontidão — 2026-09-27
 
 - `TK-020` permanece `in_progress`; `TK-021` foi revalidado e voltou a
   `verified`: a wheel reconstruída localmente
@@ -33,14 +33,22 @@ regenere esta projeção.
 - Não há tag/release GitHub da RC.1. Full gate no source atual: `not_run`,
   `blocked` pela falta do serviço e dos quatro inputs RAGFlow. CI do source
   atual também não foi executada: push requer autorização explícita.
+- A revalidação de 2026-09-27 confirmou os quatro inputs ausentes; o preflight
+  retornou `blocked/missing_external_inputs` sem iniciar subprocesso. O recibo
+  (`artifacts/ragflow-preflight-20260927.stdout.json`) e seu SHA estão em
+  `state.json` e na evidência de prontidão.
 - Private vulnerability reporting foi habilitado em 2026-09-25 e GET-confirmado
   novamente em 2026-09-26; restam o full gate RAGFlow e CI remota do source atual
   depois de push autorizado.
+- Em 2026-09-27, `main` seguia em `a939e0a4`, a branch RC remota em `be40e16` e
+  o PR #16 estava `OPEN`, `BLOCKED`, `REVIEW_REQUIRED`. Os 26 checks consultados
+  passaram em dois runs de 23/09 no head antigo; tag/release continuam ausentes.
+  O snapshot está em `state.json` e na evidência de prontidão.
 - `main` segue protegido por 13 checks e uma aprovação de code owner; a branch
   RC não tem proteção nem ruleset, então a revisão deve seguir pelo PR #16 para
   `main`. Ele está aberto, mas seu head remoto segue em `be40e16`; checks verdes
   de 2026-09-23 são desse source antigo. A decisão é `REVIEW_REQUIRED`; nenhum
-  check cobre o SHA local `129d517`.
+  check cobre o candidato `129d517` nem o head local registrado no snapshot.
 - O estado dos 21 tickets coincide com `state.json`; os 33 AC do contrato
   coincidem com a matriz e suas referências de evidência existem. A auditoria
   `requirements.lock`/ambiente local passou sem findings nesta data.

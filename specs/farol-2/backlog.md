@@ -1,13 +1,13 @@
 # Backlog Farol 2.0
 
-**Gerado a partir de:** spec/plan revisão 1; tickets TK-020/TK-021 revisão 13/2 e demais tickets revisão 1.
+**Gerado a partir de:** spec/plan revisão 1; tickets TK-020/TK-021 revisão 14/2 e demais tickets revisão 1.
 **Baseline:** `81d5dcb2e189d00406cdd9b9e671d94e3f23cd58`
 **Snapshot histórico da implementação (2026-09-20):** branch `main`, com a release candidate
 `v2.0.0-rc.1` preparada a partir da integração Farol 2.0. A evidência full foi
 capturada em 20/09/2026 contra a mesma árvore de implementação antes do handoff
 documental.
 
-**Prontidão local atual (2026-09-26):** branch `release/farol-2.0.0-rc.1`,
+**Prontidão local atual (2026-09-27):** branch `release/farol-2.0.0-rc.1`,
 `TK-020` em progresso; core (22/22) e bundle auditável foram verificados no
 source limpo `129d517a899e5ed39b1d48666ae736de246e09a6`, digest
 `e3bd485758d4ecf751e5c6e740b678f410f5d8f74eb5cf164199d53a0ff46017`. Private
