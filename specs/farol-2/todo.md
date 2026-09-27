@@ -1,5 +1,12 @@
 # Todo Farol 2.0
 
+## Estado de entrega vigente
+
+Full gate `e6a3c41`: 25/25, 1082 passed, 12 skipped, zero falhas/bloqueios.
+CI 26/26 e bundle `--release` aprovados. TK-022 verificado; TK-020 aguarda
+somente revisão/entrega via PR #16. Evidência em `evidence/TK-020.md`.
+Os snapshots abaixo são históricos.
+
 ## Retomada atual — 2026-09-27
 
 - TK-022: instalação e diagnóstico para usuário local em verificação.

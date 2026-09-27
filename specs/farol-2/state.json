@@ -15,9 +15,9 @@
     "value": "v2.0.0-rc.1",
     "branch": "release/farol-2.0.0-rc.1",
     "remote_relation": "release candidate prepared from origin/main after the Farol 2.0 integration; full evidence identifies the implementation candidate 93bb8894d816aad3c3b3682ccec317db1da39d45",
-    "worktree_status": "TK-022 installation and doctor improvements under verification on baseline 1afd00e; prior evidence remains bound to its recorded source.",
+    "worktree_status": "Product source e6a3c41 passed full gate and exact-source remote CI; CI bundle independently release-verified. This follow-up records evidence only.",
     "gate_worktree_entries": 75,
-    "current_worktree_entries": "See git status for the current TK-022 candidate; final full gate pending.",
+    "current_worktree_entries": "Evidence-only follow-up; distribution artifacts remain bound to e6a3c41.",
     "current_worktree_observed_at": "2026-09-27"
   },
   "inputs": {
@@ -1093,8 +1093,41 @@
       "wheel_installed_doctor_generate_validate_evaluate": "passed",
       "previous_head_remote_ci": "26 checks passed for 1afd00e; not evidence for TK-022 changes",
       "evidence": "specs/farol-2/evidence/TK-022.md"
+    },
+    "user_ready_e6a3c41": {
+      "source_commit": "e6a3c4112f99a7a7a9e2819fd32154729dd71495",
+      "status": "passed",
+      "profile": "full",
+      "denominators": {
+        "blocked": 0,
+        "failed": 0,
+        "not_run": 0,
+        "passed": 1082,
+        "skipped": 12,
+        "stages": 25
+      },
+      "report_artifact": "artifacts/release-full-e6a3c41-normalized/release-gates.json",
+      "report_sha256": "68b0ad9a252e11539216831c8135c2a282dedfd823a8c32eb710d316235cc3f2",
+      "initial_worktree_entries": 4,
+      "initial_worktree_limitation": "EOL normalization stat entries; git diff HEAD and staged diff empty after index refresh; no product changes during gate.",
+      "ci_runs": [
+        36356521594,
+        36356525951
+      ],
+      "ci_checks_passed": 26,
+      "bundle_verification": "passed --release against independent clean LF checkout",
+      "source_candidate_digest": "ed64d23e9924f2fda009a73e084833e01dc7ef4de693bd7d34ac4e013d6f9f84",
+      "download_zip_smoke": "passed bootstrap, doctor, generate, validate in new venv without credentials",
+      "evidence": "specs/farol-2/evidence/TK-020.md"
     }
   },
-  "external_blockers": [],
-  "next_action": "Run full gate on the clean TK-022 candidate with private local RAGFlow inputs, update PR #16, obtain exact-source CI/review, and prepare audited downloadable assets."
+  "external_blockers": [
+    {
+      "scope": "protected main review and public release",
+      "status": "blocked",
+      "reason": "PR #16 requires code-owner review and approval of the latest push; no approval received. No bypass, merge, tag or release performed.",
+      "source_commit": "e6a3c4112f99a7a7a9e2819fd32154729dd71495"
+    }
+  ],
+  "next_action": "Obtain required review on PR #16; then merge and prepare/reverify the approved publication source. Downloadable RC archives and exact-source CI artifact are ready; GA remains unpublished."
 }

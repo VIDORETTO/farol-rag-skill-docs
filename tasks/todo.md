@@ -1,9 +1,11 @@
 # Checkpoint Farol 2.0 — 2026-09-27
 
-- Baseline `1afd00e`: PR #16 atualizado, 26 checks remotos aprovados.
-- TK-022: bootstrap opcional, doctor instalado/seguro, guia de credenciais;
-  30 testes dirigidos, wheel fora do checkout e documentação passaram.
-- RAGFlow local recuperado; integração real 2/2 passou, sem skips.
-  Credenciais usadas somente em memória pelo launcher privado em `.scratch`.
-- Próximo: full gate no candidato limpo, CI/revisão do novo SHA e bundle final.
-- Release ainda não publicada; evidência canônica em TK-020/TK-022 e state.json.
+- Source de produto: `e6a3c4112f99a7a7a9e2819fd32154729dd71495`.
+- Full 25/25, 1082 passed, 12 skips; RAGFlow/OCR/book-to-skill reais passaram.
+- CI 26/26; bundle da CI verificado com `--release` em checkout limpo LF.
+- ZIP sem Git: bootstrap em venv novo, doctor, geração e validação passaram.
+- TK-022 verified; TK-020 verificação passed, in_progress por revisão/entrega.
+- PR #16 exige review de code owner e aprovação do último push. Sem bypass.
+- Downloads em `artifacts/`, hashes e limites em `specs/farol-2/evidence/TK-020.md`.
+- Próximo: revisão exigida, merge e verificação do source aprovado para publicar.
+- Nenhum merge, tag, release ou GA. Recibo atual altera apenas evidência.
