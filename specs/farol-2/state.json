@@ -526,6 +526,12 @@
         "DOCOPS_RAGFLOW_SDK_VERSION"
       ],
       "integration_subprocess_started": false,
+      "environment_scope_check": "all four inputs absent in Process, User and Machine scopes; values not read or recorded",
+      "local_runtime_check": {
+        "command": "docker ps --format \"{{.Names}}|{{.Image}}|{{.Status}}\"",
+        "status": "unavailable",
+        "reason": "Docker Desktop Linux engine named pipe is unavailable; no local container listing could be obtained"
+      },
       "report_artifact": "artifacts/ragflow-preflight-20260927.stdout.json",
       "report_sha256": "a50d53d4ea37a421af67454942ed7449671bca0bfb42fa9f834f972d5ea19e79",
       "retention": "ignored local artifact; report hash recorded here"
@@ -759,7 +765,8 @@
           "DOCOPS_RAGFLOW_IMAGE_DIGEST",
           "DOCOPS_RAGFLOW_SDK_VERSION"
         ],
-        "environment_presence_check": "all four variables absent; values were not read or recorded",
+        "environment_presence_check": "all four variables absent in Process, User and Machine scopes; values were not read or recorded",
+        "local_runtime_check": "Docker daemon unavailable; docker ps could not reach the Docker Desktop Linux engine",
         "integration_subprocess_started": false,
         "report_artifact": "artifacts/ragflow-preflight-20260927.stdout.json",
         "report_sha256": "a50d53d4ea37a421af67454942ed7449671bca0bfb42fa9f834f972d5ea19e79"

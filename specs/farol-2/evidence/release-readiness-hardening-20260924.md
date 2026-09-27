@@ -572,6 +572,13 @@ subprocesso iniciado. O recibo local ignorado
 `a50d53d4ea37a421af67454942ed7449671bca0bfb42fa9f834f972d5ea19e79`. O full
 gate continua `not_run`; o preflight não é contado como integração aprovada.
 
+Na continuação da auditoria, a checagem de presença foi ampliada aos escopos
+Process, User e Machine; todas as quatro variáveis estavam ausentes nos três
+escopos, sem leitura dos valores. `docker ps --format
+"{{.Names}}|{{.Image}}|{{.Status}}"` também falhou porque o named pipe do Docker
+Desktop Linux engine não existe neste ambiente. Portanto não há serviço local
+Docker acessível para substituir o serviço RAGFlow externo exigido pelo gate.
+
 ### Snapshot GitHub
 
 Consultas de leitura em 2026-09-27 (`git ls-remote`, `gh pr view 16`,

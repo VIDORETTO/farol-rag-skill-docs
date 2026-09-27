@@ -34,9 +34,10 @@ regenere esta projeção.
   `blocked` pela falta do serviço e dos quatro inputs RAGFlow. CI do source
   atual também não foi executada: push requer autorização explícita.
 - A revalidação de 2026-09-27 confirmou os quatro inputs ausentes; o preflight
-  retornou `blocked/missing_external_inputs` sem iniciar subprocesso. O recibo
-  (`artifacts/ragflow-preflight-20260927.stdout.json`) e seu SHA estão em
-  `state.json` e na evidência de prontidão.
+  retornou `blocked/missing_external_inputs` sem iniciar subprocesso. A checagem
+  não encontrou as variáveis nos escopos Process/User/Machine e `docker ps`
+  confirmou daemon local indisponível. O recibo (`artifacts/ragflow-preflight-20260927.stdout.json`)
+  e seu SHA estão em `state.json` e na evidência de prontidão.
 - Private vulnerability reporting foi habilitado em 2026-09-25 e GET-confirmado
   novamente em 2026-09-26; restam o full gate RAGFlow e CI remota do source atual
   depois de push autorizado.
