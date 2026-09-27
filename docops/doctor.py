@@ -311,7 +311,7 @@ def _ragflow_check(environ: Mapping[str, str]) -> dict[str, object]:
                 health = probe.status
                 version = probe.version or version
                 capabilities = list(probe.capabilities) or capabilities
-                reason = str(probe.diagnostics.get("reason") or reason)
+                reason = str(probe.diagnostics.get("reason") or ("healthy" if health == "healthy" else "probe_failed"))
                 status = "ready" if health == "healthy" else "unavailable"
             except (BackendError, ValueError):
                 health = "unavailable"

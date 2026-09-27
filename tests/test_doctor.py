@@ -140,6 +140,7 @@ def test_doctor_probes_once_and_accepts_a_healthy_required_service(tmp_path: Pat
     )
     assert report.ok
     assert report.capabilities["rag"] == "available"
+    assert report.checks["ragflow"]["reason"] == "healthy"
     assert len(calls) == 1
 
 
