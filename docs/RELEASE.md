@@ -32,10 +32,13 @@ setembro para aquele SHA antigo. Não existe tag `v2.0.0-rc.1` nem GitHub
 Release. Atualizar o PR exige autorização explícita de push; review/merge em
 `main`, tag, release e promoção a GA continuam decisões separadas.
 
-As revisões locais do README e deste runbook ainda precisam passar pela
-auditoria do candidato e integrar o source final antes de gerar artefatos de
-publicação. Nenhum recibo de `129d517` deve ser tratado como validação dessas
-alterações posteriores.
+A revisão documental local passou em 27 de setembro: 167 Markdown sem findings,
+matriz de suporte e contratos válidos, e auditoria do candidato com 578 arquivos
+e zero findings. O bundle RC foi regenerado para a revisão do README/runbook e
+verificado independentemente; os digests estão em `specs/farol-2/state.json`.
+Esse bundle local não tem CI remota nem atestação configurada e não foi
+publicado. O full gate continua bloqueado. A distribuição pública ainda deve
+ser reconstruída a partir do source aprovado/mesclado, com os gates finais.
 
 ## Evidência histórica de gates anteriores
 
