@@ -25,27 +25,29 @@ regenere esta projeção.
   `e3bd485758d4ecf751e5c6e740b678f410f5d8f74eb5cf164199d53a0ff46017`. Os
   relatórios, hashes e limitações estão em `state.json` e na evidência de
   prontidão. O perfil foi `core`, não full.
-- **Revalidação final:** o README, runbook e notas RC foram alinhados ao estado
-  observado; no source limpo `8f06ee7d31fbd4431de63f953ca9f843035c6859`, o core
-  passou 22/22 (`1050 passed`, `12 skipped`, zero falhas/bloqueios/not_run).
-  O bundle `artifacts/farol-2.0.0-rc.1-final-20260927` foi verificado
+- **Snapshot anterior:** após alinhar README, runbook e notas RC, o source limpo
+  `8f06ee7d31fbd4431de63f953ca9f843035c6859` passou core 22/22; bundle digest
+  `6bc0784cf884675f9a4aa2690a11b5217abe3efa4a9d1d32478dc9596a88c464`.
+- **Source documental atual `eb53395`:** core 22/22, `1050 passed`, `12 skipped`,
+  zero falhas/bloqueios/not_run. Bundle
+  `artifacts/farol-2.0.0-rc.1-eb53395-final-20260927` verificado
   independentemente: 31 arquivos, digest
-  `6bc0784cf884675f9a4aa2690a11b5217abe3efa4a9d1d32478dc9596a88c464`, wheel
-  SHA `9b734abc8f360a9fb55468b029078bd1f55570c19d2f460807b9c40501c19067`.
+  `23d9c54cc582d46171f437669ebe90ce2f5e9fd89756a51c01e4db188874351d`, wheel
+  SHA `a5b42459513fdccd880ab373469e040253fbe40a3a1e40272e311bab6fb02316`.
 - Book-to-skill e OCR passaram isoladamente no predecessor documental
   `c0859b61941459575d68d35fa1e856f63856e1d1`, com somente documentação pública
   alterada até `8f06ee7`: book-to-skill 23/23, duas skills e cinco claims de
   lineage; OCR 1/1 sem rede. Não são reportados como executados no SHA final.
 - A claim de suporte Python do README foi alinhada à matriz oficial 3.11–3.13;
   a revisão manual Standards/Spec não deixou findings locais abertos.
-- Não há tag/release GitHub da RC.1. Full gate no source atual `8f06ee7`:
+- Não há tag/release GitHub da RC.1. Full gate no source atual `eb53395`:
   `not_run`,
   `blocked` pela falta do serviço e dos quatro inputs RAGFlow. CI do source
   atual também não foi executada: push requer autorização explícita.
 - A revalidação de 2026-09-27 confirmou os quatro inputs ausentes; o preflight
   retornou `blocked/missing_external_inputs` sem iniciar subprocesso. A checagem
   não encontrou as variáveis nos escopos Process/User/Machine e `docker ps`
-  confirmou daemon local indisponível. O recibo (`artifacts/ragflow-preflight-20260927.stdout.json`)
+  confirmou daemon local indisponível. O recibo atual (`artifacts/ragflow-preflight-eb53395-20260927.stdout.json`)
   e seu SHA estão em `state.json` e na evidência de prontidão.
 - Private vulnerability reporting foi habilitado em 2026-09-25 e GET-confirmado
   novamente em 2026-09-26; restam o full gate RAGFlow e CI remota do source atual
@@ -58,8 +60,8 @@ regenere esta projeção.
   RC não tem proteção nem ruleset, então a revisão deve seguir pelo PR #16 para
   `main`. Ele está aberto, mas seu head remoto segue em `be40e16`; checks verdes
   de 2026-09-23 são desse source antigo. A decisão é `REVIEW_REQUIRED`; nenhum
-  check cobre o candidato final `8f06ee7`; a branch local está 13 commits à
-  frente no estado observado após o snapshot, sem push.
+  check cobre o candidato final `eb53395`; a branch local avançou depois da
+  consulta e segue sem push.
 - O estado dos 21 tickets coincide com `state.json`; os 33 AC do contrato
   coincidem com a matriz e suas referências de evidência existem. A auditoria
   `requirements.lock`/ambiente local passou sem findings nesta data.

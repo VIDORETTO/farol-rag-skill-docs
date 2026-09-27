@@ -685,3 +685,87 @@ CI exata e da aprovação de code owner na `main` protegida. Não houve push,
 merge, tag, release, publicação do artefato nem promoção a GA. O backup
 `farol-v3-backup-2026-09-21` permanece verificado e preservado conforme
 `rc1-assets-and-v3-backup-20260924.md`.
+
+## Revalidação após alinhamento dos documentos públicos — 2026-09-27
+
+### Core e bundle no source documental atualizado
+
+Depois de identificar que README, runbook e notas ainda descreviam `c0859b6`
+como o snapshot mais recente, alinhei esses documentos e gravei o commit
+`eb533951fc8feaa2a469a3d491fa381501e22f08`. Ele altera apenas documentação
+pública desde `c42832e5b348e9507c695e5f11c4db970c47ad22`; não contém mudança de
+código de aplicação. O checkout estava limpo antes de executar o gate.
+
+Comando:
+
+```powershell
+.venv-rag\Scripts\python.exe scripts\run_release_gates.py --root . --python .venv-rag\Scripts\python.exe --output artifacts\release-gates-eb53395-core-20260927 --profile core --timeout 3600 --json
+```
+
+Resultado: `ok=true`, 22/22 estágios, 1050 passed, 12 skipped, zero
+failed/blocked/not_run e zero entradas de worktree. Windows 11, Python 3.13.12,
+AMD64; término `2026-09-27T10:53:04-03:00`. O relatório
+`artifacts/release-gates-eb53395-core-20260927/release-gates.json` tem SHA-256
+`b1558cbc5d5ee648c41a5bc7cad53a34ff7e17e85401f17cdff0a1b7de34cd77`. Os skips
+são os casos OCR/RAGFlow opt-in e três casos por suíte pytest que exigem
+symlink, indisponível neste host. Este resultado é `core`, não `full`.
+
+Bundle construído e verificado independentemente:
+
+```powershell
+.venv-rag\Scripts\python.exe scripts\prepare_candidate.py --root . --output artifacts\farol-2.0.0-rc.1-eb53395-final-20260927 --profile core
+.venv-rag\Scripts\python.exe scripts\verify_candidate.py --root artifacts\farol-2.0.0-rc.1-eb53395-final-20260927 --source-root .
+```
+
+O builder retornou `ok=true`; o verificador saiu com código 0,
+`ok=true`, `errors=[]`, source identity correspondente e supply-chain válida.
+O bundle contém 31 arquivos/606265 bytes e digest
+`23d9c54cc582d46171f437669ebe90ce2f5e9fd89756a51c01e4db188874351d`.
+Manifesto SHA-256 `65bae1b3b3c00a1f85ef2d666b8962df747339f121a70dd9e3f6b29bbcbf6e79`,
+identity SHA-256 `18fa3c49bed8f8717b5bfe6eb38e61fb05c453bede5e1483d78afa33a7aa09a2`,
+`evidence/SHA256SUMS` SHA-256
+`dadd9887bddf5837722355fc3a6676344bf382eb9765416b5a73586cbe423fd1`.
+Wheel `consulta_documentacao-2.0.0rc1-py3-none-any.whl`: 394035 bytes,
+SHA-256 `a5b42459513fdccd880ab373469e040253fbe40a3a1e40272e311bab6fb02316`.
+Supply-chain receipt SHA-256
+`e1960cfac42522c63370ac5b3cc339796f0c7e4bea9db206b3bf134d9b6af75d`;
+candidate audit: 578 arquivos, zero findings. CI não observada, atestação
+`not-configured`, publicação não realizada.
+
+Após atualizar os registros canônicos, `check_acceptance_matrix.py --check`
+confirmou 33 critérios verificados sem gaps; `check_documentation.py` passou em
+167 Markdown; contratos, support matrix e candidate audit passaram sem findings.
+
+### Bloqueios externos, GitHub e backup Farol v3
+
+O preflight do source `eb53395` terminou com exit code 1,
+`status=blocked`, `reason=missing_external_inputs`; faltam
+`DOCOPS_RAGFLOW_ENDPOINT`, `DOCOPS_RAGFLOW_TOKEN`,
+`DOCOPS_RAGFLOW_IMAGE_DIGEST` e `DOCOPS_RAGFLOW_SDK_VERSION`. Nenhum
+subprocesso de integração foi iniciado. O usuário confirmou ausência do serviço
+e credenciais. O recibo ignorado
+`artifacts/ragflow-preflight-eb53395-20260927.stdout.json` tem SHA-256
+`a50d53d4ea37a421af67454942ed7449671bca0bfb42fa9f834f972d5ea19e79`.
+
+Reconsultei `git ls-remote`, `gh pr view 16`, `gh pr checks 16` e
+`gh release list`. No momento da consulta, a branch local estava em
+`c42832e5b348e9507c695e5f11c4db970c47ad22`, 14 commits à frente do remoto.
+`main` continua em `a939e0a4b856ea3df86ac5f8055f329ebd15f5fd`; a branch RC
+remota em `be40e16f09153cfc12e3ea389302793f920c40b2`. PR #16 segue `OPEN`,
+`BLOCKED`, `REVIEW_REQUIRED`; seus 26 checks verdes pertencem aos runs
+`35802632753` e `35802649202` de 23/09, não ao source `eb53395`. Não há tag ou
+release RC. O novo source local não foi enviado; obter CI e aprovação de code
+owner ainda depende de autorização explícita para publicar o branch.
+
+Também revalidei os refs remotos do backup: `refs/heads/farol-v3` e a tag
+`farol-v3-backup-2026-09-21` apontam ao commit
+`79f9887c52e102351cd5c8d3b5ff7aaab5b7a07d`, árvore
+`358db1c1a89a3aa8d1ce07b5641e612c681be876`. A tag anotada continua no objeto
+`5fa11d68a3faec8ce24337a573fb2f30b20ff226`.
+
+O full gate permanece `blocked/not_run`. Nenhum push, merge, tag, release,
+publicação do bundle ou promoção a GA foi feito. Próximos passos: provisionar
+RAGFlow e seus quatro inputs para executar o full gate no candidato então
+vigente; autorizar separadamente o push para PR/CI/review; depois do merge,
+reconstruir o artefato do source aprovado. Tag, release e GA continuam decisões
+separadas com autorização própria.

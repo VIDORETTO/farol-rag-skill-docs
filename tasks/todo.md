@@ -2,21 +2,22 @@
 
 ## Estado atual
 
-- Source de produto `8f06ee7d31fbd4431de63f953ca9f843035c6859`, branch local
-  `release/farol-2.0.0-rc.1`; mudanças de evidência/checkpoint ficam em commit
-  local posterior. Sem push, tag ou release.
-- Gate core: 22/22 etapas, 1050 passed, 12 skips e zero falhas/bloqueios/not_run.
-  Bundle local independente: digest
-  `6bc0784cf884675f9a4aa2690a11b5217abe3efa4a9d1d32478dc9596a88c464`; wheel
-  SHA `9b734abc8f360a9fb55468b029078bd1f55570c19d2f460807b9c40501c19067`.
+- Source de documentos públicos `eb533951fc8feaa2a469a3d491fa381501e22f08`,
+  branch `release/farol-2.0.0-rc.1`; o recibo local atual registra apenas
+  evidência/checkpoint. Sem push, tag ou release.
+- Gate core: 22/22 etapas, 1050 passed, 12 skips e zero falhas/bloqueios/not_run;
+  relatório SHA `b1558cbc5d5ee648c41a5bc7cad53a34ff7e17e85401f17cdff0a1b7de34cd77`.
+  Bundle independente: digest
+  `23d9c54cc582d46171f437669ebe90ce2f5e9fd89756a51c01e4db188874351d`; wheel
+  SHA `a5b42459513fdccd880ab373469e040253fbe40a3a1e40272e311bab6fb02316`.
 - `TK-020` permanece `in_progress`/`blocked`; `TK-021` está `verified`.
   Book-to-skill (23/23) e OCR (1/1) passaram no predecessor documental
   `c0859b6`, sem serem atribuídos ao SHA final.
 - Full gate RAGFlow: `blocked/not_run`; o usuário confirmou que não há serviço
-  ou credenciais. Faltam quatro inputs, o preflight não iniciou integração e o
-  daemon Docker está indisponível.
+  ou credenciais. Faltam quatro inputs, o preflight do source `eb53395` não
+  iniciou integração e o daemon Docker está indisponível.
 - GitHub: PR #16 segue no head remoto antigo `be40e16`, com `REVIEW_REQUIRED`;
-  os 26 checks verdes são de runs antigos. Não há CI para o candidato local.
+  os 26 checks verdes são de runs antigos. Não há CI para `eb53395`.
   `main` requer 13 checks e uma aprovação de code owner; atualizar o PR requer
   autorização de push.
 - Backup `farol-v3-backup-2026-09-21` verificado e preservado.
