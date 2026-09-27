@@ -9,21 +9,24 @@ de conteúdo, permissões e artefatos.
 
 ## Snapshot atual da candidata — 2026-09-27
 
-O source limpo `129d517a899e5ed39b1d48666ae736de246e09a6` passou o perfil `core`
+O source limpo `c0859b61941459575d68d35fa1e856f63856e1d1` passou o perfil `core`
 em 22/22 etapas (`1050 passed`, `12 skipped`, zero falhas/bloqueios/not_run).
-O bundle e a cadeia de suprimentos desse source passaram por verificação
-independente, sem findings. O manifesto fixa o source e os digests exatos. O
-perfil `core` não substitui o gate `full`, e os recibos de `129d517` não cobrem
-os commits locais de documentação posteriores.
+O perfil `book-to-skill` passou 23/23 etapas (`1051 passed`, `12 skipped` no
+agregado), e o contrato OCR real local passou em um PDF sintético de duas
+páginas sem envio remoto. O bundle e a cadeia de suprimentos desse source
+passaram por verificação independente, sem findings. O manifesto fixa o
+source e os digests exatos. Esses resultados continuam sendo perfil `core` e
+integrações específicas; não substituem o gate `full` com RAGFlow.
 
 O `full` permanece `blocked/not_run`: o serviço RAGFlow e os quatro inputs
 `DOCOPS_RAGFLOW_ENDPOINT`, `DOCOPS_RAGFLOW_TOKEN`,
 `DOCOPS_RAGFLOW_IMAGE_DIGEST` e `DOCOPS_RAGFLOW_SDK_VERSION` estão indisponíveis.
-O preflight de 27 de setembro terminou com `status=blocked`,
-`reason=missing_external_inputs` e exit code 1; nenhum subprocesso de integração
-foi iniciado. As quatro variáveis estavam ausentes nos escopos Process, User e
-Machine. O Docker Desktop Linux engine também estava inacessível, então não foi
-possível obter uma listagem de containers locais.
+O preflight de 27 de setembro para o source atualizado terminou com
+`status=blocked`, `reason=missing_external_inputs` e exit code 1; nenhum
+subprocesso de integração foi iniciado. As quatro variáveis estavam ausentes
+nos escopos Process, User e Machine. O Docker Desktop Linux engine também
+estava inacessível, então não foi possível obter uma listagem de containers
+locais.
 
 Não foi observada CI remota para o head local. Em 27 de setembro, a branch RC
 remota ainda estava em `be40e16`; o PR #16 seguia aberto, `BLOCKED` e
@@ -32,13 +35,14 @@ setembro para aquele SHA antigo. Não existe tag `v2.0.0-rc.1` nem GitHub
 Release. Atualizar o PR exige autorização explícita de push; review/merge em
 `main`, tag, release e promoção a GA continuam decisões separadas.
 
-A revisão documental local passou em 27 de setembro: 167 Markdown sem findings,
+O README, este runbook e as notas da RC estão atualizados com os resultados do
+source `c0859b6`. A revisão documental passou: 167 Markdown sem findings,
 matriz de suporte e contratos válidos, e auditoria do candidato com 578 arquivos
-e zero findings. O bundle RC foi regenerado para a revisão do README/runbook e
-verificado independentemente; os digests estão em `specs/farol-2/state.json`.
-Esse bundle local não tem CI remota nem atestação configurada e não foi
-publicado. O full gate continua bloqueado. A distribuição pública ainda deve
-ser reconstruída a partir do source aprovado/mesclado, com os gates finais.
+e zero findings. O bundle RC foi regenerado e verificado independentemente; os
+digests estão em `specs/farol-2/state.json`. Esse bundle local não tem CI remota
+nem atestação configurada e não foi publicado. O full gate continua bloqueado.
+A distribuição pública deve ser reconstruída a partir do source
+aprovado/mesclado, com os gates finais.
 
 ## Evidência histórica de gates anteriores
 

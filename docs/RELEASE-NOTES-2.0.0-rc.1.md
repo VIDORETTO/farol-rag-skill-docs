@@ -32,18 +32,20 @@ O gate full `25/25` foi executado no commit de implementação
 commit de preparação da RC nem desta árvore de trabalho. O estado atual dos
 gates e das limitações está em [`specs/farol-2/state.json`](../specs/farol-2/state.json).
 
-Na revalidação de 26 de setembro de 2026, o source local limpo passou o perfil
-`core`: 22/22 etapas, `1050 passed`, `12 skipped` explícitos e zero
-falhas/bloqueios/not_run. O bundle candidate passou pela verificação
-independente, auditoria de candidate e supply-chain; a wheel não contém os três
-módulos Farol 1.x removidos. O `candidate-manifest.json` de cada bundle registra
-o SHA exato do source e os digests dos artefatos.
+Na validação local de 27 de setembro de 2026, o source limpo `c0859b6` passou o
+perfil `core`: 22/22 etapas, `1050 passed`, `12 skipped` explícitos e zero
+falhas/bloqueios/not_run. O perfil `book-to-skill` passou 23/23 etapas
+(`1051 passed`, `12 skipped` no agregado), e o contrato OCR real local passou
+com um PDF sintético de duas páginas, sem envio remoto. O bundle candidate foi
+regenerado e passou pela verificação independente, auditoria de candidate e
+supply-chain; o `candidate-manifest.json` fixa source e digests. Os valores
+completos estão em [`specs/farol-2/state.json`](../specs/farol-2/state.json).
 
-Esse resultado é apenas `core`; não valida a integração real RAGFlow. No
-snapshot de 26 de setembro, o full gate permanecia `blocked/not_run` pela
-indisponibilidade do serviço e das quatro entradas externas. O PR #16 ainda
-apontava para o head antigo, sem CI remoto no source exato. O release candidate
-seguia sem tag, GitHub Release ou artefatos públicos.
+Esses resultados não constituem o gate `full`: em 27 de setembro, o preflight
+RAGFlow permaneceu `blocked` por falta do serviço e dos quatro inputs, sem
+iniciar integração. O PR #16 ainda apontava para o head remoto antigo e não há
+CI remota no source local. A RC segue sem tag, GitHub Release ou artefatos
+públicos.
 
 Não há wheel, checksums ou release públicos para baixar neste momento. O
 artefato local auditado não é uma distribuição pública; aguarde a publicação
