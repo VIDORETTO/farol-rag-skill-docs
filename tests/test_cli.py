@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 def test_doctor_command_emits_machine_readable_report(tmp_path: Path) -> None:
-    (tmp_path / "pyproject.toml").write_text("[project]\nname='fixture'\n", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text("[project]\nname='consulta-documentacao'\n", encoding="utf-8")
     (tmp_path / "requirements.lock").write_text("# fixture\n", encoding="utf-8")
 
     completed = subprocess.run(
@@ -26,6 +26,22 @@ def test_doctor_command_emits_machine_readable_report(tmp_path: Path) -> None:
     assert report["project_root"] == "."
     assert report["checks"]["project_metadata"]["path"] == "pyproject.toml"
     assert report["checks"]["dependency_lock"]["path"] == "requirements.lock"
+
+
+def test_doctor_required_ragflow_fails_with_actionable_json_without_credentials(tmp_path: Path) -> None:
+    import os
+
+    environment = {key: value for key, value in os.environ.items() if not key.startswith("DOCOPS_RAGFLOW_")}
+    completed = subprocess.run(
+        [sys.executable, "-m", "docops", "doctor", "--root", str(tmp_path), "--require-ragflow", "--json"],
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+    assert completed.returncode == 1
+    report = json.loads(completed.stdout)
+    assert report["checks"]["ragflow"]["reason"] == "endpoint_missing"
+    assert report["checks"]["ragflow"]["probe"] == "explicit"
 
 
 def test_project_init_resumes_across_cli_processes_without_repeating_answers(tmp_path: Path) -> None:

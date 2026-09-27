@@ -4,15 +4,38 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+import tomllib
 from pathlib import Path
 from typing import Any
 
 import yaml
 
+_EXTRA_GROUP = re.compile(r"\.\[([A-Za-z0-9_.-]+(?:,[A-Za-z0-9_.-]+)*)\]")
 
-def validate_workflows(workflows_dir: Path) -> dict[str, Any]:
+
+def validate_workflows(workflows_dir: Path, *, project_file: Path | None = None) -> dict[str, Any]:
     findings: list[dict[str, str]] = []
     paths = sorted([*workflows_dir.glob("*.yml"), *workflows_dir.glob("*.yaml")])
+    if project_file is None:
+        inferred_project = workflows_dir.parent.parent / "pyproject.toml"
+        project_file = inferred_project if inferred_project.is_file() else None
+    declared_extras: set[str] | None = None
+    if project_file is not None:
+        try:
+            with project_file.open("rb") as handle:
+                project_metadata = tomllib.load(handle)
+            optional_dependencies = project_metadata.get("project", {}).get("optional-dependencies", {})
+            if isinstance(optional_dependencies, dict):
+                declared_extras = set(optional_dependencies)
+        except (OSError, tomllib.TOMLDecodeError):
+            findings.append(
+                {
+                    "code": "project_metadata_invalid",
+                    "file": project_file.name,
+                    "message": "project optional-dependency groups could not be read",
+                }
+            )
     for path in paths:
         try:
             payload = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -39,6 +62,23 @@ def validate_workflows(workflows_dir: Path) -> dict[str, Any]:
                         "message": f"workflow job has no executable steps: {name}",
                     }
                 )
+                continue
+            if declared_extras is None:
+                continue
+            for step in job["steps"]:
+                run = step.get("run") if isinstance(step, dict) else None
+                if not isinstance(run, str):
+                    continue
+                for group in _EXTRA_GROUP.findall(run):
+                    for extra in group.split(","):
+                        if extra not in declared_extras:
+                            findings.append(
+                                {
+                                    "code": "workflow_extra_undeclared",
+                                    "file": path.name,
+                                    "message": f"workflow installs an undeclared project extra: {extra}",
+                                }
+                            )
     return {
         "schema_version": 1,
         "ok": not findings and bool(paths),

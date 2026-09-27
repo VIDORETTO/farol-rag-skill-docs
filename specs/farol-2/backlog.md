@@ -1,10 +1,40 @@
 # Backlog Farol 2.0
 
-**Gerado a partir de:** spec/plan revisão 1 e tickets revisão 1.
+## Estado de entrega vigente
+
+Full gate `e6a3c41`: 25/25, 1082 passed, 12 skipped, zero falhas/bloqueios.
+CI 26/26 e bundle `--release` aprovados. TK-022 verificado; TK-020 aguarda
+somente revisão/entrega via PR #16. Evidência em `evidence/TK-020.md`.
+Os snapshots abaixo são históricos.
+
+## Retomada de primeiro uso — 2026-09-27
+
+TK-022 cobre instalação, diagnóstico fora do checkout e guia de credenciais.
+O PR #16 foi atualizado para `1afd00e`, com 26 checks aprovados. O serviço
+RAGFlow local foi recuperado e a integração real passou; falta ligar o full
+gate ao novo candidato e concluir revisão/entrega. O snapshot abaixo descreve
+o estado anterior a essa retomada.
+
+**Gerado a partir de:** spec/plan revisão 1; tickets TK-020/TK-021 revisão 18/2 e demais tickets revisão 1.
 **Baseline:** `81d5dcb2e189d00406cdd9b9e671d94e3f23cd58`
-**Snapshot de entrega:** branch `farol-v3`; a árvore candidata foi
-versionada e enviada ao GitHub. A evidência full foi capturada em 20/09/2026
-contra a mesma árvore de implementação antes do handoff documental.
+**Snapshot histórico da implementação (2026-09-20):** branch `main`, com a release candidate
+`v2.0.0-rc.1` preparada a partir da integração Farol 2.0. A evidência full foi
+capturada em 20/09/2026 contra a mesma árvore de implementação antes do handoff
+documental.
+
+**Prontidão local atual (2026-09-27):** branch `release/farol-2.0.0-rc.1`,
+`TK-020` em progresso; core (22/22) e bundle auditável foram verificados no
+source limpo `eb533951fc8feaa2a469a3d491fa381501e22f08`, digest
+`23d9c54cc582d46171f437669ebe90ce2f5e9fd89756a51c01e4db188874351d`. O core
+registrou 1050 passed, 12 skips e zero falhas/bloqueios/not_run; README, runbook,
+notas da RC, contratos e candidate audit não têm findings. Private vulnerability
+reporting está habilitado. O full gate RAGFlow está bloqueado pela ausência do
+serviço e quatro entradas; CI do source atual requer push autorizado. O PR #16
+para `main` ainda aponta ao commit remoto antigo `be40e16f09153cfc12e3ea389302793f920c40b2`
+e requer review. `main` tem 13 checks e aprovação de code owner; a branch RC
+não tem proteção. Não há tag nem release remota.
+Reconsulta às 11:13 -03 confirmou esse estado após o recibo local `9f44b1c`;
+a branch local estava 16 commits à frente, ainda sem push.
 
 ## Fases e gates
 
@@ -42,10 +72,10 @@ MVP técnico = P0–P4 para corpus sintético autorizado. Farol 2.0 distribuíve
 | [TK-015](tickets/TK-015.md) | Composição/updates/recovery | TK-011, TK-014 | verified |
 | [TK-016](tickets/TK-016.md) | Migração 1.x→2.0 | TK-015 | verified |
 | [TK-017](tickets/TK-017.md) | Remover Mercado Livre e editorial | TK-002, TK-016 | verified (remoção executada) |
-| [TK-021](tickets/TK-021.md) | Originais privados e provenance de release | TK-017 | verified |
+| [TK-021](tickets/TK-021.md) | Originais privados e provenance de release | TK-017 | verified (wheel isolada e regressões aprovadas) |
 | [TK-018](tickets/TK-018.md) | Paridade e autorização de cutover | TK-007–009, TK-015–017 | verified (`cutover_approved`) |
 | [TK-019](tickets/TK-019.md) | Contração do backend legado | TK-018 | verified (legacy/vendor/Chroma removidos da superfície) |
-| [TK-020](tickets/TK-020.md) | Jornada e release candidate 2.0 | TK-017, TK-019 | verified (full gate e handoff) |
+| [TK-020](tickets/TK-020.md) | Jornada e release candidate 2.0 | TK-017, TK-019 | in_progress (full gate atual bloqueado) |
 
 ## Grafo
 

@@ -2,12 +2,15 @@
 
 ## Como reportar
 
-Use o fluxo privado de vulnerabilidade do GitHub na aba **Security** ou em
-[Report a vulnerability](https://github.com/VIDORETTO/farol-rag-skill-docs/security/advisories/new).
-Não abra uma issue pública para uma falha ainda explorável. Inclua a versão ou
-commit afetado, sistema operacional, comando reproduzível, impacto e um fixture
-mínimo sanitizado. Nunca anexe corpus privado, índices, tokens, credenciais ou
-logs que os contenham.
+O fluxo privado de vulnerabilidade do GitHub está habilitado neste repositório;
+o estado foi confirmado por API autenticada em 2026-09-25. Use a aba
+**Security** ou [Report a vulnerability](https://github.com/VIDORETTO/farol-rag-skill-docs/security/advisories/new)
+para comunicar problemas de forma privada. Se o formulário não estiver
+disponível, não publique detalhes exploráveis em uma issue; confirme a
+configuração com um mantenedor.
+Inclua versão ou commit afetado, sistema operacional, comando reproduzível,
+impacto e um fixture mínimo sanitizado. Nunca anexe corpus privado, índices,
+tokens, credenciais ou logs que os contenham.
 
 O formulário privado, secret scanning, push protection e Dependabot devem ser
 verificados autenticado pelo mantenedor antes de cada release. Uma leitura
@@ -17,9 +20,10 @@ pública não prova o estado dessas configurações.
 
 O escopo inclui o código Python em `docops/`, scripts, workflows, configuração
 de release, templates, schemas, os perfis opcionais e a integração externa
-RAGFlow. O pacote público continua com o identificador técnico
-`consulta-documentacao` na release `v1.1.0`; o snapshot Farol 2.0 ainda é um
-candidato não publicado.
+RAGFlow. O pacote usa o identificador técnico `consulta-documentacao`. O código
+de Farol 2.0 está em `main`, mas `v2.0.0-rc.1` ainda não tem tag ou GitHub
+Release e não deve ser tratada como contrato final. A API autenticada não
+encontrou release estável publicada neste repositório na revisão de 2026-09-24.
 
 Corpus, índices, caches, ambientes virtuais, tokens, credenciais, artefatos de
 execução e arquivos em `config/network.yaml` são dados locais e não fazem parte

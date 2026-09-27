@@ -51,7 +51,11 @@ def git_files(root: Path) -> list[str] | None:
         return None
     if completed.returncode:
         return None
-    return sorted({item for item in completed.stdout.decode("utf-8", errors="replace").split("\0") if item})
+    return sorted(
+        item
+        for item in {item for item in completed.stdout.decode("utf-8", errors="replace").split("\0") if item}
+        if (root / item).is_file() or (root / item).is_symlink()
+    )
 
 
 def git_commit(root: Path) -> str | None:

@@ -1,29 +1,29 @@
 # Uso operacional
 
-Este é o guia curto do piloto/produto. O contrato completo está em
+Para instalar e gerar seu primeiro pacote, use o
+[guia de primeiro uso](GETTING-STARTED.md). Este guia descreve as operações
+avançadas. O contrato completo está em
 [ARCHITECTURE.md](ARCHITECTURE.md), e o passo a passo por harness em
 [HARNESSES.md](HARNESSES.md).
 
 ## Instalação
 
 ```text
-python scripts/bootstrap.py --dev
+python scripts/bootstrap.py
 python -m docops doctor --json
-python -m pytest
 ```
 
 Para preparar o perfil externo de RAGFlow, use Python 3.13 e instale os extras
 fixados; o bootstrap do core não instala nem inicia esse serviço:
 
 ```text
-python -m pip install --editable ".[dev,formats,ragflow,ocr]"
-python scripts/run_release_gates.py --profile ragflow --json
+python scripts/bootstrap.py --ragflow --ocr
 ```
 
 No Windows use `scripts/bootstrap.ps1`; em Linux/macOS use
 `sh scripts/bootstrap.sh`. `doctor` trata o RAG como capacidade opcional;
-`DOCOPS_REQUIRE_RAGFLOW=1 python -m docops doctor --json` torna o RAGFlow
-obrigatório.
+`python -m docops doctor --require-ragflow --json` verifica a conexão e torna
+o RAGFlow obrigatório. Ative `.venv-rag` depois de instalar os perfis opcionais.
 Se o mesmo checkout for acessado por Windows e WSL, o bootstrap detecta um
 `.venv` de outra plataforma e usa `.venv-windows` ou `.venv-posix`, evitando
 que um ambiente nativo seja sobrescrito; esses diretórios são ignorados pelo

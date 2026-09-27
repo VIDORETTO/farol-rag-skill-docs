@@ -10,7 +10,7 @@ idioma, licença e escopo no próprio `manifest.json`.
 | Slug do piloto | `fastapi` |
 | Corpus derivado | `documents/fastapi-docs/` (privado/ignorado) |
 | Transporte padrão | MCP stdio local |
-| Estado do produto | protocolo genérico implementado; release 1.1.0 pública no GitHub, com FastAPI como piloto interno |
+| Estado do produto | protocolo Farol 2.0 integrado em `main`; candidata `v2.0.0-rc.1` ainda sem tag ou GitHub Release; FastAPI preservado apenas como piloto histórico |
 
 ## Decisões preservadas
 

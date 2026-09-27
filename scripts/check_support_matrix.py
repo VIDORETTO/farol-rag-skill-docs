@@ -240,8 +240,8 @@ def audit(*, matrix_path: Path = MATRIX_PATH, workflows_dir: Path = ROOT / ".git
             "code": "candidate_artifact_missing",
             "markers": (
                 "actions/upload-artifact@",
-                "name: candidate-1.1.0-${{ github.sha }}",
-                "path: artifacts/candidate-1.1.0",
+                "name: candidate-2.0.0rc1-${{ github.sha }}",
+                "path: artifacts/candidate-2.0.0rc1",
                 "if-no-files-found: error",
             ),
         },

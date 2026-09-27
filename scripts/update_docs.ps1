@@ -1,8 +1,7 @@
 # Atualização coordenada do pacote de documentação.
 #
-# Com -Sources, o protocolo público docops faz aquisição, skill, router,
-# manifesto, validação e (opcionalmente) indexação em um único fluxo. Sem
-# -Sources, preservamos os comandos legados de manutenção do corpus local.
+# O protocolo Farol 2.0 recebe uma fonte explícita e executa aquisição, skill,
+# router, manifesto e validação; indexação externa é opt-in.
 param(
     [string]$Sources = "",
     [string]$Slug = "fastapi",
@@ -26,14 +25,6 @@ if ($Sources) {
     exit $LASTEXITCODE
 }
 
-Write-Host "== legacy corpus :: RAG plan =="
-& python (Join-Path $Root "scripts\update_rag.py") plan
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-Write-Host "`n== legacy corpus :: RAG apply (foreground, checkpointed) =="
-& python (Join-Path $Root "scripts\update_rag.py") apply
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-Write-Host "`n== legacy corpus :: RAG status =="
-& python (Join-Path $Root "scripts\update_rag.py") status
-exit $LASTEXITCODE
+Write-Host "Farol 2.0 requires -Sources <path>. The legacy update_rag.py corpus runner has been removed." -ForegroundColor Yellow
+Write-Host "Example: .\scripts\update_docs.ps1 -Sources documents/fixtures/acme-docs -Slug example -License MIT"
+exit 2

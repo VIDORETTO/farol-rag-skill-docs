@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -230,9 +231,13 @@ def build_parser() -> argparse.ArgumentParser:
     agents_bootstrap.add_argument("--root", type=Path, default=Path.cwd())
     agents_bootstrap.add_argument("--check", action="store_true", help="do not write; fail if the rule is absent")
     agents_bootstrap.add_argument("--json", action="store_true")
-    doctor = commands.add_parser("doctor", help="diagnose a clean clone")
+    doctor = commands.add_parser("doctor", help="diagnose an installation or checkout")
     doctor.add_argument("--root", type=Path, default=Path.cwd())
     doctor.add_argument("--json", action="store_true", help="emit JSON")
+    doctor.add_argument("--probe-ragflow", action="store_true", help="check the configured RAGFlow connection")
+    doctor.add_argument(
+        "--require-ragflow", action="store_true", help="require a healthy RAGFlow connection (also probes)"
+    )
     resolve = commands.add_parser("resolve", help="resolve a documentation source")
     resolve.add_argument("source")
     resolve.add_argument("--root", type=Path, default=Path.cwd())
@@ -1290,7 +1295,13 @@ def _dispatch(args: argparse.Namespace) -> int:
             )
         )
     if args.command == "doctor":
-        report = run_doctor(args.root)
+        environment = dict(os.environ)
+        if args.probe_ragflow or args.require_ragflow:
+            environment["DOCOPS_RAGFLOW_PROBE"] = "1"
+        if args.require_ragflow:
+            environment["DOCOPS_REQUIRE_RAGFLOW"] = "1"
+            environment.pop("DOCOPS_SKIP_RAG", None)
+        report = run_doctor(args.root, environ=environment)
         if args.json:
             print(report.to_json())
         else:
