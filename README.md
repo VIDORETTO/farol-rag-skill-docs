@@ -384,15 +384,16 @@ reconciliação de release e seus bloqueios atuais estão em
 [`specs/farol-2/evidence/`](specs/farol-2/evidence/). A promoção para GA exige
 gates atuais e autorização explícita do mantenedor.
 
-Na validação local de 27 de setembro de 2026, o source limpo `c0859b6` passou
+Na validação local de 27 de setembro de 2026, o source limpo `8f06ee7` passou
 o core em 22/22 etapas (`1050 passed`, `12 skipped`, zero falhas/bloqueios/
-not_run). O perfil `book-to-skill` passou 23/23 etapas e o OCR real local
-passou com PDF sintético, sem envio remoto. O bundle RC desse source foi
-verificado independentemente. O full gate RAGFlow segue `blocked` pela falta
-do serviço e dos quatro inputs; a CI remota ainda cobre apenas o head antigo do
-PR #16. A candidata não tem tag ou GitHub Release. Consulte o
-[runbook de release](docs/RELEASE.md) e o
-[estado agregado](specs/farol-2/state.json) para os hashes, recibos e limitações.
+not_run). O bundle desse source, com 31 arquivos, foi verificado
+independentemente; manifesto, wheel e supply-chain estão ligados ao mesmo SHA.
+Book-to-skill (23/23) e OCR (1/1, PDF sintético sem envio remoto) passaram no
+predecessor documental `c0859b6`; esses perfis suplementares não substituem o
+full gate RAGFlow, que segue `blocked` pela falta do serviço e dos quatro
+inputs. A CI remota ainda cobre apenas o head antigo do PR #16. A candidata não
+tem tag ou GitHub Release. Consulte o [runbook de release](docs/RELEASE.md) e o
+[estado agregado](specs/farol-2/state.json) para hashes, recibos e limitações.
 
 ### Histórico Farol 1.x
 

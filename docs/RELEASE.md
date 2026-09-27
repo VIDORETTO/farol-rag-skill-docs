@@ -7,42 +7,48 @@ GitHub Release `v2.0.0-rc.1` na consulta de 2026-09-27. A lista de releases do
 GitHub estava vazia nessa consulta. Qualquer publicação exige revisão manual
 de conteúdo, permissões e artefatos.
 
-## Snapshot atual da candidata — 2026-09-27
+## Snapshot de prontidão local — 2026-09-27
 
-O source limpo `c0859b61941459575d68d35fa1e856f63856e1d1` passou o perfil `core`
-em 22/22 etapas (`1050 passed`, `12 skipped`, zero falhas/bloqueios/not_run).
-O perfil `book-to-skill` passou 23/23 etapas (`1051 passed`, `12 skipped` no
-agregado), e o contrato OCR real local passou em um PDF sintético de duas
-páginas sem envio remoto. O bundle e a cadeia de suprimentos desse source
-passaram por verificação independente, sem findings. O manifesto fixa o
-source e os digests exatos. Esses resultados continuam sendo perfil `core` e
-integrações específicas; não substituem o gate `full` com RAGFlow.
+No snapshot de validação documentado nesta seção, o gate core foi executado no source limpo
+`8f06ee7d31fbd4431de63f953ca9f843035c6859`: 22/22 etapas, `1050 passed`,
+`12 skipped`, zero falhas/bloqueios/not_run e zero entradas no worktree. O
+relatório `artifacts/release-gates-8f06ee7-core-20260927/release-gates.json`
+tem SHA-256 `e97d024b5416e9e7fc4b68bd6af430880164fc18b2bd8b9569ed6b20090efc53`.
+Os skips são integrações OCR/RAGFlow opt-in e casos que dependem de criar
+symlink neste host Windows.
 
-O `full` permanece `blocked/not_run`: o serviço RAGFlow e os quatro inputs
+O bundle local correspondente,
+`artifacts/farol-2.0.0-rc.1-final-20260927`, tem 31 arquivos e digest
+`6bc0784cf884675f9a4aa2690a11b5217abe3efa4a9d1d32478dc9596a88c464`. O
+verificador independente retornou `ok=true`, sem erros, com identidade do
+source correspondente e supply-chain aprovada. Os hashes da wheel e dos
+manifestos estão no `state.json`. Este bundle é local e não foi publicado.
+
+Book-to-skill passou 23/23 etapas e OCR passou 1/1 no predecessor documental
+`c0859b61941459575d68d35fa1e856f63856e1d1`; os resultados são suplementares e
+não substituem integração no source final.
+
+O gate `full` permanece `blocked/not_run`: faltam o serviço e os quatro inputs
 `DOCOPS_RAGFLOW_ENDPOINT`, `DOCOPS_RAGFLOW_TOKEN`,
-`DOCOPS_RAGFLOW_IMAGE_DIGEST` e `DOCOPS_RAGFLOW_SDK_VERSION` estão indisponíveis.
-O preflight de 27 de setembro para o source atualizado terminou com
-`status=blocked`, `reason=missing_external_inputs` e exit code 1; nenhum
-subprocesso de integração foi iniciado. As quatro variáveis estavam ausentes
-nos escopos Process, User e Machine. O Docker Desktop Linux engine também
-estava inacessível, então não foi possível obter uma listagem de containers
-locais.
+`DOCOPS_RAGFLOW_IMAGE_DIGEST` e `DOCOPS_RAGFLOW_SDK_VERSION`. O preflight de 27
+de setembro terminou com `blocked/missing_external_inputs` antes de iniciar o
+subprocesso de integração; os inputs estavam ausentes em Process, User e
+Machine. O Docker Desktop Linux engine também estava indisponível.
 
-Não foi observada CI remota para o head local. Em 27 de setembro, a branch RC
-remota ainda estava em `be40e16`; o PR #16 seguia aberto, `BLOCKED` e
-`REVIEW_REQUIRED`. Os 26 checks verdes eram de dois runs concluídos em 23 de
-setembro para aquele SHA antigo. Não existe tag `v2.0.0-rc.1` nem GitHub
-Release. Atualizar o PR exige autorização explícita de push; review/merge em
-`main`, tag, release e promoção a GA continuam decisões separadas.
+Na consulta remota de 27 de setembro, a branch RC permanecia em `be40e16` e o
+PR #16 seguia aberto, `BLOCKED` e `REVIEW_REQUIRED`. Os 26 checks verdes eram
+de dois runs concluídos em 23 de setembro para esse head antigo. Não há tag
+`v2.0.0-rc.1`, GitHub Release ou CI remota do candidato local. A branch local
+evidenciada permanece sem push; atualizá-la no PR requer autorização explícita.
+`main` exige os checks configurados e aprovação de code owner. Merge, tag,
+release e promoção a GA continuam decisões separadas.
 
-O README, este runbook e as notas da RC estão atualizados com os resultados do
-source `c0859b6`. A revisão documental passou: 167 Markdown sem findings,
-matriz de suporte e contratos válidos, e auditoria do candidato com 578 arquivos
-e zero findings. O bundle RC foi regenerado e verificado independentemente; os
-digests estão em `specs/farol-2/state.json`. Esse bundle local não tem CI remota
-nem atestação configurada e não foi publicado. O full gate continua bloqueado.
-A distribuição pública deve ser reconstruída a partir do source
-aprovado/mesclado, com os gates finais.
+As verificações documentais registradas passaram: 167 Markdown sem findings,
+matriz de aceite com 33 AC sem gaps, support matrix e contratos válidos, e
+auditoria do candidato com 578 arquivos e zero findings. Um commit posterior
+`c42832e` registra somente recibos/checkpoints e não altera código de produto.
+Atestação não está configurada. A distribuição pública deve ser reconstruída a
+partir do source aprovado/mesclado e passar os gates finais nesse source.
 
 ## Evidência histórica de gates anteriores
 

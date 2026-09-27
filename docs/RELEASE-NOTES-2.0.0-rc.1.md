@@ -32,20 +32,23 @@ O gate full `25/25` foi executado no commit de implementação
 commit de preparação da RC nem desta árvore de trabalho. O estado atual dos
 gates e das limitações está em [`specs/farol-2/state.json`](../specs/farol-2/state.json).
 
-Na validação local de 27 de setembro de 2026, o source limpo `c0859b6` passou o
+Na validação local de 27 de setembro de 2026, o source limpo `8f06ee7` passou o
 perfil `core`: 22/22 etapas, `1050 passed`, `12 skipped` explícitos e zero
-falhas/bloqueios/not_run. O perfil `book-to-skill` passou 23/23 etapas
-(`1051 passed`, `12 skipped` no agregado), e o contrato OCR real local passou
-com um PDF sintético de duas páginas, sem envio remoto. O bundle candidate foi
-regenerado e passou pela verificação independente, auditoria de candidate e
-supply-chain; o `candidate-manifest.json` fixa source e digests. Os valores
-completos estão em [`specs/farol-2/state.json`](../specs/farol-2/state.json).
+falhas/bloqueios/not_run. O bundle candidate desse source foi verificado
+independentemente, sem erros, com auditoria e supply-chain aprovadas; o
+manifesto fixa source e digests. Os resultados e hashes estão em
+[`specs/farol-2/state.json`](../specs/farol-2/state.json).
 
-Esses resultados não constituem o gate `full`: em 27 de setembro, o preflight
-RAGFlow permaneceu `blocked` por falta do serviço e dos quatro inputs, sem
-iniciar integração. O PR #16 ainda apontava para o head remoto antigo e não há
-CI remota no source local. A RC segue sem tag, GitHub Release ou artefatos
-públicos.
+Book-to-skill passou 23/23 etapas e OCR passou 1/1 em execução local com PDF
+sintético sem envio remoto no predecessor documental `c0859b6`. Esses perfis
+são evidência suplementar e não são apresentados como executados no source
+`8f06ee7`.
+
+O perfil `core` e os perfis suplementares não constituem o gate `full`. Em 27
+de setembro, o preflight RAGFlow permaneceu `blocked` por falta do serviço e
+dos quatro inputs, sem iniciar integração. O PR #16 ainda apontava para o head
+remoto antigo e não há CI remota no source local. A RC segue sem tag, GitHub
+Release ou artefatos públicos.
 
 Não há wheel, checksums ou release públicos para baixar neste momento. O
 artefato local auditado não é uma distribuição pública; aguarde a publicação
