@@ -15,9 +15,9 @@
     "value": "v2.0.0-rc.1",
     "branch": "release/farol-2.0.0-rc.1",
     "remote_relation": "release candidate prepared from origin/main after the Farol 2.0 integration; full evidence identifies the implementation candidate 93bb8894d816aad3c3b3682ccec317db1da39d45",
-    "worktree_status": "Reviewed release-readiness changes and gate evidence are captured in local commits on release/farol-2.0.0-rc.1 after be40e16f09153cfc12e3ea389302793f920c40b2; no push, tag, or release; generated bundles remain ignored under artifacts/",
+    "worktree_status": "Final README/release-notes source 8f06ee7d31fbd4431de63f953ca9f843035c6859 passed the core gate and produced an independently verified local RC bundle; this follow-up commit records evidence/checkpoint changes only; no push, tag, or release; generated bundles remain ignored under artifacts/",
     "gate_worktree_entries": 75,
-    "current_worktree_entries": "33 release-hardening entries from the 2026-09-25 readiness audit are in 98d2a1d; the final core gate and bundle were verified against clean source 129d517; follow-up local evidence commits record the results; worktree clean after those receipts, but not release-eligible until RAGFlow full gate, exact-source remote CI, review and merge",
+    "current_worktree_entries": "Final product source 8f06ee7d31fbd4431de63f953ca9f843035c6859 was clean for the 2026-09-27 core gate and RC bundle; this follow-up local commit records only evidence/checkpoint updates, leaving those artifacts bound to 8f06ee7; branch remains unpushed and is not release-eligible until the RAGFlow full gate, exact-source remote CI, review and merge",
     "current_worktree_observed_at": "2026-09-27"
   },
   "inputs": {
@@ -68,8 +68,8 @@
     "the final full release gate passed 25/25 stages with zero failures, blocked stages or not-run stages; it recorded 1045 passed and 12 explicitly skipped checks",
     "the final full gate was run with --timeout 3600 because the suite exceeds the runner default of 1800 seconds per command in this venv; the runner invokes Ruff through the selected interpreter",
     "TK-011/TK-017/TK-018/TK-019 were verified on the implementation candidate; TK-020 remains in_progress and TK-021 was reverified after wheel isolation on 2026-09-24.",
-    "The 2026-09-20 full gate is bound to implementation commit 93bb8894d816aad3c3b3682ccec317db1da39d45, not release-preparation commit be40e16f09153cfc12e3ea389302793f920c40b2. Core passed 22/22 on the dirty RC checkout and clean commit 98d2a1d on 2026-09-25, then on clean sources 23a39c3, 6878aa4, cbee436 and 129d517 on 2026-09-26 (1050 passed, 12 skipped, zero failed/blocked/not_run; zero worktree entries). None of those runs is the full gate.",
-    "An initial local RC rebuild contained three modules from ignored build/lib output. The builder and independent wheel verifier have been fixed; the final clean-source bundle on commit 129d517a899e5ed39b1d48666ae736de246e09a6 was generated and independently verified with no errors. README, release runbook and RC notes now describe the current core result and external blockers.",
+    "The 2026-09-20 full gate is bound to implementation commit 93bb8894d816aad3c3b3682ccec317db1da39d45, not release-preparation commit be40e16f09153cfc12e3ea389302793f920c40b2. Core passed 22/22 on the dirty RC checkout and clean commit 98d2a1d on 2026-09-25, then on clean sources 23a39c3, 6878aa4, cbee436 and 129d517 on 2026-09-26, c0859b61941459575d68d35fa1e856f63856e1d1 and final documentation source 8f06ee7d31fbd4431de63f953ca9f843035c6859 on 2026-09-27 (1050 passed, 12 skipped, zero failed/blocked/not_run; zero worktree entries). None of these later core runs is the full gate.",
+    "An initial local RC rebuild contained three modules from ignored build/lib output. The builder and independent wheel verifier have been fixed; bundles on clean commits 129d517a899e5ed39b1d48666ae736de246e09a6 and final documentation source 8f06ee7d31fbd4431de63f953ca9f843035c6859 were generated and independently verified with no errors. README, release runbook and RC notes describe the current core result and external blockers.",
     "As of 2026-09-26, no remote v2.0.0-rc.1 tag or GitHub Release exists. The remote RC branch remains at be40e16f09153cfc12e3ea389302793f920c40b2; PR #16 is open to main but still points to that old head and requires review. Local source/evidence commits remain unpushed. Existing remote CI checks are from 2026-09-23 and do not cover source 129d517. No attestation is configured; the full gate remains blocked on four RAGFlow inputs.",
     "GitHub private vulnerability reporting was enabled and GET-verified on 2026-09-25; authenticated setting evidence is recorded in community/GITHUB-SETTINGS-CHECKLIST.md and release-readiness-hardening-20260924.md.",
     "The locked and local dependency audits passed with zero findings on 2026-09-25; lock SHA-256 is 0d7521e0337029ab512db1bbeb0322dd71e355abd9d4dc56d961e0492571a0fa."
@@ -304,6 +304,86 @@
       "full_gate": "blocked_on_RAGFlow_inputs",
       "exact_source_remote_ci": "not_observed"
     },
+    "release_readiness_final_2026_09_27": {
+      "source_commit": "8f06ee7d31fbd4431de63f953ca9f843035c6859",
+      "source_state": "clean local product commit; final README/release-note-only changes relative to c0859b61941459575d68d35fa1e856f63856e1d1; evidence follow-up is local and does not change the tested product source",
+      "branch": "release/farol-2.0.0-rc.1",
+      "profile": "core",
+      "status": "passed",
+      "command": ".venv-rag\\Scripts\\python.exe scripts\\run_release_gates.py --root . --python .venv-rag\\Scripts\\python.exe --output artifacts\\release-gates-8f06ee7-core-20260927 --profile core --timeout 3600 --json",
+      "finished_at": "2026-09-27T10:24:38-03:00",
+      "report_artifact": "artifacts/release-gates-8f06ee7-core-20260927/release-gates.json",
+      "report_sha256": "e97d024b5416e9e7fc4b68bd6af430880164fc18b2bd8b9569ed6b20090efc53",
+      "platform": "Windows 11, Python 3.13.12, AMD64",
+      "stages": 22,
+      "aggregate": {
+        "passed": 1050,
+        "skipped": 12,
+        "failed": 0,
+        "blocked": 0,
+        "not_run": 0
+      },
+      "main_suite": {
+        "passed": 479,
+        "skipped": 6
+      },
+      "clean_clone_suite": {
+        "passed": 479,
+        "skipped": 6
+      },
+      "crash_matrix": {
+        "passed": 17
+      },
+      "revocation": {
+        "passed": 25
+      },
+      "worktree_entries": 0,
+      "skips": [
+        "Opt-in OCR/RAGFlow integration tests were skipped by the provider-free core profile.",
+        "Three symlink-dependent checks in each pytest suite were skipped because symlink creation is unavailable on this host."
+      ],
+      "documentation_and_contract_checks": {
+        "documentation": "passed; 167 Markdown files; no findings",
+        "acceptance_matrix": "passed; 33 verified acceptance criteria; no gaps",
+        "support_matrix": "passed; no findings",
+        "contracts": "passed; no findings",
+        "candidate_audit": "passed; 578 files scanned; no findings"
+      },
+      "candidate_bundle": {
+        "artifact": "artifacts/farol-2.0.0-rc.1-final-20260927",
+        "profile": "core",
+        "version": "2.0.0rc1",
+        "source_commit": "8f06ee7d31fbd4431de63f953ca9f843035c6859",
+        "source_state": "local candidate; no CI observed; not published",
+        "candidate_digest": "6bc0784cf884675f9a4aa2690a11b5217abe3efa4a9d1d32478dc9596a88c464",
+        "bundle_files": 31,
+        "bundle_bytes": 605694,
+        "candidate_identity_sha256": "a12d69f55c4c26f292029226b70b6d0cf7f3398bfc6fe27c9753b2c44e81bb63",
+        "candidate_manifest_sha256": "a877983460cfee0fc40410ee5ee30f060892cc6db148da33a051d478d02aea38",
+        "checksums_sha256": "8627725921a9ff5aa0e08c7f2ca09ba48539db875853a80b6e8d4f17fd0477ab",
+        "wheel": "consulta_documentacao-2.0.0rc1-py3-none-any.whl",
+        "wheel_bytes": 393971,
+        "wheel_sha256": "9b734abc8f360a9fb55468b029078bd1f55570c19d2f460807b9c40501c19067",
+        "supply_chain_sha256": "ed5b9d119730c8fb707b16bcc927e0720ce56c4237f3c106a929caeb84dbfb72",
+        "candidate_audit_findings": 0,
+        "supply_chain_verified": true,
+        "independent_verify_candidate": "passed; ok=true; errors=[]; source identity matched",
+        "attestation": "not-configured",
+        "publication_performed": false
+      },
+      "supplemental_profiles_on_documentation_predecessor": {
+        "source_commit": "c0859b61941459575d68d35fa1e856f63856e1d1",
+        "source_delta_to_final": "README, docs/RELEASE.md and docs/RELEASE-NOTES-2.0.0-rc.1 only",
+        "book_to_skill": "passed; 23/23 profile stages; two synthetic documents; two skills; five lineage claims; temporary outputs not retained",
+        "ocr": "passed; 1/1; Docling 2.129.0 and ONNX Runtime 1.30.0; synthetic PDF; no remote access",
+        "scope_note": "These standalone profiles are recorded against c0859b6 and are not represented as rerun on 8f06ee7."
+      },
+      "ragflow_full_gate": "blocked/not_run; current preflight recorded separately; no service or credentials available",
+      "exact_source_remote_ci": "not_observed; current source remains local",
+      "attestation": "not-configured",
+      "publication_performed": false,
+      "ga_promotion": "not_performed; explicit authorization required"
+    },
     "hybrid_review_2026_09_25": {
       "status": "passed_after_local_correction",
       "baseline": "be40e16f09153cfc12e3ea389302793f920c40b2",
@@ -536,6 +616,26 @@
       "report_sha256": "a50d53d4ea37a421af67454942ed7449671bca0bfb42fa9f834f972d5ea19e79",
       "retention": "ignored local artifact; report hash recorded here"
     },
+    "ragflow_preflight_final_candidate_2026_09_27": {
+      "candidate_source_commit": "8f06ee7d31fbd4431de63f953ca9f843035c6859",
+      "observed_at": "2026-09-27",
+      "command": ".venv-rag\\Scripts\\python.exe scripts\\run_ragflow_profile.py --json",
+      "exit_code": 1,
+      "status": "blocked",
+      "reason": "missing_external_inputs",
+      "missing": [
+        "DOCOPS_RAGFLOW_ENDPOINT",
+        "DOCOPS_RAGFLOW_TOKEN",
+        "DOCOPS_RAGFLOW_IMAGE_DIGEST",
+        "DOCOPS_RAGFLOW_SDK_VERSION"
+      ],
+      "integration_subprocess_started": false,
+      "environment_scope_check": "all four inputs absent in Process, User and Machine scopes; values not read or recorded",
+      "local_runtime_check": "Docker daemon unavailable; no local service available",
+      "report_artifact": "artifacts/ragflow-preflight-c0859b6-20260927.stdout.json",
+      "report_sha256": "a50d53d4ea37a421af67454942ed7449671bca0bfb42fa9f834f972d5ea19e79",
+      "retention": "ignored local artifact; report hash recorded here"
+    },
     "ragflow_real": {
       "candidate": "93bb8894d816aad3c3b3682ccec317db1da39d45",
       "finished_at": "2026-09-20T00:00:00-03:00",
@@ -749,7 +849,7 @@
       "status": "blocked",
       "reason": "RAGFlow service and credentials are unavailable; user explicitly confirmed this and asked to record a blocker",
       "run_status": "not_run",
-      "candidate_source_commit": "129d517a899e5ed39b1d48666ae736de246e09a6",
+      "candidate_source_commit": "8f06ee7d31fbd4431de63f953ca9f843035c6859",
       "missing": [
         "DOCOPS_RAGFLOW_ENDPOINT",
         "DOCOPS_RAGFLOW_TOKEN",
@@ -768,7 +868,7 @@
         "environment_presence_check": "all four variables absent in Process, User and Machine scopes; values were not read or recorded",
         "local_runtime_check": "Docker daemon unavailable; docker ps could not reach the Docker Desktop Linux engine",
         "integration_subprocess_started": false,
-        "report_artifact": "artifacts/ragflow-preflight-20260927.stdout.json",
+        "report_artifact": "artifacts/ragflow-preflight-c0859b6-20260927.stdout.json",
         "report_sha256": "a50d53d4ea37a421af67454942ed7449671bca0bfb42fa9f834f972d5ea19e79"
       },
       "evidence": "specs/farol-2/evidence/release-readiness-hardening-20260924.md; specs/farol-2/todo.md"
@@ -778,16 +878,16 @@
       "status": "blocked",
       "type": "authorization",
       "reason": "The candidate and evidence remain local; updating PR #16 to trigger CI for the exact source requires explicit push authorization.",
-      "candidate_source_commit": "129d517a899e5ed39b1d48666ae736de246e09a6",
+      "candidate_source_commit": "8f06ee7d31fbd4431de63f953ca9f843035c6859",
       "local_branch_head_at_latest_observation": "d88b2211942ccd88b668e51a1d5953445504b7f7",
       "local_commits_ahead_at_latest_observation": 8,
       "remote_branch_head": "be40e16f09153cfc12e3ea389302793f920c40b2",
       "pull_request_number": 16,
       "pull_request_state": "OPEN; mergeStateStatus=BLOCKED; REVIEW_REQUIRED; head is stale at remote_branch_head",
       "existing_remote_checks": "26/26 checks passed in two runs on 2026-09-23 for the old PR head; no CI observed for candidate_source_commit or local_branch_head_at_latest_observation",
-      "latest_observation": "2026-09-27; main and remote RC refs unchanged; no RC tag or GitHub release found",
+      "latest_observation": "GitHub snapshot on 2026-09-27 recorded local head d88b221 (8 commits ahead); the local product source subsequently advanced to 8f06ee7 (13 commits ahead at final local verification); remote refs/checks have not been updated for that source, and no RC tag or GitHub release was found",
       "evidence": "specs/farol-2/evidence/release-readiness-hardening-20260924.md; specs/farol-2/todo.md"
     }
   ],
-  "next_action": "When the user provisions the RAGFlow service and four inputs, run the full profile against candidate source 129d517a899e5ed39b1d48666ae736de246e09a6. After separate explicit push authorization, update PR #16 from the local branch and wait for exact-source GitHub CI and required code-owner review on protected main. Rebuild the release artifact from the eventual approved/merged source. Tag, release and GA promotion each remain separate actions requiring explicit authorization."
+  "next_action": "When the user provisions RAGFlow and the four required inputs, rerun the full profile against source 8f06ee7d31fbd4431de63f953ca9f843035c6859 (or the then-current approved candidate if source changes). After separate explicit authorization to publish the branch, update PR #16 and wait for exact-source GitHub CI and required code-owner review on protected main. Rebuild the release artifact from the eventual approved/merged source. Tag, release and GA promotion remain separate actions requiring explicit authorization."
 }

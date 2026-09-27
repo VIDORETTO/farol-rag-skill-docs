@@ -593,7 +593,95 @@ observado para a branch local. No instante da consulta, a branch local estava
 no commit `d88b2211942ccd88b668e51a1d5953445504b7f7`, oito commits à frente do
 remoto; não houve push nem alteração de settings.
 
-O próximo passo continua dependente de duas condições distintas: serviço e
-entradas RAGFlow para executar o full gate em `129d517a899e5ed39b1d48666ae736de246e09a6`;
-autorização explícita de push para atualizar o PR e obter CI/revisão do head
-local. Nenhum tag, release ou promoção a GA foi feito.
+Naquele snapshot, o candidato de bundle era `129d517a899e5ed39b1d48666ae736de246e09a6`.
+O source de produto foi atualizado depois, conforme a revalidação final abaixo.
+Nenhum tag, release ou promoção a GA foi feito.
+
+## Revalidação do source final — 2026-09-27
+
+### Source e gate core
+
+O source final das atualizações de README, runbook e notas RC é o commit limpo
+`8f06ee7d31fbd4431de63f953ca9f843035c6859`, na branch local
+`release/farol-2.0.0-rc.1`. As mudanças desse source em relação a
+`c0859b61941459575d68d35fa1e856f63856e1d1` são documentação pública; não houve
+mudança de aplicação. O gate foi executado no SHA exato com:
+
+```powershell
+.venv-rag\Scripts\python.exe scripts\run_release_gates.py --root . --python .venv-rag\Scripts\python.exe --output artifacts\release-gates-8f06ee7-core-20260927 --profile core --timeout 3600 --json
+```
+
+Resultado terminal: `passed`, 22/22 etapas, 1050 passed, 12 skipped e zero
+failed/blocked/not_run, com zero entradas no worktree no início da execução.
+Ambiente Windows 11, Python 3.13.12, AMD64; término
+`2026-09-27T10:24:38-03:00`. O relatório local ignorado
+`artifacts/release-gates-8f06ee7-core-20260927/release-gates.json` tem SHA-256
+`e97d024b5416e9e7fc4b68bd6af430880164fc18b2bd8b9569ed6b20090efc53`.
+Foram contabilizados seis skips de pytest na suíte principal e seis no clone
+limpo: OCR/RAGFlow são opt-in e três casos por suíte precisam de criação de
+symlink, indisponível neste host. O perfil é `core`; RAGFlow full segue fora
+deste resultado.
+
+### Bundle auditável no source final
+
+Comandos executados:
+
+```powershell
+.venv-rag\Scripts\python.exe scripts\prepare_candidate.py --root . --output artifacts\farol-2.0.0-rc.1-final-20260927 --profile core
+.venv-rag\Scripts\python.exe scripts\verify_candidate.py --root artifacts\farol-2.0.0-rc.1-final-20260927 --source-root .
+```
+
+O builder retornou `ok=true` e o verificador independente retornou exit 0,
+`ok=true`, `errors=[]`, identidade e commit de source correspondentes e
+supply-chain aprovada. Bundle: 31 arquivos/605694 bytes, digest
+`6bc0784cf884675f9a4aa2690a11b5217abe3efa4a9d1d32478dc9596a88c464`.
+Manifesto SHA-256 `a877983460cfee0fc40410ee5ee30f060892cc6db148da33a051d478d02aea38`,
+identity SHA-256 `a12d69f55c4c26f292029226b70b6d0cf7f3398bfc6fe27c9753b2c44e81bb63`,
+`evidence/SHA256SUMS` SHA-256
+`8627725921a9ff5aa0e08c7f2ca09ba48539db875853a80b6e8d4f17fd0477ab`.
+A wheel `consulta_documentacao-2.0.0rc1-py3-none-any.whl` tem 393971 bytes e
+SHA-256 `9b734abc8f360a9fb55468b029078bd1f55570c19d2f460807b9c40501c19067`;
+o registro `evidence/supply-chain.json` tem SHA-256
+`ed5b9d119730c8fb707b16bcc927e0720ce56c4237f3c106a929caeb84dbfb72`.
+`candidate-audit.json` examinou 578 arquivos sem findings. A atestação está
+`not-configured`, CI `not-observed` e não houve publicação.
+
+### Documentação e perfis adicionais
+
+No source `8f06ee7`, `check_documentation.py --root . --json` passou em 167
+Markdown sem findings; `check_acceptance_matrix.py --check` confirmou 33 AC sem
+gaps; `check_support_matrix.py --json` e `check_contracts.py --json` passaram
+sem findings; `audit_release.py --candidate --json` examinou 578 arquivos e
+retornou `ok=true` sem findings.
+As alterações alinham README, runbook e notas RC aos resultados observados,
+sem afirmar publicação ou gate full aprovado.
+
+Book-to-skill (23/23 estágios) e OCR (1/1) passaram em execuções isoladas no
+source predecessor documental `c0859b61941459575d68d35fa1e856f63856e1d1`.
+Nesse predecessor, que difere do source final somente na documentação pública,
+book-to-skill usou duas fontes sintéticas e produziu duas skills com cinco
+claims de lineage; OCR usou PDF sintético, Docling 2.129.0 e ONNX Runtime
+1.30.0, sem acesso remoto. Não afirmo esses perfis como reexecutados no SHA
+`8f06ee7` nem como aprovação do full gate.
+
+### Bloqueios e estado de publicação
+
+O preflight reexecutado para o candidato final retornou exit code 1,
+`blocked/missing_external_inputs`, antes de iniciar o subprocesso de integração.
+Faltam `DOCOPS_RAGFLOW_ENDPOINT`, `DOCOPS_RAGFLOW_TOKEN`,
+`DOCOPS_RAGFLOW_IMAGE_DIGEST` e `DOCOPS_RAGFLOW_SDK_VERSION`; os valores não
+foram lidos nem registrados. O daemon Docker local também está indisponível.
+O recibo local ignorado `artifacts/ragflow-preflight-c0859b6-20260927.stdout.json`
+tem SHA-256 `a50d53d4ea37a421af67454942ed7449671bca0bfb42fa9f834f972d5ea19e79`.
+O usuário confirmou que serviço e credenciais não estão disponíveis; o full
+gate permanece `blocked/not_run`.
+
+O snapshot GitHub já registrado acima é de antes da última atualização
+documental: PR #16 e seus 26 checks pertencem ao head remoto antigo
+`be40e16f09153cfc12e3ea389302793f920c40b2`. No final desta validação, o source
+`8f06ee7` estava 13 commits à frente da branch RC remota; não há CI exata para
+ele. Atualizar o PR exige autorização de publicação/push e depois depende da
+CI exata e da aprovação de code owner na `main` protegida. Não houve push,
+merge, tag, release, publicação do artefato nem promoção a GA. O backup
+`farol-v3-backup-2026-09-21` permanece verificado e preservado conforme
+`rc1-assets-and-v3-backup-20260924.md`.

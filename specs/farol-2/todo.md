@@ -15,7 +15,8 @@ regenere esta projeção.
   `verified`: a wheel reconstruída localmente
   continha três módulos de `build/lib/`; a CI também usava o extra inexistente
   `rag`, e havia referências a uma release RC ainda não publicada.
-- O build foi isolado dos artefatos ignorados; verificador e workflows foram
+- **Snapshot anterior (26/09, source `129d517`):** o build foi isolado dos
+  artefatos ignorados; verificador e workflows foram
   endurecidos. No source limpo `129d517a899e5ed39b1d48666ae736de246e09a6`, o
   core gate passou 22/22 (`1050 passed`, `12 skipped`, zero
   falhas/bloqueios/not_run; worktree zero). O bundle foi gerado e verificado
@@ -24,13 +25,21 @@ regenere esta projeção.
   `e3bd485758d4ecf751e5c6e740b678f410f5d8f74eb5cf164199d53a0ff46017`. Os
   relatórios, hashes e limitações estão em `state.json` e na evidência de
   prontidão. O perfil foi `core`, não full.
-- Os perfis locais `book-to-skill` e OCR também passaram em worktree limpo do
-  mesmo source: duas skills com 5 claims de lineage e 13 arquivos temporários;
-  OCR 1/1, sem rede. São evidências isoladas, fora do agregado core e sem efeito
-  sobre o bloqueio do full gate RAGFlow.
+- **Revalidação final:** o README, runbook e notas RC foram alinhados ao estado
+  observado; no source limpo `8f06ee7d31fbd4431de63f953ca9f843035c6859`, o core
+  passou 22/22 (`1050 passed`, `12 skipped`, zero falhas/bloqueios/not_run).
+  O bundle `artifacts/farol-2.0.0-rc.1-final-20260927` foi verificado
+  independentemente: 31 arquivos, digest
+  `6bc0784cf884675f9a4aa2690a11b5217abe3efa4a9d1d32478dc9596a88c464`, wheel
+  SHA `9b734abc8f360a9fb55468b029078bd1f55570c19d2f460807b9c40501c19067`.
+- Book-to-skill e OCR passaram isoladamente no predecessor documental
+  `c0859b61941459575d68d35fa1e856f63856e1d1`, com somente documentação pública
+  alterada até `8f06ee7`: book-to-skill 23/23, duas skills e cinco claims de
+  lineage; OCR 1/1 sem rede. Não são reportados como executados no SHA final.
 - A claim de suporte Python do README foi alinhada à matriz oficial 3.11–3.13;
   a revisão manual Standards/Spec não deixou findings locais abertos.
-- Não há tag/release GitHub da RC.1. Full gate no source atual: `not_run`,
+- Não há tag/release GitHub da RC.1. Full gate no source atual `8f06ee7`:
+  `not_run`,
   `blocked` pela falta do serviço e dos quatro inputs RAGFlow. CI do source
   atual também não foi executada: push requer autorização explícita.
 - A revalidação de 2026-09-27 confirmou os quatro inputs ausentes; o preflight
@@ -49,7 +58,8 @@ regenere esta projeção.
   RC não tem proteção nem ruleset, então a revisão deve seguir pelo PR #16 para
   `main`. Ele está aberto, mas seu head remoto segue em `be40e16`; checks verdes
   de 2026-09-23 são desse source antigo. A decisão é `REVIEW_REQUIRED`; nenhum
-  check cobre o candidato `129d517` nem o head local registrado no snapshot.
+  check cobre o candidato final `8f06ee7`; a branch local está 13 commits à
+  frente no estado observado após o snapshot, sem push.
 - O estado dos 21 tickets coincide com `state.json`; os 33 AC do contrato
   coincidem com a matriz e suas referências de evidência existem. A auditoria
   `requirements.lock`/ambiente local passou sem findings nesta data.
