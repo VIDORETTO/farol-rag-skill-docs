@@ -1,0 +1,58 @@
+name: Beta feedback
+description: Tell us how Farol worked with your own sources and AI agent
+title: "[beta] "
+labels: [beta]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for testing Farol. Do not attach private documents, indexes, tokens or credentials.
+  - type: input
+    id: version
+    attributes:
+      label: Farol version
+      description: Output of `farol doctor` (installation.version) or the commit you installed.
+    validations:
+      required: true
+  - type: dropdown
+    id: agent
+    attributes:
+      label: AI agent
+      options: [Claude Code, Codex, Cursor, OpenCode, Other MCP client]
+    validations:
+      required: true
+  - type: checkboxes
+    id: sources
+    attributes:
+      label: Sources you added
+      options:
+        - label: Documentation folder or website
+        - label: Git repository
+        - label: PDF book or paper
+        - label: arXiv paper
+        - label: YouTube video, subtitles or audio
+  - type: input
+    id: time_to_first_answer
+    attributes:
+      label: Minutes from install to the first cited answer in your agent
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Did installation and `farol build` work without help?
+      options: [Yes, With workarounds, No]
+    validations:
+      required: true
+  - type: textarea
+    id: worked
+    attributes:
+      label: What worked well
+  - type: textarea
+    id: problems
+    attributes:
+      label: What did not work (commands, error codes, sanitized output)
+  - type: dropdown
+    id: recommend
+    attributes:
+      label: How likely are you to recommend Farol? (0–10)
+      options: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
