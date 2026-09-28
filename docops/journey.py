@@ -60,7 +60,14 @@ def load_project(root: Path | str, *, create: bool = False, language: str | None
     root = Path(root).resolve()
     path = root / PROJECT_FILE
     if path.is_file():
-        return Project(root, json.loads(path.read_text(encoding="utf-8")))
+        config = json.loads(path.read_text(encoding="utf-8"))
+        if config.get("schema_version") != 1:
+            raise JourneyError(
+                "project_version_unsupported",
+                f"{PROJECT_FILE} uses schema {config.get('schema_version')!r}; this Farol reads schema 1",
+                next_action="upgrade Farol (pipx upgrade farol-kit)",
+            )
+        return Project(root, config)
     if not create:
         raise JourneyError("project_missing", f"no {PROJECT_FILE} in {root.name}", next_action="farol add <source>")
     config = {"schema_version": 1, "name": _slug(root.name), "language": language or "en", "sources": []}

@@ -32,7 +32,6 @@
     "blocked": [],
     "draft": [
       "TK-111",
-      "TK-118",
       "TK-119",
       "TK-120",
       "TK-121",
@@ -56,12 +55,13 @@
       "TK-112",
       "TK-109",
       "TK-115",
-      "TK-116"
+      "TK-116",
+      "TK-118"
     ]
   },
-  "next_action": "Onda D: TK-118 (semver e testes de upgrade).",
+  "next_action": "Onda E: TK-119 (prova de valor), TK-111 (release), TK-121 (distribuição), TK-120 (site).",
   "publicity_gate": "TK-122 exit criteria (SC-109)",
-  "wave": "D",
+  "wave": "E",
   "decisions": "specs/farol-3/decisions.md",
   "baseline_metrics": "specs/farol-3/evidence/TK-101.md#baseline"
 }
