@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "id": "httpx-docs",
+      "kind": "docs",
+      "title": "HTTPX documentation 0.28.1",
+      "ref": "26d48e0634e6ee9cdc0533996db289ce4b430177",
+      "license": "BSD-3-Clause",
+      "license_url": "https://github.com/encode/httpx/blob/26d48e0634e6ee9cdc0533996db289ce4b430177/LICENSE.md",
+      "purpose": "local-acceptance",
+      "redistribution": "forbidden",
+      "files": [
+        {
+          "name": "advanced-authentication.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/advanced/authentication.md",
+          "sha256": "490c0393f5af1bdcf70ed5dc6e296d75f4a4035d1916f2262102de61c623dc04"
+        },
+        {
+          "name": "advanced-clients.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/advanced/clients.md",
+          "sha256": "80d0496f33dc995d40ebb573301b0de360fbe90dffd4a0641a078701e5abaac0"
+        },
+        {
+          "name": "advanced-event-hooks.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/advanced/event-hooks.md",
+          "sha256": "96d292f95b3412c54f7f862fd38a569b0efb2bd51a6cacdd5b391072262b9558"
+        },
+        {
+          "name": "advanced-extensions.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/advanced/extensions.md",
+          "sha256": "b0fb02059b00203114478faa48a808fd16a8b004e6c50cab672a7d63ee6c496f"
+        },
+        {
+          "name": "advanced-proxies.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/advanced/proxies.md",
+          "sha256": "38f3be3b3babe015f9b9878c8ed207144e860a572b5c1dbf8eb7924d4a738960"
+        },
+        {
+          "name": "advanced-resource-limits.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/advanced/resource-limits.md",
+          "sha256": "48463dfbcc09e28b174cf07695a937119da537436dc534421b64dcca7a024559"
+        },
+        {
+          "name": "advanced-ssl.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/advanced/ssl.md",
+          "sha256": "96dc8e954c5965bcf2ee68f436a143bcc8dab3cd647aa1631c1190593d241831"
+        },
+        {
+          "name": "advanced-text-encodings.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/advanced/text-encodings.md",
+          "sha256": "6810e718430df5676d2102cbc35ea3388f2c0fb442f8162bf9548c9596f741cc"
+        },
+        {
+          "name": "advanced-timeouts.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/advanced/timeouts.md",
+          "sha256": "48959a587ecc6430f9051ab1b1c76fcebc3f3e95ec01199281aab813a2dcfaa1"
+        },
+        {
+          "name": "advanced-transports.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/advanced/transports.md",
+          "sha256": "55648dd15c551f151f538aa79c8d2934bb581528d85bcc0fe3d810ac4a5ca382"
+        },
+        {
+          "name": "api.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/api.md",
+          "sha256": "125c23b40867cea7c40da59d129515e0964b4ea80e2994293e850f12fb067a6e"
+        },
+        {
+          "name": "async.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/async.md",
+          "sha256": "dd32e675ef994bb136e5414e5a2636db6e75418ce557ee6f731fddb924e47e4e"
+        },
+        {
+          "name": "compatibility.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/compatibility.md",
+          "sha256": "e30d0a254fc89e5a891739607e289432b48930ac68be285810dd4e540f304776"
+        },
+        {
+          "name": "environment_variables.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/environment_variables.md",
+          "sha256": "d0cdf4d740dc3ed8b21c4ee45735551e05d4e57d0fda05a2f18c4684197a27eb"
+        },
+        {
+          "name": "exceptions.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/exceptions.md",
+          "sha256": "5e59ac5575373f359c45b8685cfb5813ba8d3a834052c7c0427789b32722324f"
+        },
+        {
+          "name": "http2.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/http2.md",
+          "sha256": "51010101b5aff566dcdfdf94cb5e0ef644caf5411b84749753a9da79d28caaf7"
+        },
+        {
+          "name": "index.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/index.md",
+          "sha256": "07edc3ef5d9d5c5e404b25abe5762f83c6c25a68cf7e556e5c52f4c86387c36b"
+        },
+        {
+          "name": "logging.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/logging.md",
+          "sha256": "cf128dd9d45561d57807fb34c00c2fff63071dbbfcb3990df00c7061bea88195"
+        },
+        {
+          "name": "quickstart.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/quickstart.md",
+          "sha256": "9f8351551dd18be0ed7e40dea2f1c231523a2e8833a0bb5c471630178ec2aea8"
+        },
+        {
+          "name": "third_party_packages.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/third_party_packages.md",
+          "sha256": "211bc5d5c82adc4b38b882ac58b7387a828a3c65e1b348d5a245d3de48a0fd4e"
+        },
+        {
+          "name": "troubleshooting.md",
+          "url": "https://raw.githubusercontent.com/encode/httpx/26d48e0634e6ee9cdc0533996db289ce4b430177/docs/troubleshooting.md",
+          "sha256": "3a9f68c58a03575ac88ce94da22d2f7c93d2e88df54e7f9be1061ca6fafd3c96"
+        }
+      ]
+    },
+    {
+      "id": "progit-book",
+      "kind": "book",
+      "title": "Pro Git, 2nd edition (2.1.450)",
+      "ref": "2.1.450",
+      "license": "CC-BY-NC-SA-3.0",
+      "license_url": "https://raw.githubusercontent.com/progit/progit2/2.1.450/LICENSE.asc",
+      "purpose": "local-acceptance",
+      "redistribution": "forbidden",
+      "files": [
+        {
+          "name": "progit.pdf",
+          "url": "https://github.com/progit/progit2/releases/download/2.1.450/progit.pdf",
+          "sha256": "403f4051cdca2c585361d85f6e87d5dd87d8c544fc91dced007711babe81e8ef"
+        }
+      ]
+    },
+    {
+      "id": "graphrag-paper",
+      "kind": "paper",
+      "title": "From Local to Global: A Graph RAG Approach to Query-Focused Summarization (arXiv:2404.16130v2)",
+      "ref": "2404.16130v2",
+      "license": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "purpose": "local-acceptance",
+      "redistribution": "forbidden",
+      "files": [
+        {
+          "name": "graphrag.pdf",
+          "url": "https://arxiv.org/pdf/2404.16130v2",
+          "sha256": "730f1a9f38d16689900969a3eeeb1b31e45eda1dcc1f37a043afa90aff76c867"
+        }
+      ]
+    },
+    {
+      "id": "cc-video",
+      "kind": "video",
+      "status": "pending_extractor",
+      "title": "YouTube CC-BY video with captions (chosen in TK-107)",
+      "license": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "purpose": "local-acceptance",
+      "redistribution": "forbidden",
+      "files": []
+    }
+  ]
+}

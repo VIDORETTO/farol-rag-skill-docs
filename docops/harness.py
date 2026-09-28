@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .contracts import validate_artifact
+from .mcp_server import TOOLS
 from .revisions import package_revisions, tree_hash
 from .storage import write_json_atomic
 
@@ -43,6 +44,15 @@ def build_harness_manifest(package_root: Path | str) -> dict[str, Any]:
             "config": "config.yaml",
             "capabilities": ["probe", "prepare", "apply", "query", "snapshot", "discard", "close"],
             "external": True,
+        },
+        "mcp": {
+            "name": "farol",
+            "transport": "stdio",
+            "command": "farol",
+            "args": ["mcp", "--package", "."],
+            "cwd": ".",
+            "tools": sorted(tool["name"] for tool in TOOLS),
+            "prerequisite": "farol index .",
         },
         "notes": [
             "Pin the reader to generation.release_id and reopen it if the package composition changes.",

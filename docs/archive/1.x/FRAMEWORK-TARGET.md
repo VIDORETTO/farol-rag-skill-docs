@@ -38,5 +38,5 @@ Golden revisado próprio.
 ## Fonte de verdade operacional
 
 Use [ROADMAP-GITHUB-PRODUTO.md](ROADMAP-GITHUB-PRODUTO.md) para a ordem dos
-tickets, [ARCHITECTURE.md](ARCHITECTURE.md) para o contrato de artefatos e
-[PUBLISHING-POLICY.md](PUBLISHING-POLICY.md) para licença e dados.
+tickets, [ARCHITECTURE.md](../../ARCHITECTURE.md) para o contrato de artefatos e
+[PUBLISHING-POLICY.md](../../PUBLISHING-POLICY.md) para licença e dados.

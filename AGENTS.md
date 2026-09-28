@@ -2,14 +2,15 @@
 
 ## Escopo do projeto
 
-Farol transforma documentação em skill, corpus RAG, roteador e artefatos
-DOCOPS. O piloto atual usa FastAPI; a evolução Farol 2.0 é governada por
-`specs/farol-2/`.
+Farol transforma qualquer fonte (documentação, livros, papers, vídeos,
+repositórios) em skills, índice factual com citações, roteador e servidor MCP
+para agentes. A evolução vigente (Farol 3.0) é governada por `specs/farol-3/`;
+`specs/farol-2/` é histórico normativo.
 
 ## Fontes de verdade
 
-- Use os tickets em `specs/farol-2/tickets/` como unidade canônica de trabalho.
-- Use `specs/farol-2/state.json`, `backlog.md` e `todo.md` para o estado agregado.
+- Use os tickets em `specs/farol-3/tickets/` como unidade canônica de trabalho.
+- Use `specs/farol-3/state.json`, `backlog.md` e `decisions.md` para o estado agregado.
 - Mantenha `tasks/todo.md` como checkpoint curto de retomada, não como diário.
 - Preserve mudanças preexistentes do usuário e não altere arquivos fora do
   escopo necessário.

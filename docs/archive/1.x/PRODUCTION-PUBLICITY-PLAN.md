@@ -246,10 +246,10 @@ de canal exigiria nova decisão.
 
 ## 7. Referências e comandos normativos
 
-- Runbook técnico: [`docs/RELEASE.md`](RELEASE.md).
-- Política de publicação: [`docs/PUBLISHING-POLICY.md`](PUBLISHING-POLICY.md).
+- Runbook técnico: [`docs/RELEASE.md`](../../RELEASE.md).
+- Política de publicação: [`docs/PUBLISHING-POLICY.md`](../../PUBLISHING-POLICY.md).
 - Decisão de risco: [`docs/CHROMA-RESIDUAL-DECISION.md`](CHROMA-RESIDUAL-DECISION.md).
-- Settings: [`community/GITHUB-SETTINGS-CHECKLIST.md`](../community/GITHUB-SETTINGS-CHECKLIST.md).
+- Settings: [`community/GITHUB-SETTINGS-CHECKLIST.md`](../../../community/GITHUB-SETTINGS-CHECKLIST.md).
 - Handoff atual: [`docs/HANDOFF-2026-09-04-CI-WHEEL.md`](HANDOFF-2026-09-04-CI-WHEEL.md).
 - Handoff pós-release: [`docs/POST-RELEASE-HANDOFF-2026-09-04.md`](POST-RELEASE-HANDOFF-2026-09-04.md).
 

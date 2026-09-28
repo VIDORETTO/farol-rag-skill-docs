@@ -88,6 +88,8 @@ from .triggers import assess_conceptual_impact
 # canonical spelling and can be removed by policy instead of by accident.
 CLI_COMPATIBILITY_MAP = {
     "doctor": "doctor",
+    "index": "index",
+    "mcp": "mcp",
     "skill": "skill",
     "agents-bootstrap": "agents-bootstrap",
     "resolve": "source resolve",
@@ -827,6 +829,11 @@ def build_parser() -> argparse.ArgumentParser:
     config_audit = commands.add_parser("config-audit", help="audit package transport security")
     config_audit.add_argument("config", type=Path)
     config_audit.add_argument("--json", action="store_true")
+    index = commands.add_parser("index", help="build the local factual index of a package (no services needed)")
+    index.add_argument("package", type=Path)
+    index.add_argument("--json", action="store_true")
+    mcp = commands.add_parser("mcp", help="serve a package's skills and evidence over MCP (stdio, read-only)")
+    mcp.add_argument("--package", type=Path, required=True)
     return parser
 
 
@@ -1381,6 +1388,19 @@ def _dispatch(args: argparse.Namespace) -> int:
         result = preview(operation) if args.mode == "dry-run" else apply_operation(operation)
         print(json.dumps(result.to_dict(), indent=2, ensure_ascii=False, sort_keys=True))
         return result.exit_code if not result.ok else 0
+    if args.command == "index":
+        from .package_index import build_package_index
+
+        report = build_package_index(args.package)
+        if args.json:
+            print(json.dumps(report, indent=2, ensure_ascii=False, sort_keys=True))
+        else:
+            print(f"{report['status']}: {report['blocks']} blocks from {report['documents']} documents")
+        return 0
+    if args.command == "mcp":
+        from .mcp_server import serve
+
+        return serve(args.package)
     if args.command == "validate":
         result = validate_package(args.package)
         print(json.dumps(result.to_dict(), indent=2, ensure_ascii=False, sort_keys=True))
