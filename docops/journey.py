@@ -1,0 +1,244 @@
+"""The everyday Farol journey: ``init`` → ``add`` → ``build`` → ``status``.
+
+A project is a directory with a ``farol.json`` listing its sources. Each source
+becomes its own knowledge package under ``packages/<id>/`` (one skill per book,
+site, paper or repository), built by the governed 2.0 pipeline, indexed by the
+local backend and handed to the user's AI agent for skill synthesis. Later
+builds are factual updates, so a distilled skill is never overwritten.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+from urllib.parse import urlsplit
+
+from .storage import write_json_atomic
+
+PROJECT_FILE = "farol.json"
+STATE_FILE = Path(".farol") / "state.json"
+PACKAGES_DIR = "packages"
+
+
+class JourneyError(ValueError):
+    def __init__(self, code: str, message: str, *, next_action: str | None = None) -> None:
+        self.code = code
+        self.next_action = next_action
+        super().__init__(message)
+
+
+@dataclass(frozen=True)
+class Project:
+    root: Path
+    config: dict[str, Any]
+
+    @property
+    def packages(self) -> Path:
+        return self.root / PACKAGES_DIR
+
+    def package(self, source_id: str) -> Path:
+        return self.packages / source_id
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _slug(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", value.casefold()).strip("-")[:48] or "source"
+
+
+def load_project(root: Path | str, *, create: bool = False, language: str | None = None) -> Project:
+    root = Path(root).resolve()
+    path = root / PROJECT_FILE
+    if path.is_file():
+        return Project(root, json.loads(path.read_text(encoding="utf-8")))
+    if not create:
+        raise JourneyError("project_missing", f"no {PROJECT_FILE} in {root.name}", next_action="farol add <source>")
+    config = {"schema_version": 1, "name": _slug(root.name), "language": language or "en", "sources": []}
+    root.mkdir(parents=True, exist_ok=True)
+    write_json_atomic(path, config)
+    return Project(root, config)
+
+
+def init_project(root: Path | str, *, language: str | None = None) -> dict[str, Any]:
+    project = load_project(root, create=True, language=language)
+    return {"status": "ok", "project": project.config["name"], "path": PROJECT_FILE}
+
+
+def _source_id(value: str, taken: set[str]) -> str:
+    parsed = urlsplit(value)
+    if parsed.scheme in {"http", "https"}:
+        parts = [parsed.hostname or "web", *[part for part in parsed.path.split("/") if part][-1:]]
+        base = _slug("-".join(parts).removesuffix(".git"))
+    else:
+        base = _slug(Path(value).stem if Path(value).suffix else Path(value).name)
+    candidate, counter = base, 2
+    while candidate in taken:
+        candidate, counter = f"{base}-{counter}", counter + 1
+    return candidate
+
+
+def add_source(
+    root: Path | str,
+    value: str,
+    *,
+    license: str | None = None,
+    name: str | None = None,
+    redistribution: str | None = None,
+) -> dict[str, Any]:
+    project = load_project(root, create=True)
+    parsed = urlsplit(value)
+    if parsed.scheme not in {"http", "https"}:
+        path = Path(value).expanduser()
+        if not path.is_absolute():
+            path = (Path.cwd() / path).resolve()
+        if not path.exists():
+            raise JourneyError("source_not_found", f"{value} does not exist")
+        if path == project.root or path.is_relative_to(project.packages):
+            raise JourneyError("source_inside_packages", "add a source outside the project's packages folder")
+        value = str(path)
+    existing = next((source for source in project.config["sources"] if source["input"] == value), None)
+    if existing:
+        return {"status": "unchanged", "source": existing}
+    taken = {source["id"] for source in project.config["sources"]}
+    source_id = _slug(name) if name else _source_id(value, taken)
+    if source_id in taken:
+        raise JourneyError("source_id_taken", f"a source named {source_id!r} already exists")
+    source = {
+        "id": source_id,
+        "input": value,
+        "license": license,
+        "redistribution": redistribution or "private-only",
+        "added_at": _now(),
+    }
+    project.config["sources"].append(source)
+    write_json_atomic(project.root / PROJECT_FILE, project.config)
+    return {"status": "added", "source": source}
+
+
+def _state(project: Project) -> dict[str, Any]:
+    path = project.root / STATE_FILE
+    return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {"schema_version": 1, "sources": {}}
+
+
+def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
+    import docops
+
+    from .agent_tasks import plan_synthesis, synthesis_status
+    from .package_index import build_package_index
+
+    package = project.package(source["id"])
+    existing = (package / "manifest.json").is_file()
+    input_value = source["input"]
+    source_root = Path(input_value).parent if not urlsplit(input_value).scheme else None
+    options: dict[str, Any] = {
+        "output_dir": package,
+        "slug": source["id"],
+        "license": source.get("license") or None,
+        "redistribution": source.get("redistribution"),
+        "language": project.config.get("language"),
+    }
+    if source_root is not None:
+        options["source_root"] = source_root
+    if existing:
+        # Factual refresh: keeps a distilled (or scaffold) skill byte for byte.
+        options.update(mode="update", layers=("factual",))
+    request = docops.OperationRequest(input_value, docops.OperationOptions(**options))
+    result = docops.apply(docops.plan(request))
+    if not result.ok:
+        return {
+            "ok": False,
+            "errors": [{"code": error.get("code"), "message": error.get("message")} for error in result.errors],
+        }
+    index = build_package_index(package)
+    synthesis = synthesis_status(package)
+    if synthesis["state"] != "installed":
+        plan_synthesis(package, language=project.config.get("language"))
+    return {"ok": True, "index": {key: index[key] for key in ("documents", "blocks", "index_revision")}}
+
+
+def build(root: Path | str, *, source_ids: list[str] | None = None) -> dict[str, Any]:
+    project = load_project(root)
+    if not project.config["sources"]:
+        raise JourneyError("no_sources", "the project has no sources", next_action="farol add <source>")
+    state = _state(project)
+    results: dict[str, Any] = {}
+    for source in project.config["sources"]:
+        if source_ids and source["id"] not in source_ids:
+            continue
+        outcome = _build_one(project, source)
+        state["sources"][source["id"]] = {"last_build": _now(), **outcome}
+        results[source["id"]] = outcome
+    write_json_atomic(project.root / STATE_FILE, state)
+    report = status(project.root)
+    report["built"] = results
+    report["ok"] = all(outcome["ok"] for outcome in results.values())
+    return report
+
+
+def _source_status(project: Project, source: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
+    from .agent_tasks import synthesis_status
+
+    package = project.package(source["id"])
+    warnings = []
+    if not source.get("license"):
+        warnings.append("license not declared: the package is for local, private use only")
+    last = state["sources"].get(source["id"])
+    entry: dict[str, Any] = {"id": source["id"], "input": source["input"], "warnings": warnings}
+    if last and not last.get("ok"):
+        entry.update(state="failed", errors=last.get("errors", []), next_action="fix the source, then farol build")
+        return entry
+    if not (package / "rag" / "local-index" / "ACTIVE.json").is_file():
+        entry.update(state="added", next_action="farol build")
+        return entry
+    synthesis = synthesis_status(package)
+    relative = package.relative_to(project.root).as_posix()
+    if synthesis["state"] == "installed":
+        entry.update(state="ready", next_action=None)
+    else:
+        counts = synthesis.get("counts", {})
+        entry.update(
+            state="awaiting_agent",
+            tasks={"accepted": counts.get("accepted", 0), "total": sum(counts.values())},
+            next_action=f"farol task next --package {relative}",
+        )
+    return entry
+
+
+def status(root: Path | str) -> dict[str, Any]:
+    project = load_project(root)
+    state = _state(project)
+    sources = [_source_status(project, source, state) for source in project.config["sources"]]
+    order = ("failed", "added", "awaiting_agent", "ready")
+    overall = next((name for name in order if any(item["state"] == name for item in sources)), "empty")
+    if not sources:
+        next_action = "farol add <source>"
+    elif overall in {"failed", "added"}:
+        next_action = "farol build"
+    elif overall == "awaiting_agent":
+        next_action = next(item["next_action"] for item in sources if item["state"] == "awaiting_agent")
+    else:
+        next_action = "farol mcp --project ."
+    return {
+        "schema_version": 1,
+        "project": project.config["name"],
+        "state": overall,
+        "sources": sources,
+        "next_action": next_action,
+    }
+
+
+def project_packages(root: Path | str) -> dict[str, Path]:
+    """Packages of a project that have an active factual index, by source id."""
+
+    project = load_project(root)
+    return {
+        source["id"]: project.package(source["id"])
+        for source in project.config["sources"]
+        if (project.package(source["id"]) / "rag" / "local-index" / "ACTIVE.json").is_file()
+    }

@@ -34,7 +34,6 @@
     ],
     "blocked": [],
     "draft": [
-      "TK-102",
       "TK-106",
       "TK-109",
       "TK-111",
@@ -57,10 +56,11 @@
       "TK-104",
       "TK-110",
       "TK-105",
-      "TK-113"
+      "TK-113",
+      "TK-102"
     ]
   },
-  "next_action": "Onda B: TK-102 (jornada add/build/status) → TK-106 (taxonomia pelo agente).",
+  "next_action": "Onda B: TK-106 (taxonomia pelo agente); depois Onda C.",
   "publicity_gate": "TK-122 exit criteria (SC-109)",
   "wave": "B",
   "decisions": "specs/farol-3/decisions.md",
