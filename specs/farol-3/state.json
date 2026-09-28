@@ -32,7 +32,6 @@
     "blocked": [],
     "draft": [
       "TK-111",
-      "TK-115",
       "TK-116",
       "TK-118",
       "TK-119",
@@ -56,7 +55,8 @@
       "TK-107",
       "TK-117",
       "TK-112",
-      "TK-109"
+      "TK-109",
+      "TK-115"
     ]
   },
   "next_action": "Onda D: TK-115 (escala), TK-116 (biblioteca), TK-118 (semver/upgrade).",
