@@ -29,8 +29,7 @@
   "open_decisions": [],
   "tickets": {
     "ready": [
-      "TK-107",
-      "TK-108"
+      "TK-107"
     ],
     "blocked": [],
     "draft": [
@@ -57,10 +56,11 @@
       "TK-105",
       "TK-113",
       "TK-102",
-      "TK-106"
+      "TK-106",
+      "TK-108"
     ]
   },
-  "next_action": "Onda C: TK-109 (connect + instalação), TK-117 (erros), TK-112 (sync), TK-108 (paper), TK-107 (mídia).",
+  "next_action": "Onda C: TK-114 antecipado (busca híbrida, lacuna de vocabulário medida), depois TK-107, TK-117, TK-112.",
   "publicity_gate": "TK-122 exit criteria (SC-109)",
   "wave": "C",
   "decisions": "specs/farol-3/decisions.md",

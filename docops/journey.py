@@ -22,6 +22,10 @@ from .storage import write_json_atomic
 PROJECT_FILE = "farol.json"
 STATE_FILE = Path(".farol") / "state.json"
 PACKAGES_DIR = "packages"
+DOWNLOADS_DIR = Path(".farol") / "downloads"
+ARXIV_BASE = "https://arxiv.org"
+_ARXIV = re.compile(r"^(?:arxiv:\s*|https?://(?:www\.)?arxiv\.org/(?:abs|pdf)/)(\d{4}\.\d{4,5}(?:v\d+)?)", re.I)
+_CC_LICENSE = re.compile(r"creativecommons\.org/(licenses|publicdomain)/([a-z-]+)/(\d\.\d)", re.I)
 
 
 class JourneyError(ValueError):
@@ -92,8 +96,11 @@ def add_source(
     redistribution: str | None = None,
 ) -> dict[str, Any]:
     project = load_project(root, create=True)
+    arxiv = _ARXIV.match(value.strip())
     parsed = urlsplit(value)
-    if parsed.scheme not in {"http", "https"}:
+    if arxiv:
+        value = f"arXiv:{arxiv.group(1)}"
+    elif parsed.scheme not in {"http", "https"}:
         path = Path(value).expanduser()
         if not path.is_absolute():
             path = (Path.cwd() / path).resolve()
@@ -106,11 +113,12 @@ def add_source(
     if existing:
         return {"status": "unchanged", "source": existing}
     taken = {source["id"] for source in project.config["sources"]}
-    source_id = _slug(name) if name else _source_id(value, taken)
+    source_id = _slug(name) if name else (_slug(f"arxiv-{arxiv.group(1)}") if arxiv else _source_id(value, taken))
     if source_id in taken:
         raise JourneyError("source_id_taken", f"a source named {source_id!r} already exists")
     source = {
         "id": source_id,
+        "kind": "arxiv" if arxiv else "url" if parsed.scheme in {"http", "https"} else "path",
         "input": value,
         "license": license,
         "redistribution": redistribution or "private-only",
@@ -126,6 +134,44 @@ def _state(project: Project) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {"schema_version": 1, "sources": {}}
 
 
+def _fetch(url: str) -> bytes:
+    import urllib.request
+
+    request = urllib.request.Request(
+        url, headers={"User-Agent": "farol (+https://github.com/VIDORETTO/farol-rag-skill-docs)"}
+    )
+    with urllib.request.urlopen(request, timeout=120) as response:  # noqa: S310 - https/file only
+        return response.read(200 * 1024 * 1024)
+
+
+def _acquire_arxiv(project: Project, source: dict[str, Any]) -> str:
+    """Download an arXiv paper once and record its declared license and title."""
+
+    import os
+
+    identifier = source["input"].split(":", 1)[1]
+    base = os.environ.get("FAROL_ARXIV_MIRROR", ARXIV_BASE).rstrip("/")
+    folder = project.root / DOWNLOADS_DIR / source["id"]
+    pdf = folder / f"{source['id']}.pdf"
+    if not pdf.is_file():
+        folder.mkdir(parents=True, exist_ok=True)
+        page = _fetch(f"{base}/abs/{identifier}").decode("utf-8", errors="replace")
+        pdf.write_bytes(_fetch(f"{base}/pdf/{identifier}"))
+        license_match = _CC_LICENSE.search(page)
+        if not source.get("license"):
+            if license_match and license_match.group(1).lower() == "licenses":
+                source["license"] = f"CC-{license_match.group(2).upper()}-{license_match.group(3)}"
+            elif license_match:
+                source["license"] = "CC0-1.0"
+            elif "nonexclusive-distrib" in page:
+                source["license"] = "arXiv-nonexclusive-distrib-1.0"
+        title = re.search(r'<h1 class="title[^"]*">(?:<span[^>]*>)?\s*(?:Title:)?\s*(?:</span>)?(.*?)</h1>', page, re.S)
+        if title:
+            source["title"] = re.sub(r"<[^>]+>|\s+", " ", title.group(1)).strip()
+        write_json_atomic(project.root / PROJECT_FILE, project.config)
+    return str(folder)
+
+
 def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
     import docops
 
@@ -135,6 +181,11 @@ def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
     package = project.package(source["id"])
     existing = (package / "manifest.json").is_file()
     input_value = source["input"]
+    if source.get("kind") == "arxiv":
+        try:
+            input_value = _acquire_arxiv(project, source)
+        except OSError as exc:
+            return {"ok": False, "errors": [{"code": "download_failed", "message": f"arXiv download failed: {exc}"}]}
     source_root = Path(input_value).parent if not urlsplit(input_value).scheme else None
     options: dict[str, Any] = {
         "output_dir": package,
@@ -188,6 +239,8 @@ def _source_status(project: Project, source: dict[str, Any], state: dict[str, An
     warnings = []
     if not source.get("license"):
         warnings.append("license not declared: the package is for local, private use only")
+    elif str(source["license"]).startswith("arXiv-nonexclusive"):
+        warnings.append("arXiv non-exclusive license: keep the package private; do not redistribute")
     last = state["sources"].get(source["id"])
     entry: dict[str, Any] = {"id": source["id"], "input": source["input"], "warnings": warnings}
     if last and not last.get("ok"):

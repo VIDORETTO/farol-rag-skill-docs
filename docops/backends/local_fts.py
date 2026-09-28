@@ -61,10 +61,24 @@ def fts5_available() -> bool:
         return False
 
 
+# Function words (English and Portuguese) carry no evidence; they are dropped
+# from queries unless the query has nothing else.
+_STOPWORDS = frozenset(
+    """a about after all also an and any are as at be been before but by can could did do does
+    for from had has have how i if in into is it its just me more most my no not of on only or
+    our out over should so some than that the their them then there these they this those to
+    under up very was we were what when where which while who why will with within would you your
+    à ao aos as até com como da das de do dos e é ela ele em entre essa esse esta este eu foi
+    há isso já la mais mas me meu minha na nas no nos não o os ou para pela pelo por qual quando
+    que quem se sem ser seu sua são também tem um uma umas uns""".split()
+)
+
+
 def _match_expression(query: str) -> str:
     # Quote every token so user text can never inject FTS5 query syntax.
     tokens = [token for token in _TOKEN.findall(query) if token.strip("_")]
-    return " OR ".join(f'"{token}"' for token in tokens)
+    content = [token for token in tokens if token.casefold() not in _STOPWORDS]
+    return " OR ".join(f'"{token}"' for token in (content or tokens))
 
 
 class LocalFtsBackend:

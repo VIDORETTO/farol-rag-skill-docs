@@ -51,3 +51,16 @@ def test_html_preserves_links_and_table_cells_without_executing_scripts(tmp_path
     assert any(block.kind == "table" and "strict" in str(block.structured) for block in result.document.blocks)
     assert "ignore this" not in " ".join(block.text or "" for block in result.document.blocks)
     assert any("https://docs.example.test/auth" in str(block.structured) for block in result.document.blocks)
+
+
+def test_heading_path_follows_levels_when_the_document_has_no_h1(tmp_path: Path) -> None:
+    from docops.extractors import ExtractorPolicy
+    from docops.extractors.text_web import TextWebExtractor
+
+    path = tmp_path / "doc.md"
+    path.write_text("## Page 1\n\n### Intro\n\nOne.\n\n## Page 2\n\n### Methods\n\nTwo.\n", encoding="utf-8")
+
+    result = TextWebExtractor().extract(path, ExtractorPolicy(rights_ref="MIT"), {})
+
+    paths = [block.heading_path for block in result.document.blocks if block.kind == "paragraph"]
+    assert paths == [["Page 1", "Intro"], ["Page 2", "Methods"]]
