@@ -124,7 +124,9 @@ English sources. Hybrid search, top 5:
 | GraphRAG paper (arXiv) | 5 | 100% | 100% |
 | Spoken article (audio, local speech recognition) | 3 | 100% | 100% |
 
-Reproduce with `python scripts/acceptance_real.py --json` from a clone.
+Reproduce with `python scripts/acceptance_real.py --json` from a clone. On a
+2-vCPU, 4 GB machine a 500-page book builds in 10 s (BM25) or 75 s (hybrid);
+see [performance and scale](docs/SCALE.md).
 
 ## Commands
 

@@ -182,3 +182,26 @@ def test_task_commands_inside_a_project_pick_the_next_waiting_source(tmp_path: P
     assert task["package"] == "packages/acme-docs"
     assert "--package packages/acme-docs" in task["instructions"]
     assert progress["state"] == "awaiting_agent"
+
+
+def test_build_reports_progress_on_stderr_and_keeps_stdout_machine_readable(tmp_path: Path) -> None:
+    guide, notes = _sources(tmp_path)
+    project = tmp_path / "project"
+    project.mkdir()
+    _cli(project, "add", str(guide), "--license", "MIT")
+    _cli(project, "add", str(notes), "--license", "MIT")
+
+    completed = subprocess.run(
+        [sys.executable, "-m", "docops", "build", "--json"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=project,
+        env={**os.environ, "PYTHONPATH": str(ROOT)},
+        timeout=120,
+    )
+
+    assert json.loads(completed.stdout)["ok"] is True
+    progress = completed.stderr.splitlines()
+    assert "[1/2] acme-docs: extracting and indexing" in progress
+    assert any(line.startswith("[2/2] notes: done") for line in progress)

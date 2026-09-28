@@ -252,16 +252,34 @@ def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
     return {"ok": True, "index": {key: index[key] for key in ("documents", "blocks", "index_revision")}}
 
 
+def _progress(message: str) -> None:
+    """Human progress on stderr; stdout stays reserved for results (and --json)."""
+
+    import sys
+
+    print(message, file=sys.stderr, flush=True)
+
+
 def build(root: Path | str, *, source_ids: list[str] | None = None) -> dict[str, Any]:
+    import time
+
     project = load_project(root)
     if not project.config["sources"]:
         raise JourneyError("no_sources", "the project has no sources", next_action="farol add <source>")
     state = _state(project)
     results: dict[str, Any] = {}
-    for source in project.config["sources"]:
-        if source_ids and source["id"] not in source_ids:
-            continue
+    selected = [source for source in project.config["sources"] if not source_ids or source["id"] in source_ids]
+    for position, source in enumerate(selected, 1):
+        prefix = f"[{position}/{len(selected)}] {source['id']}"
+        _progress(f"{prefix}: extracting and indexing")
+        started = time.monotonic()
         outcome = _build_one(project, source)
+        elapsed = time.monotonic() - started
+        if outcome["ok"]:
+            blocks = outcome["index"]["blocks"]
+            _progress(f"{prefix}: done in {elapsed:.1f}s ({blocks} blocks)")
+        else:
+            _progress(f"{prefix}: failed ({outcome['errors'][0]['code']})")
         state["sources"][source["id"]] = {"last_build": _now(), **outcome}
         results[source["id"]] = outcome
     write_json_atomic(project.root / STATE_FILE, state)
