@@ -160,7 +160,11 @@ def run(manifest_path: Path, cases_path: Path, work: Path, only: set[str] | None
         if only and source["id"] not in only:
             continue
         if source.get("status") == "pending_extractor":
-            report["sources"][source["id"]] = {"status": "not_run", "code": "extractor_unavailable"}
+            report["sources"][source["id"]] = {
+                "status": "not_run",
+                "code": source.get("not_run_code", "extractor_unavailable"),
+                **({"note": source["note"]} if source.get("note") else {}),
+            }
             continue
         cases = [case for case in all_cases if case.get("source") == source["id"] and case.get("kind") == "factual"]
         report["sources"][source["id"]] = _measure(source, cases, work)

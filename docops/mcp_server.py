@@ -89,9 +89,11 @@ def citation(hit: Mapping[str, Any]) -> str:
     path = str(hit.get("path") or "")
     locators = hit.get("locators") or []
     page = next((item.get("page") for item in locators if item.get("kind") == "page"), None)
+    moment = next((item.get("start") for item in locators if item.get("kind") == "timestamp"), None)
+    suffix = f" (page {page})" if page is not None else f" (at {moment})" if moment else ""
     for locator in locators:
         if locator.get("kind") == "line" and locator.get("line") is not None:
-            return f"{path}:{locator['line']}" + (f" (page {page})" if page is not None else "")
+            return f"{path}:{locator['line']}{suffix}"
         if locator.get("kind") == "page" and locator.get("page") is not None:
             return f"{path}#page={locator['page']}"
         if locator.get("kind") == "timestamp" and locator.get("label"):

@@ -11,9 +11,21 @@ from typing import Any
 from xml.etree import ElementTree
 
 from .safety import classify, dominated_by_high_risk
+from .transcripts import MEDIA_SUFFIXES, parse_subtitles, transcript_markdown
 from .web_acquirer import normalize_html
 
 SUPPORTED_SUFFIXES = {
+    ".vtt",
+    ".srt",
+    ".mp3",
+    ".m4a",
+    ".wav",
+    ".ogg",
+    ".flac",
+    ".mp4",
+    ".webm",
+    ".mkv",
+    ".mov",
     ".md",
     ".markdown",
     ".rst",
@@ -420,6 +432,41 @@ def _extract_pdf(path: Path) -> str:
     return "\n\n".join(part.strip() for part in text_parts if part and part.strip()).strip()
 
 
+def _normalize_media(file_path: Path, origin: str, suffix: str) -> "NormalizationResult":
+    """Audio/video through local speech recognition; typed error when unavailable."""
+
+    from . import transcripts
+
+    try:
+        segments = transcripts.transcribe_media(file_path)
+    except transcripts.TranscriptError as exc:
+        return NormalizationResult("error", "", origin, suffix.lstrip("."), error_code=exc.code, error=str(exc))
+    if not segments:
+        return NormalizationResult(
+            "error", "", origin, suffix.lstrip("."), error_code="transcript_empty", error="no speech was recognized"
+        )
+    title = file_path.stem.replace("-", " ").replace("_", " ").strip() or file_path.stem
+    content = transcripts.transcript_markdown(
+        segments,
+        title=title,
+        metadata=["- Transcript: local speech recognition (quality depends on audio and model)"],
+    )
+    untrusted, warnings = _untrusted_warnings(content)
+    quality_status, quality_reason = _quality_assessment(content, untrusted)
+    return NormalizationResult(
+        "accepted",
+        content,
+        origin,
+        "transcript",
+        title=title,
+        warnings=warnings,
+        untrusted=untrusted,
+        locators=_extract_locators(content, "transcript"),
+        quality_status=quality_status,
+        quality_reason=quality_reason,
+    )
+
+
 def _cell_source(value: Any) -> str:
     if isinstance(value, list):
         return "".join(str(item) for item in value)
@@ -566,7 +613,9 @@ def normalize_file(
         return NormalizationResult(
             "error", "", origin, suffix.lstrip("."), error_code="not_found", error="file does not exist"
         )
-    if suffix in TRANSCRIPTION_SUFFIXES:
+    if suffix in MEDIA_SUFFIXES:
+        return _normalize_media(file_path, origin, suffix)
+    if suffix in TRANSCRIPTION_SUFFIXES - {".vtt", ".srt"}:
         return NormalizationResult(
             "ignored",
             "",
@@ -596,7 +645,15 @@ def normalize_file(
     title: str | None = None
     fmt = suffix.lstrip(".")
     try:
-        if suffix in {".html", ".htm"}:
+        if suffix in {".vtt", ".srt"}:
+            title = file_path.stem.replace("-", " ").replace("_", " ").strip() or file_path.stem
+            content = transcript_markdown(
+                parse_subtitles(file_path.read_text(encoding="utf-8", errors="replace")),
+                title=title,
+                metadata=[f"- Captions: subtitle file ({suffix.lstrip('.')})"],
+            )
+            fmt = "transcript"
+        elif suffix in {".html", ".htm"}:
             document = normalize_html(file_path.read_bytes(), source_url or origin)
             content = document.content
             title = document.title or _title_from_markdown(content, file_path.stem)

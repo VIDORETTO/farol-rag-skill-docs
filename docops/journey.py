@@ -96,10 +96,15 @@ def add_source(
     redistribution: str | None = None,
 ) -> dict[str, Any]:
     project = load_project(root, create=True)
+    from .transcripts import youtube_id
+
     arxiv = _ARXIV.match(value.strip())
+    video = youtube_id(value)
     parsed = urlsplit(value)
     if arxiv:
         value = f"arXiv:{arxiv.group(1)}"
+    elif video:
+        value = f"https://www.youtube.com/watch?v={video}"
     elif parsed.scheme not in {"http", "https"}:
         path = Path(value).expanduser()
         if not path.is_absolute():
@@ -113,12 +118,19 @@ def add_source(
     if existing:
         return {"status": "unchanged", "source": existing}
     taken = {source["id"] for source in project.config["sources"]}
-    source_id = _slug(name) if name else (_slug(f"arxiv-{arxiv.group(1)}") if arxiv else _source_id(value, taken))
+    if name:
+        source_id = _slug(name)
+    elif arxiv:
+        source_id = _slug(f"arxiv-{arxiv.group(1)}")
+    elif video:
+        source_id = _slug(f"youtube-{video}")
+    else:
+        source_id = _source_id(value, taken)
     if source_id in taken:
         raise JourneyError("source_id_taken", f"a source named {source_id!r} already exists")
     source = {
         "id": source_id,
-        "kind": "arxiv" if arxiv else "url" if parsed.scheme in {"http", "https"} else "path",
+        "kind": "arxiv" if arxiv else "youtube" if video else "url" if parsed.scheme in {"http", "https"} else "path",
         "input": value,
         "license": license,
         "redistribution": redistribution or "private-only",
@@ -172,20 +184,44 @@ def _acquire_arxiv(project: Project, source: dict[str, Any]) -> str:
     return str(folder)
 
 
+def _acquire_youtube(project: Project, source: dict[str, Any]) -> str:
+    """Fetch captions, chapters and the declared license once; store the transcript."""
+
+    from . import transcripts
+
+    folder = project.root / DOWNLOADS_DIR / source["id"]
+    document = folder / f"{source['id']}.md"
+    if not document.is_file():
+        languages = list(dict.fromkeys([str(project.config.get("language") or "en").split("-")[0], "en"]))
+        video = transcripts.fetch_youtube(source["input"], languages=languages)
+        folder.mkdir(parents=True, exist_ok=True)
+        document.write_text(transcripts.youtube_markdown(source["input"], video), encoding="utf-8")
+        if not source.get("license"):
+            source["license"] = transcripts.youtube_license(video.get("license"))
+        source["title"] = video.get("title")
+        write_json_atomic(project.root / PROJECT_FILE, project.config)
+    return str(folder)
+
+
 def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
     import docops
 
     from .agent_tasks import plan_synthesis, synthesis_status
     from .package_index import build_package_index
+    from .transcripts import TranscriptError
 
     package = project.package(source["id"])
     existing = (package / "manifest.json").is_file()
     input_value = source["input"]
-    if source.get("kind") == "arxiv":
-        try:
+    try:
+        if source.get("kind") == "arxiv":
             input_value = _acquire_arxiv(project, source)
-        except OSError as exc:
-            return {"ok": False, "errors": [{"code": "download_failed", "message": f"arXiv download failed: {exc}"}]}
+        elif source.get("kind") == "youtube":
+            input_value = _acquire_youtube(project, source)
+    except TranscriptError as exc:
+        return {"ok": False, "errors": [{"code": exc.code, "message": str(exc)}]}
+    except OSError as exc:
+        return {"ok": False, "errors": [{"code": "download_failed", "message": f"download failed: {exc}"}]}
     source_root = Path(input_value).parent if not urlsplit(input_value).scheme else None
     options: dict[str, Any] = {
         "output_dir": package,
@@ -241,6 +277,8 @@ def _source_status(project: Project, source: dict[str, Any], state: dict[str, An
         warnings.append("license not declared: the package is for local, private use only")
     elif str(source["license"]).startswith("arXiv-nonexclusive"):
         warnings.append("arXiv non-exclusive license: keep the package private; do not redistribute")
+    elif source["license"] == "YouTube-Standard":
+        warnings.append("Standard YouTube license: personal use only; do not redistribute the transcript")
     last = state["sources"].get(source["id"])
     entry: dict[str, Any] = {"id": source["id"], "input": source["input"], "warnings": warnings}
     if last and not last.get("ok"):
