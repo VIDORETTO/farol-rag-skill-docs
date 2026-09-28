@@ -116,6 +116,62 @@ def _slices(documents: list[dict[str, Any]], budget: int) -> list[list[dict[str,
     return slices
 
 
+def _sections(documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Evidence grouped by document and second-level heading, in source order."""
+
+    sections: list[dict[str, Any]] = []
+    index: dict[tuple[str, tuple[str, ...]], dict[str, Any]] = {}
+    for document in documents:
+        for block in document["blocks"]:
+            if block.get("kind") in _CONTEXT_KINDS or not (block.get("text") or "").strip():
+                continue
+            if block.get("risk") == "high":
+                continue
+            key = (document["path"], tuple(block.get("heading_path") or [])[:2])
+            section = index.get(key)
+            if section is None:
+                title = " › ".join(key[1]) or Path(document["path"]).stem
+                section = {"id": f"s{len(sections) + 1}", "title": title, "path": document["path"], "blocks": []}
+                index[key] = section
+                sections.append(section)
+            section["blocks"].append({**block, "path": document["path"], "document_id": document["document_id"]})
+    for section in sections:
+        text = " ".join(block["text"] for block in section["blocks"])
+        section["tokens"] = sum(_tokens(block["text"]) for block in section["blocks"])
+        section["first_sentence"] = re.split(r"(?<=[.!?])\s", text.strip(), maxsplit=1)[0][:200]
+    return sections
+
+
+def _chapter_task(
+    index: int, title: str, blocks: list[dict[str, Any]], counter: int, language: str
+) -> tuple[dict, int]:
+    items = []
+    for block in blocks:
+        counter += 1
+        items.append(
+            {
+                "ref": f"b{counter}",
+                "block_id": block["block_id"],
+                "citation": citation(block),
+                "heading_path": block.get("heading_path") or [],
+                "text": block["text"],
+                "risk": block.get("risk", "none"),
+            }
+        )
+    task = {
+        "schema_version": 1,
+        "task_id": f"chapter-{index:02d}",
+        "kind": "chapter",
+        "status": "pending",
+        "requires": [],
+        "language": language,
+        "budget": {"output_tokens": CHAPTER_OUTPUT_TOKENS},
+        "inputs": {"title": title, "file": f"{index:02d}-{_slugify(title)}.md", "blocks": items},
+        "output": {"files": ["chapter.md"]},
+    }
+    return task, counter
+
+
 def _title(blocks: list[dict[str, Any]]) -> str:
     """Provisional chapter title naming what the slice covers; the agent may refine it."""
 
@@ -142,8 +198,14 @@ def plan_synthesis(
     *,
     language: str | None = None,
     task_source_tokens: int = DEFAULT_TASK_SOURCE_TOKENS,
+    outline: str | None = None,
 ) -> dict[str, Any]:
-    """Create (or keep) the task plan for distilling the package into a skill."""
+    """Create (or keep) the task plan for distilling the package into a skill.
+
+    ``outline="agent"`` (default for sources that need three or more chapters)
+    starts with an outline task in which the agent groups sections into
+    chapters by subject; ``"heuristic"`` slices the source along its sections.
+    """
 
     root = _root(package)
     manifest = _manifest(root)
@@ -151,7 +213,14 @@ def plan_synthesis(
     language = language or str((manifest.get("source") or {}).get("language") or "en")
     documents, _skipped = package_documents(root)
     corpus = content_hash([document["document_id"] for document in documents])
-    plan_id = "synthesis-" + content_hash({"corpus": corpus, "language": language, "budget": task_source_tokens})[:16]
+    slices = _slices(documents, task_source_tokens)
+    if outline not in (None, "agent", "heuristic"):
+        raise SynthesisTaskError("outline_invalid", "outline must be 'agent' or 'heuristic'")
+    mode = outline or ("agent" if len(slices) >= 3 else "heuristic")
+    plan_id = (
+        "synthesis-"
+        + content_hash({"corpus": corpus, "language": language, "budget": task_source_tokens, "outline": mode})[:16]
+    )
     directory = _dir(root)
     plan_path = directory / "plan.json"
     if plan_path.is_file():
@@ -162,37 +231,35 @@ def plan_synthesis(
         shutil.rmtree(directory / "tasks", ignore_errors=True)
         shutil.rmtree(directory / "accepted", ignore_errors=True)
     tasks: list[dict[str, Any]] = []
-    counter = 0
-    for index, blocks in enumerate(_slices(documents, task_source_tokens), 1):
-        items = []
-        for block in blocks:
-            counter += 1
-            items.append(
-                {
-                    "ref": f"b{counter}",
-                    "block_id": block["block_id"],
-                    "citation": citation(block),
-                    "heading_path": block.get("heading_path") or [],
-                    "text": block["text"],
-                    "risk": block.get("risk", "none"),
-                }
-            )
-        title = _title(blocks)
-        task_id = f"chapter-{index:02d}"
+    if mode == "agent":
+        sections = _sections(documents)
         tasks.append(
             {
                 "schema_version": 1,
-                "task_id": task_id,
-                "kind": "chapter",
+                "task_id": "outline",
+                "kind": "outline",
                 "status": "pending",
                 "requires": [],
                 "language": language,
-                "budget": {"output_tokens": CHAPTER_OUTPUT_TOKENS},
-                "inputs": {"title": title, "file": f"{index:02d}-{_slugify(title)}.md", "blocks": items},
-                "output": {"files": ["chapter.md"]},
+                "budget": {"chapter_source_tokens": task_source_tokens},
+                "inputs": {
+                    "title": "Skill outline",
+                    "sections": [
+                        {key: section[key] for key in ("id", "title", "path", "tokens", "first_sentence")}
+                        | {"block_ids": [block["block_id"] for block in section["blocks"]]}
+                        for section in sections
+                    ],
+                },
+                "output": {"files": ["outline.json"]},
             }
         )
-    chapter_ids = sorted(task["task_id"] for task in tasks)
+        chapter_ids = ["outline"]
+    else:
+        counter = 0
+        for index, blocks in enumerate(slices, 1):
+            task, counter = _chapter_task(index, _title(blocks), blocks, counter, language)
+            tasks.append(task)
+        chapter_ids = sorted(task["task_id"] for task in tasks)
     tasks.append(
         {
             "schema_version": 1,
@@ -215,6 +282,7 @@ def plan_synthesis(
         "slug": slug,
         "language": language,
         "corpus": corpus,
+        "outline": mode,
         "state": "awaiting_agent",
         "tasks": [_summary(task) for task in tasks],
     }
@@ -240,7 +308,7 @@ def _load_plan(root: Path) -> dict[str, Any]:
 
 
 def _load_task(root: Path, task_id: str) -> dict[str, Any]:
-    if not re.fullmatch(r"(?:chapter-\d{2,4}|core)", task_id):
+    if not re.fullmatch(r"(?:chapter-\d{2,4}|core|outline)", task_id):
         raise SynthesisTaskError("task_unknown", "unknown task id")
     path = _dir(root) / "tasks" / f"{task_id}.json"
     if not path.is_file():
@@ -269,6 +337,21 @@ def synthesis_status(package: Path | str) -> dict[str, Any]:
 
 def _render(root: Path, task: dict[str, Any], plan: Mapping[str, Any]) -> dict[str, Any]:
     rendered = dict(task)
+    if task["kind"] == "outline":
+        listing = "\n".join(
+            f"- {item['id']} ({item['tokens']} tokens) {item['title']} — {item['first_sentence']}"
+            for item in task["inputs"]["sections"]
+        )
+        instructions = (
+            _template("synthesis-outline.md")
+            .replace("{{SLUG}}", plan["slug"])
+            .replace("{{CHAPTER_TOKENS}}", str(task["budget"]["chapter_source_tokens"]))
+            + "\n"
+            + listing
+            + "\n"
+        )
+        rendered["instructions"] = instructions.replace("{{LANGUAGE}}", task["language"])
+        return rendered
     if task["kind"] == "chapter":
         body = _template("synthesis-chapter.md")
         blocks = "\n\n".join(
@@ -484,7 +567,9 @@ def submit_task(package: Path | str, task_id: str, output_dir: Path | str) -> di
             "task_id": task_id,
             "reasons": [_reason("dependencies_pending", "finish the chapter tasks first", pending=pending)],
         }
-    if task["kind"] == "chapter":
+    if task["kind"] == "outline":
+        reasons, chapters = _validate_outline(task, files.get("outline.json"))
+    elif task["kind"] == "chapter":
         if "chapter.md" not in files:
             reasons = [_reason("missing_file", "provide chapter.md", file="chapter.md")]
         else:
@@ -508,11 +593,85 @@ def submit_task(package: Path | str, task_id: str, output_dir: Path | str) -> di
             task["inputs"]["title"] = heading.group(1).strip()
             task["inputs"]["file"] = f"{number}-{_slugify(task['inputs']['title'])}.md"
     _save_task(root, task)
+    if task["kind"] == "outline":
+        _expand_outline(root, task, chapters)
     installed = False
     if task["kind"] == "core":
         _install(root, _load_plan(root))
         installed = True
     return {"status": "accepted", "task_id": task_id, "installed": installed}
+
+
+def _validate_outline(task: Mapping[str, Any], raw: str | None) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    if raw is None:
+        return [_reason("missing_file", "provide outline.json", file="outline.json")], []
+    try:
+        value = json.loads(raw)
+    except ValueError:
+        return [_reason("outline_invalid", "outline.json must be valid JSON")], []
+    chapters = value.get("chapters") if isinstance(value, dict) else None
+    if (
+        not isinstance(chapters, list)
+        or not chapters
+        or not all(
+            isinstance(item, dict) and str(item.get("title") or "").strip() and isinstance(item.get("sections"), list)
+            for item in chapters
+        )
+    ):
+        return [_reason("outline_invalid", 'use {"chapters": [{"title": "...", "sections": ["s1"]}]}')], []
+    known = [item["id"] for item in task["inputs"]["sections"]]
+    listed = [str(section) for item in chapters for section in item["sections"]]
+    unknown = sorted(set(listed) - set(known), key=listed.index)
+    if unknown:
+        return [_reason("unknown_sections", "use only the section ids listed in the task", sections=unknown)], []
+    duplicates = sorted({section for section in listed if listed.count(section) > 1}, key=listed.index)
+    if duplicates:
+        return [_reason("duplicate_sections", "each section belongs to exactly one chapter", sections=duplicates)], []
+    orphans = [section for section in known if section not in set(listed)]
+    if orphans:
+        return [_reason("orphan_sections", "assign every section to a chapter", sections=orphans)], []
+    sizes = {item["id"]: item["tokens"] for item in task["inputs"]["sections"]}
+    limit = int(task["budget"]["chapter_source_tokens"]) * 2
+    oversized = [
+        item["title"]
+        for item in chapters
+        if len(item["sections"]) > 1 and sum(sizes[section] for section in item["sections"]) > limit
+    ]
+    if oversized:
+        return [_reason("chapter_too_large", f"split chapters above {limit} source tokens", chapters=oversized)], []
+    return [], chapters
+
+
+def _expand_outline(root: Path, outline: Mapping[str, Any], chapters: list[dict[str, Any]]) -> None:
+    documents, _skipped = package_documents(root)
+    blocks = {
+        block["block_id"]: {**block, "path": document["path"], "document_id": document["document_id"]}
+        for document in documents
+        for block in document["blocks"]
+    }
+    sections = {item["id"]: item for item in outline["inputs"]["sections"]}
+    plan = _load_plan(root)
+    counter = 0
+    created: list[dict[str, Any]] = []
+    for index, chapter in enumerate(chapters, 1):
+        chapter_blocks = [
+            blocks[block_id]
+            for section in chapter["sections"]
+            for block_id in sections[section]["block_ids"]
+            if block_id in blocks
+        ]
+        task, counter = _chapter_task(
+            index, str(chapter["title"]).strip(), chapter_blocks, counter, outline["language"]
+        )
+        task["request_hash"] = content_hash({key: value for key, value in task.items() if key != "status"})
+        write_json_atomic(_dir(root) / "tasks" / f"{task['task_id']}.json", task)
+        created.append(task)
+    core = _load_task(root, "core")
+    core["requires"] = [task["task_id"] for task in created]
+    write_json_atomic(_dir(root) / "tasks" / "core.json", core)
+    summaries = [item for item in plan["tasks"] if item["kind"] == "outline"]
+    plan["tasks"] = summaries + [_summary(task) for task in created] + [_summary(core)]
+    write_json_atomic(_dir(root) / "plan.json", plan)
 
 
 def _resolve_refs(text: str, refs: Mapping[str, Mapping[str, Any]]) -> str:
