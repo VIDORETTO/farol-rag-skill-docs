@@ -17,6 +17,7 @@ from docops.errors import CATALOG  # noqa: E402
 
 PUBLIC_MODULES = [
     "docops/journey.py",
+    "docops/library.py",
     "docops/connect.py",
     "docops/agent_tasks.py",
     "docops/transcripts.py",

@@ -98,6 +98,7 @@ CLI_COMPATIBILITY_MAP = {
     "advanced": "advanced",
     "connect": "connect",
     "sync": "sync",
+    "library": "library",
     "skill": "skill",
     "agents-bootstrap": "agents-bootstrap",
     "resolve": "source resolve",
@@ -856,6 +857,16 @@ def build_parser() -> argparse.ArgumentParser:
     mcp_target = mcp.add_mutually_exclusive_group()
     mcp_target.add_argument("--package", type=Path, help="serve a single package")
     mcp_target.add_argument("--project", type=Path, help="serve every package of a project (default: current dir)")
+    mcp_target.add_argument("--library", action="store_true", help="serve every project in your library")
+    library = commands.add_parser("library", help="manage your library of projects (one MCP for all)")
+    library_commands = library.add_subparsers(dest="library_command", required=True)
+    library_add = library_commands.add_parser("add", help="register a project")
+    library_add.add_argument("project", type=Path, nargs="?", default=Path.cwd())
+    library_remove = library_commands.add_parser("remove", help="unregister a project")
+    library_remove.add_argument("name")
+    library_commands.add_parser("list", help="list registered projects")
+    for sub in library_commands.choices.values():
+        sub.add_argument("--json", action="store_true")
     init = commands.add_parser("init", help="create a Farol project (farol.json) in the current directory")
     init.add_argument("--language", help="language of the generated skills, e.g. en or pt-BR")
     init.add_argument("--project", type=Path, default=Path.cwd())
@@ -1633,6 +1644,10 @@ def _dispatch(args: argparse.Namespace) -> int:
 
         if args.package is not None:
             return serve(args.package)
+        if args.library:
+            from .library import library_packages
+
+            return serve(packages=library_packages())
         from .journey import JourneyError, project_packages
 
         try:
@@ -1652,6 +1667,29 @@ def _dispatch(args: argparse.Namespace) -> int:
         return _journey_command(args)
     if args.command == "connect":
         return _connect_command(args)
+    if args.command == "library":
+        from .journey import JourneyError
+        from .library import add_project, list_projects, remove_project
+
+        try:
+            if args.library_command == "add":
+                payload = add_project(args.project)
+            elif args.library_command == "remove":
+                payload = remove_project(args.name)
+            else:
+                payload = list_projects()
+            code = 0
+        except JourneyError as exc:
+            from .errors import next_action
+
+            payload = {
+                "status": "error",
+                "error": {"code": exc.code, "message": str(exc)},
+                "next_action": next_action(exc.code),
+            }
+            code = 2
+        print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
+        return code
     if args.command == "advanced":
         print(_advanced_help())
         return 0

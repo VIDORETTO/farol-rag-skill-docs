@@ -32,7 +32,6 @@
     "blocked": [],
     "draft": [
       "TK-111",
-      "TK-116",
       "TK-118",
       "TK-119",
       "TK-120",
@@ -56,10 +55,11 @@
       "TK-117",
       "TK-112",
       "TK-109",
-      "TK-115"
+      "TK-115",
+      "TK-116"
     ]
   },
-  "next_action": "Onda D: TK-115 (escala), TK-116 (biblioteca), TK-118 (semver/upgrade).",
+  "next_action": "Onda D: TK-118 (semver e testes de upgrade).",
   "publicity_gate": "TK-122 exit criteria (SC-109)",
   "wave": "D",
   "decisions": "specs/farol-3/decisions.md",

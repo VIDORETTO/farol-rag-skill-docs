@@ -169,13 +169,25 @@ class KnowledgeServer:
         top_k = max(1, min(int(top_k), _MAX_TOP_K))
         hits: list[dict[str, Any]] = []
         revisions: dict[str, str] = {}
+        unavailable: list[dict[str, str]] = []
         for name in self._selected(package):
-            reader = self._reader(name)
-            if reader is None:
+            # One damaged package must not take the others down.
+            try:
+                reader = self._reader(name)
+                if reader is None:
+                    continue
+                backend, index = reader
+                found = backend.query(index, QueryRequest(query=query, top_k=top_k)).hits
+            except BackendError as exc:
+                if exc.code == "embedding_profile_changed":
+                    raise ToolError(exc.code, str(exc)) from exc
+                unavailable.append({"package": name, "code": "index_unreadable"})
                 continue
-            backend, index = reader
+            except Exception:  # damaged SQLite files raise database errors
+                unavailable.append({"package": name, "code": "index_unreadable"})
+                continue
             revisions[name] = index.index_revision
-            for hit in backend.query(index, QueryRequest(query=query, top_k=top_k)).hits:
+            for hit in found:
                 hits.append(
                     {
                         "package": name,
@@ -191,7 +203,7 @@ class KnowledgeServer:
                         "score": hit["score"],
                     }
                 )
-        if not revisions:
+        if not revisions and not unavailable:
             raise ToolError("index_missing", "no factual index yet; run `farol build` (or `farol index <package>`)")
         hits.sort(key=lambda item: item["score"], reverse=True)
         hits = hits[:top_k]
@@ -200,10 +212,12 @@ class KnowledgeServer:
             "note": _UNTRUSTED_NOTE,
             "hits": hits,
         }
-        if len(self.packages) == 1:
+        if len(self.packages) == 1 and revisions:
             result["index_revision"] = next(iter(revisions.values()))
         else:
             result["index_revisions"] = revisions
+        if unavailable:
+            result["unavailable"] = unavailable
         return result
 
     def get_document(self, document_id: str, package: str | None = None) -> dict[str, Any]:
