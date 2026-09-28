@@ -2,9 +2,9 @@
 
 ## Escopo, evidência e ordem de execução
 
-Este documento confronta as 12 hipóteses de [MASTER-PLANNING-BRIEF.md](MASTER-PLANNING-BRIEF.md) com o checkout analisado em 2026-09-07. Ele é o diagnóstico histórico que orientou a implementação local registrada em [IMPLEMENTATION-EVIDENCE.md](master-evolution/IMPLEMENTATION-EVIDENCE.md); não autoriza publicação externa, alteração do corpus/índice real ou uso de credenciais ausentes. O sistema continua sendo operado por agente em harness externo, sem chatbot ou provedor de modelo embutido.
+Este documento confronta as 12 hipóteses de [MASTER-PLANNING-BRIEF.md](MASTER-PLANNING-BRIEF.md) com o checkout analisado em 2026-09-07. Ele é o diagnóstico histórico que orientou a implementação local registrada em [IMPLEMENTATION-EVIDENCE.md](../../master-evolution/IMPLEMENTATION-EVIDENCE.md); não autoriza publicação externa, alteração do corpus/índice real ou uso de credenciais ausentes. O sistema continua sendo operado por agente em harness externo, sem chatbot ou provedor de modelo embutido.
 
-As referências `arquivo:linha` são posições do checkout auditado, não garantias de posição depois das alterações. O inventário complementar está em [CURRENT-STATE-EVIDENCE.md](master-evolution/CURRENT-STATE-EVIDENCE.md). “Existe” significa código/contrato inspecionado; “testado nesta auditoria” identifica execução efetiva; métricas antigas e descrições de CI não equivalem a uma nova execução.
+As referências `arquivo:linha` são posições do checkout auditado, não garantias de posição depois das alterações. O inventário complementar está em [CURRENT-STATE-EVIDENCE.md](../../master-evolution/CURRENT-STATE-EVIDENCE.md). “Existe” significa código/contrato inspecionado; “testado nesta auditoria” identifica execução efetiva; métricas antigas e descrições de CI não equivalem a uma nova execução.
 
 Fases utilizadas neste diagnóstico:
 

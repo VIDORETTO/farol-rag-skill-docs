@@ -388,7 +388,7 @@ commit de implementação `93bb8894d816aad3c3b3682ccec317db1da39d45`; esse
 resultado não substitui a validação do commit de preparação da RC.1. A
 reconciliação de release e seus bloqueios atuais estão em
 [`specs/farol-2/state.json`](specs/farol-2/state.json) e nas evidências de
-[`specs/farol-2/evidence/`](specs/farol-2/evidence/). A promoção para GA exige
+[`specs/farol-2/evidence/`](specs/farol-2/evidence). A promoção para GA exige
 gates atuais e autorização explícita do mantenedor.
 
 Na validação local de 27 de setembro de 2026, o source limpo `8f06ee7` passou
@@ -422,8 +422,8 @@ fixtures não concedem autorização comercial, credencial, publicação
 externa ou uso do corpus/índice real. A evidência detalhada e as limitações
 estão em:
 
-- [docs/MASTER-PLAN.md](docs/MASTER-PLAN.md)
-- [docs/MASTER-IMPROVEMENT-PLAN.md](docs/MASTER-IMPROVEMENT-PLAN.md)
+- [docs/MASTER-PLAN.md](docs/archive/1.x/MASTER-PLAN.md)
+- [docs/MASTER-IMPROVEMENT-PLAN.md](docs/archive/1.x/MASTER-IMPROVEMENT-PLAN.md)
 - [docs/master-evolution/ROADMAP.md](docs/master-evolution/ROADMAP.md)
 - [docs/master-evolution/IMPLEMENTATION-EVIDENCE.md](docs/master-evolution/IMPLEMENTATION-EVIDENCE.md)
 - [docs/master-evolution/TDD-EXECUTION.md](docs/master-evolution/TDD-EXECUTION.md)

@@ -17,7 +17,9 @@ Load the `{{SLUG}}` skill for conceptual and behavioral questions. Treat it as
 guidance for the package's mental models, not as proof of a current literal.
 
 For literal, version-sensitive, signature, default, endpoint, changelog or
-configuration questions, call the MCP tool `search_knowledge` before answering.
+configuration questions, call the MCP tool `search_knowledge` of the `farol`
+server (`farol mcp --package .`) before answering, and cite each hit's `citation`.
+If it returns `insufficient_evidence`, say so instead of guessing.
 
 Persistent changes such as registering, reconciling, updating, approving,
 publishing, revoking or rolling back must go through the lifecycle review-first

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "effort": "farol-3",
+  "phase": "delivery",
+  "status": "active",
+  "baseline": {
+    "kind": "git_sha",
+    "value": "90c8229",
+    "branch": "farol-3/onda-a"
+  },
+  "inputs": {
+    "spec": {
+      "path": "specs/farol-3/spec.md",
+      "revision": 1
+    },
+    "plan": {
+      "path": "specs/farol-3/plan.md",
+      "revision": 1
+    },
+    "context": {
+      "path": "CONTEXT.md",
+      "revision": 1
+    },
+    "spec_part_2": {
+      "path": "specs/farol-3/spec-prontidao.md",
+      "revision": 1
+    }
+  },
+  "open_decisions": [],
+  "tickets": {
+    "ready": [
+      "TK-105",
+      "TK-107",
+      "TK-108"
+    ],
+    "blocked": [],
+    "draft": [
+      "TK-102",
+      "TK-106",
+      "TK-109",
+      "TK-111",
+      "TK-112",
+      "TK-113",
+      "TK-114",
+      "TK-115",
+      "TK-116",
+      "TK-117",
+      "TK-118",
+      "TK-119",
+      "TK-120",
+      "TK-121",
+      "TK-122"
+    ],
+    "in_progress": [],
+    "verified": [],
+    "implemented": [
+      "TK-101",
+      "TK-103",
+      "TK-104",
+      "TK-110"
+    ]
+  },
+  "next_action": "Onda B: TK-105 (síntese pelo agente) → TK-113 (injeção por bloco) → TK-102 → TK-106.",
+  "publicity_gate": "TK-122 exit criteria (SC-109)",
+  "wave": "B",
+  "decisions": "specs/farol-3/decisions.md",
+  "baseline_metrics": "specs/farol-3/evidence/TK-101.md#baseline"
+}

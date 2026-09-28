@@ -71,5 +71,5 @@ completo, avaliação do Golden FastAPI ou teste real de enriquecimento.
 - [OWASP Prompt Injection](https://genai.owasp.org/llmrisk/llm01-prompt-injection/):
   ataques por conteúdo externo e necessidade de segregação de privilégios.
 
-A [decisão Chroma do projeto](../CHROMA-RESIDUAL-DECISION.md) permanece um registro
+A [decisão Chroma do projeto](../archive/1.x/CHROMA-RESIDUAL-DECISION.md) permanece um registro
 de mitigação delimitada. Esta análise não fez auditoria nova de vulnerabilidades.

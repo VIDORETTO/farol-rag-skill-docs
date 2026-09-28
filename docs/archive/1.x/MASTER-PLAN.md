@@ -2,7 +2,7 @@
 
 > **Supersedido para trabalho futuro:** este documento registra a evolução
 > Farol 1.x e inclui linhas de produto que não pertencem ao Farol 2.0. A fonte
-> normativa atual é [`specs/farol-2/`](../specs/farol-2/README.md). Não crie
+> normativa atual é [`specs/farol-2/`](../../../specs/farol-2/README.md). Não crie
 > novos tickets a partir deste plano.
 
 Data: 2026-09-07. Baseline estudado: `c438c82e6350f9dc4971a355a4f0dcb9931d74c3`, branch `codex/main-consolidation`.
@@ -12,7 +12,7 @@ Status: especificação implementada localmente nesta execução; publicação p
 
 Transformar o pipeline de pacotes existente em um sistema de projetos de conhecimento operado por agente: conversa retomável → decisões registradas → fontes governadas → candidata → avaliação → release → consulta citada → mudança incremental.
 
-O núcleo já oferece operações determinísticas, geração de skill/router, aquisição, registros de fonte, fila, enrichment externo, avaliação e lifecycle. A lacuna principal é a composição dessas capacidades em um projeto com objetivos, curso e página independentes. Não reconstruir o lifecycle nem inserir uma LLM no pacote. Evidências e limitações: [diagnóstico](MASTER-IMPROVEMENT-PLAN.md) e [auditoria técnica](master-evolution/CURRENT-STATE-EVIDENCE.md).
+O núcleo já oferece operações determinísticas, geração de skill/router, aquisição, registros de fonte, fila, enrichment externo, avaliação e lifecycle. A lacuna principal é a composição dessas capacidades em um projeto com objetivos, curso e página independentes. Não reconstruir o lifecycle nem inserir uma LLM no pacote. Evidências e limitações: [diagnóstico](MASTER-IMPROVEMENT-PLAN.md) e [auditoria técnica](../../master-evolution/CURRENT-STATE-EVIDENCE.md).
 
 Não confundir três produtos: conhecimento operacional do vendedor, curso sobre um tema e página que apresenta uma oferta. Cada um tem revisão e critérios próprios; a página não pode virar fonte independente para comprovar suas próprias promessas.
 
@@ -20,11 +20,11 @@ Não confundir três produtos: conhecimento operacional do vendedor, curso sobre
 
 1. Este documento: arquitetura, fases e decisões de escopo.
 2. [Diagnóstico das 12 hipóteses](MASTER-IMPROVEMENT-PLAN.md): por que cada mudança existe.
-3. [SPEC](master-evolution/SPEC.md): comportamento desejado e histórias.
-4. [Contratos de estado](master-evolution/STATE-CONTRACTS.md): protocolo e invariantes.
-5. [Fontes, RAG e avaliação](master-evolution/KNOWLEDGE-QUALITY.md).
+3. [SPEC](../../master-evolution/SPEC.md): comportamento desejado e histórias.
+4. [Contratos de estado](../../master-evolution/STATE-CONTRACTS.md): protocolo e invariantes.
+5. [Fontes, RAG e avaliação](../../master-evolution/KNOWLEDGE-QUALITY.md).
 6. Preset de domínio declarativo (documento editorial removido por TK-017).
-7. [Roadmap e tickets](master-evolution/ROADMAP.md), [TDD e execução](master-evolution/TDD-EXECUTION.md).
+7. [Roadmap e tickets](../../master-evolution/ROADMAP.md), [TDD e execução](../../master-evolution/TDD-EXECUTION.md).
 
 Para fatos atuais, código e evidência executada prevalecem sobre planos anteriores. Para a implementação nova, estes contratos propostos prevalecem sobre sugestões genéricas dos tickets. Se houver conflito entre documentos desta entrega, interromper apenas o ticket dependente e registrar a decisão; não escolher silenciosamente. Segurança existente não é relaxada por omissão do plano.
 
@@ -72,7 +72,7 @@ Toda proposta fixa revisão base, inventário de fontes e hash da política. Se 
 
 **P3 — evolução integrada:** mudanças, dependências, enrichment e composição de releases de curso/página. **P4 — operação confiável:** scheduler, recuperação, backup e gates de distribuição. P0–P4 entregam produto local operável; não significam publicação pública autorizada. **P5 — autonomia restrita:** política explícita para atualizações factuais de baixo risco, somente após evidência operacional. Multi-host e SaaS ficam como visão futura, condicionados a medição de demanda.
 
-Aceites, blockers e fronteiras de paralelismo: [roadmap](master-evolution/ROADMAP.md). Não executar as fases como refatoração horizontal de todo o repositório.
+Aceites, blockers e fronteiras de paralelismo: [roadmap](../../master-evolution/ROADMAP.md). Não executar as fases como refatoração horizontal de todo o repositório.
 
 ## Decisões e trade-offs
 

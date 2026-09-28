@@ -55,7 +55,7 @@ posteriores na documentação de `main` não alteram a identidade publicada.
   `HttpClient`, HTTP Chroma, `trust_remote_code` nem repositório remoto de
   modelo. Reavaliar em `2026-10-04` ou antes se esse threat model mudar.
 - A revisão autenticada dos settings GitHub está em
-  [`community/GITHUB-SETTINGS-CHECKLIST.md`](../community/GITHUB-SETTINGS-CHECKLIST.md):
+  [`community/GITHUB-SETTINGS-CHECKLIST.md`](../../../community/GITHUB-SETTINGS-CHECKLIST.md):
   branch protection, 13 required checks, CODEOWNERS, Dependabot, secret
   scanning, push protection e Actions com SHA pinning.
 - O Golden FastAPI não foi fabricado nem baixado: os 14 arquivos do corpus

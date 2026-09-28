@@ -34,6 +34,9 @@ _DOCOPS_START_RE = re.compile(
     r"^\s*(?:(?:python(?:\.exe)?|py)\s+-m\s+docops|docops|farol)(?:\s+(?P<args>.*))?$",
     re.IGNORECASE,
 )
+# Planning documents may describe commands and scripts before they exist; the
+# marker exempts only command/script drift, never links or other checks.
+_PROPOSAL_DOCUMENT_MARKER = "<!-- docs-gate: proposal -->"
 _PROPOSAL_CONTEXT_RE = re.compile(
     r"\b(?:future|proposal|proposed|planned|not available|not yet|futuro|proposta|proposto|planejado|não disponível)\b",
     re.IGNORECASE,
@@ -277,6 +280,8 @@ def _check_docops_argv(
 
 def _check_documented_commands(path: Path, content: str, root: Path) -> list[dict[str, str]]:
     findings: list[dict[str, str]] = []
+    if _PROPOSAL_DOCUMENT_MARKER in content:
+        return findings
     for fragment, context in _code_fragments_with_context(content):
         findings.extend(_check_docops_fragment(fragment, context, path, root))
         for match in _SCRIPT_RE.finditer(fragment):

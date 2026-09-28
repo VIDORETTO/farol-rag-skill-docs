@@ -53,4 +53,4 @@ proprietário escolheu não fazer divulgação externa em massa nesta versão.
 - Não mover a tag nem editar os assets publicados. Para defeito, preservar
   `v1.1.0` e publicar uma nova versão de correção.
 - Para incidente de segurança, interromper divulgação e usar
-  [`SECURITY.md`](../SECURITY.md).
+  [`SECURITY.md`](../../../SECURITY.md).

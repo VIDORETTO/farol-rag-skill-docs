@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "review": {
+    "status": "pending_human_review",
+    "authored_by": "agent",
+    "note": "expected_text copied verbatim from the pinned source; questions paraphrased"
+  },
+  "cases": [
+    {
+      "id": "httpx-default-timeout",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "What is the default timeout in HTTPX?",
+      "expected_text": "default timeout for network inactivity is five seconds"
+    },
+    {
+      "id": "httpx-disable-env",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "How do I stop HTTPX from reading proxy environment variables?",
+      "expected_text": "trust_env has to be set False"
+    },
+    {
+      "id": "httpx-ssl-cert-file",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "Does httpx honor the SSL_CERT_FILE environment variable automatically?",
+      "expected_text": "does not automatically pull in"
+    },
+    {
+      "id": "httpx-socks-install",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "How do I install SOCKS proxy support?",
+      "expected_text": "pip install httpx[socks]"
+    },
+    {
+      "id": "httpx-http2-install",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "Which extra enables HTTP/2 support?",
+      "expected_text": "pip install httpx[http2]"
+    },
+    {
+      "id": "httpx-pool-timeout",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "What exception is raised when no connection is available from the pool in time?",
+      "expected_text": "PoolTimeout exception is raised"
+    },
+    {
+      "id": "httpx-limits-example",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "How do I configure connection pool limits?",
+      "expected_text": "httpx.Limits(max_keepalive_connections=5, max_connections=10)"
+    },
+    {
+      "id": "httpx-follow-redirects",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "How do I make a client follow redirects?",
+      "expected_text": "httpx.Client(follow_redirects=True)"
+    },
+    {
+      "id": "httpx-raise-status",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "Which method raises an exception for 4xx and 5xx responses?",
+      "expected_text": "raise_for_status"
+    },
+    {
+      "id": "httpx-request-params",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "Which parameters does httpx.Request() not support?",
+      "expected_text": "does not support the auth, timeout, follow_redirects, mounts, verify and cert parameters"
+    },
+    {
+      "id": "git-checksum",
+      "source": "progit-book",
+      "kind": "factual",
+      "question": "What hash mechanism does Git use for checksumming?",
+      "expected_text": "called a SHA-1 hash"
+    },
+    {
+      "id": "git-three-states",
+      "source": "progit-book",
+      "kind": "factual",
+      "question": "What states can files be in within Git?",
+      "expected_text": "three main states that your files can reside in"
+    },
+    {
+      "id": "git-default-branch",
+      "source": "progit-book",
+      "kind": "factual",
+      "question": "How do I set main as the default branch name for new repositories?",
+      "expected_text": "git config --global init.defaultBranch main"
+    },
+    {
+      "id": "git-branch-version",
+      "source": "progit-book",
+      "kind": "factual",
+      "question": "Since which Git version can the initial branch name be changed?",
+      "expected_text": "From Git version 2.28 onwards"
+    },
+    {
+      "id": "git-amend",
+      "source": "progit-book",
+      "kind": "factual",
+      "question": "How do I change the content of my last commit?",
+      "expected_text": "replaces that last commit with your new, improved commit"
+    },
+    {
+      "id": "git-bisect",
+      "source": "progit-book",
+      "kind": "factual",
+      "question": "How do I start a binary search for the commit that introduced a bug?",
+      "expected_text": "run git bisect start"
+    },
+    {
+      "id": "git-rerere",
+      "source": "progit-book",
+      "kind": "factual",
+      "question": "What does rerere stand for?",
+      "expected_text": "reuse recorded resolution"
+    },
+    {
+      "id": "git-head",
+      "source": "progit-book",
+      "kind": "factual",
+      "question": "How does Git know what branch you are currently on?",
+      "expected_text": "special pointer called HEAD"
+    },
+    {
+      "id": "git-global-ignore",
+      "source": "progit-book",
+      "kind": "factual",
+      "question": "How do I configure a global ignore file for all repositories?",
+      "expected_text": "git config --global core.excludesfile"
+    },
+    {
+      "id": "git-cherry-pick",
+      "source": "progit-book",
+      "kind": "factual",
+      "question": "How do I apply a single commit from another branch?",
+      "expected_text": "git cherry-pick e43a6"
+    },
+    {
+      "id": "graphrag-community",
+      "source": "graphrag-paper",
+      "kind": "factual",
+      "question": "Which community detection algorithm does GraphRAG use?",
+      "expected_text": "Leiden"
+    },
+    {
+      "id": "graphrag-chunks",
+      "source": "graphrag-paper",
+      "kind": "factual",
+      "question": "How was the podcast corpus chunked?",
+      "expected_text": "1669 × 600-token text chunks"
+    },
+    {
+      "id": "graphrag-indexing-time",
+      "source": "graphrag-paper",
+      "kind": "factual",
+      "question": "How long did indexing take for the Podcast dataset?",
+      "expected_text": "took 281 minutes for the Podcast dataset"
+    },
+    {
+      "id": "graphrag-graph-size",
+      "source": "graphrag-paper",
+      "kind": "factual",
+      "question": "How large was the graph built for the Podcast data?",
+      "expected_text": "8,564 nodes and 20,691 edges"
+    },
+    {
+      "id": "graphrag-query",
+      "source": "graphrag-paper",
+      "kind": "factual",
+      "question": "How does GraphRAG answer a global query?",
+      "expected_text": "map-reduce processing of community summaries"
+    }
+  ]
+}

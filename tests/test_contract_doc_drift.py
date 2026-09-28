@@ -102,3 +102,23 @@ def test_repository_documentation_passes_its_quality_gate() -> None:
     result = check_documentation(Path(__file__).parents[1])
 
     assert result["ok"] is True, result["findings"]
+
+
+def test_documentation_checker_allows_future_commands_in_marked_proposal_documents(tmp_path: Path) -> None:
+    # Planning documents describe interfaces before they exist. An explicit
+    # document-level marker exempts command drift, but links stay checked.
+    spec = tmp_path / "specs" / "farol-3"
+    spec.mkdir(parents=True)
+    (spec / "spec.md").write_text(
+        "<!-- docs-gate: proposal -->\n\n"
+        + ("Contexto de planejamento. " * 20)
+        + "\n\n```text\nfarol not-yet-built --json\n```\n\nSee [missing](nope.md).\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "README.md").write_text("```text\nfarol not-yet-built --json\n```\n", encoding="utf-8")
+
+    result = check_documentation(tmp_path)
+
+    command_paths = {f["path"] for f in result["findings"] if f["code"] == "documented_command_unknown"}
+    assert command_paths == {"README.md"}
+    assert any(f["code"] == "broken_local_link" and f["path"] == "specs/farol-3/spec.md" for f in result["findings"])

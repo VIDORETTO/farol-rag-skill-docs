@@ -61,11 +61,11 @@ may be copyrighted and requires an explicit license/redistribution decision.
 The optional RAG dependency currently has four documented ChromaDB advisories;
 the raw audit remains visible and the recorded scope-limited decision is in
 [`CHROMA-RESIDUAL-DECISION.md`](CHROMA-RESIDUAL-DECISION.md). Report security
-issues privately according to [`SECURITY.md`](../SECURITY.md).
+issues privately according to [`SECURITY.md`](../../../SECURITY.md).
 
 ## Support
 
 The normative support matrix is
-[`SUPPORT-MATRIX.json`](SUPPORT-MATRIX.json). Public claims must be limited to
+[`SUPPORT-MATRIX.json`](../../SUPPORT-MATRIX.json). Public claims must be limited to
 the platforms, Python versions and profiles verified by the release and its
 canary.
