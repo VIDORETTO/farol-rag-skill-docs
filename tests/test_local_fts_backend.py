@@ -1,4 +1,4 @@
-# seam-scope: public-seam (KnowledgeBackend contract, local-fts adapter)
+# seam-scope: implementation-infrastructure (Farol 3 public module seam: KnowledgeBackend contract, local-fts adapter)
 from __future__ import annotations
 
 from pathlib import Path

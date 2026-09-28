@@ -17,7 +17,7 @@ and checked by the test suite:
 - **Project file**: the keys of `farol.json` (`schema_version` 1).
 - **Python API**: the names exported by `import docops`.
 - **Schemas** in `schemas/`, under the expand–contract rules of
-  [CONTRACT-COMPATIBILITY.md](CONTRACT-COMPATIBILITY.md).
+  [CONTRACT-COMPATIBILITY.md](https://github.com/VIDORETTO/farol-rag-skill-docs/blob/main/docs/CONTRACT-COMPATIBILITY.md).
 
 Error codes are public too; their catalog is [ERRORS.md](ERRORS.md).
 

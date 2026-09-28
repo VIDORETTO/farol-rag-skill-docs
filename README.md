@@ -11,7 +11,7 @@
 <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/VIDORETTO/farol-rag-skill-docs"></a>
 <img alt="Works with any MCP client" src="https://img.shields.io/badge/MCP-Claude%20Code%20%7C%20Codex%20%7C%20Cursor%20%7C%20OpenCode-0f766e">
 
-**Version:** `2.0.0rc1` — pre-release of Farol 3.0 ([what that means](#project-status))
+**Version:** `3.0.0` ([changelog](CHANGELOG.md))
 
 </div>
 
@@ -124,6 +124,11 @@ English sources. Hybrid search, top 5:
 | GraphRAG paper (arXiv) | 5 | 100% | 100% |
 | Spoken article (audio, local speech recognition) | 3 | 100% | 100% |
 
+In a [value benchmark](docs/BENCHMARK.md) with Claude Haiku, answers with Farol
+were 89% correct (83% with a verifiable citation) using 1.4k prompt tokens,
+versus 22% correct without context and 100% correct but uncitable and ~20× more
+tokens when pasting the whole source.
+
 Reproduce with `python scripts/acceptance_real.py --json` from a clone. On a
 2-vCPU, 4 GB machine a 500-page book builds in 10 s (BM25) or 75 s (hybrid);
 see [performance and scale](docs/SCALE.md).
@@ -147,9 +152,10 @@ Every error prints what to do next; see the [error reference](docs/ERRORS.md).
 
 ## Project status
 
-Farol 3.0 is in active development toward its first public release. It is
-already usable end to end, and every claim above is backed by tests or by the
-measured acceptance corpus. Known limits today:
+Farol 3.0 is the first release built for everyday use by anyone, with any AI
+agent. Every claim above is backed by tests or by the measured acceptance
+corpus, and the public CLI, MCP tools and package layout follow
+[semantic versioning](docs/COMPATIBILITY.md). Known limits:
 
 - YouTube may require browser cookies from servers or VPNs
   (`FAROL_YTDLP_COOKIES`); local subtitle and audio files always work.

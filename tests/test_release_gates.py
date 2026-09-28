@@ -245,3 +245,12 @@ def test_release_gate_pipeline_has_a_global_deadline(tmp_path: Path, monkeypatch
     assert report["ok"] is False
     assert report["stages"][0]["status"] == "failed"
     assert report["stages"][0]["reason"] == "pipeline_timeout"
+
+
+def test_release_profile_is_a_short_essential_gate(tmp_path: Path) -> None:
+    from scripts.run_release_gates import build_gate_plan
+
+    names = [stage.name for stage in build_gate_plan(Path("."), Path(sys.executable), tmp_path, "release")]
+
+    assert len(names) <= 10
+    assert {"pytest", "ruff", "contracts", "documentation", "wheel-core", "clean-clone"} <= set(names)

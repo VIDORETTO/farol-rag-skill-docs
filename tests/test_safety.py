@@ -1,4 +1,4 @@
-# seam-scope: public-seam (content safety classification used by extraction, index, MCP and synthesis)
+# seam-scope: implementation-infrastructure (Farol 3 public module seam: content safety classification used by extraction, index, MCP and synthesis)
 from __future__ import annotations
 
 import json

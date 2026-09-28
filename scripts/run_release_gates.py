@@ -471,6 +471,22 @@ def build_gate_plan(root: Path, python: Path, output: Path, profile: str) -> lis
             environment=common_env,
         ),
     ]
+    if profile == "release":
+        # The everyday release gate: ten essential stages; the full profile keeps
+        # the exhaustive matrix (crash, revocation, fixtures, integrations).
+        essential = (
+            "doctor",
+            "contracts",
+            "documentation",
+            "security",
+            "dependency-audit",
+            "pytest",
+            "ruff",
+            "format",
+            "wheel-core",
+            "clean-clone",
+        )
+        return [stage for stage in stages if stage.name in essential]
     if profile in {"full", "book-to-skill"}:
         stages.append(
             _stage(
@@ -931,7 +947,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--root", type=Path, default=PROJECT_ROOT)
     parser.add_argument("--python", type=Path, default=Path(sys.executable))
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--profile", choices=("core", "full", "ragflow", "book-to-skill"), default="full")
+    parser.add_argument("--profile", choices=("release", "core", "full", "ragflow", "book-to-skill"), default="full")
     parser.add_argument("--allow-rag-skip", action="store_true")
     parser.add_argument("--timeout", type=int, default=1800)
     parser.add_argument("--pipeline-timeout", type=float, default=DEFAULT_PIPELINE_TIMEOUT_SECONDS)

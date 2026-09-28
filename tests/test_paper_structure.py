@@ -1,4 +1,4 @@
-# seam-scope: public-seam (PDF books/papers → package index, citations and synthesis sections)
+# seam-scope: implementation-infrastructure (Farol 3 public module seam: PDF books/papers → package index, citations and synthesis sections)
 from __future__ import annotations
 
 import io

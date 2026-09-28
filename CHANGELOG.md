@@ -1,8 +1,40 @@
 # Changelog
 
-## Unreleased
+## 3.0.0 — 2026-09-28
 
-Preparação adicional da release candidate, ainda não publicada:
+Farol 3.0: any source becomes skills and cited evidence for any AI agent,
+locally.
+
+- **Everyday journey**: `farol add`, `farol build`, `farol sync`,
+  `farol status`, `farol connect` and `farol library`; `farol advanced` keeps
+  every 2.0 lifecycle command, and `docops` stays as an alias.
+- **Skills written by your own AI**: `farol task next|submit` turns each source
+  into an outline, chapter and core tasks; answers are validated for sections,
+  block citations, budget, verbatim copying and injected instructions, then
+  installed atomically with lineage. Stale chapters are reopened after changes.
+- **Local cited evidence**: SQLite FTS5 (BM25) index by default, optional
+  multilingual hybrid search (`semantic` extra) with abstention; citations as
+  `file:line`, page or video timestamp.
+- **MCP server** (`farol mcp`): `search_knowledge`, `get_document`,
+  `list_skills`, `get_skill`; read-only, untrusted-content marking, one server
+  for a project or a whole library.
+- **Connect any agent**: Claude Code, Codex, Cursor, OpenCode or any MCP client,
+  reversibly.
+- **More sources**: PDF outlines and pages, arXiv papers with declared license,
+  WebVTT/SRT, YouTube (captions, chapters, license) and local audio/video via
+  speech recognition (`media` extra).
+- **Safety**: block-level prompt-injection classification; documents that quote
+  attacks keep their evidence, directives never reach the agent.
+- **Quality you can check**: real licensed acceptance corpus, value benchmark,
+  error catalog with next steps, `farol doctor --fix`, recorded public surface
+  and semver policy.
+- Distribution renamed to `farol-kit` (the old name is still recognised).
+- Fixed: headings of documents without H1, PDF text parsed as Markdown, code
+  comments taken as scaffold titles, and reuse of a damaged index file.
+
+## 2.0.0 release-candidate follow-ups (not published separately)
+
+Preparação adicional da release candidate 2.0, incorporada ao 3.0:
 
 - Isolated candidate wheel builds from ignored `build/lib/` output and added an
   independent check for removed Farol 1.x wheel modules.

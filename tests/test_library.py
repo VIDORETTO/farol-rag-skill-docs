@@ -1,4 +1,4 @@
-# seam-scope: public-seam (S1/S2: `farol library` and `farol mcp --library`)
+# seam-scope: implementation-infrastructure (Farol 3 public module seam: S1/S2: `farol library` and `farol mcp --library`)
 from __future__ import annotations
 
 import json

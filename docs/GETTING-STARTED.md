@@ -120,7 +120,7 @@ extra `ragflow`), configure na sessão `DOCOPS_RAGFLOW_ENDPOINT` (HTTPS),
 farol doctor --require-ragflow --json
 ```
 
-Para hospedar localmente, veja o [ambiente Docker fixado](../config/ragflow/README.md).
+Para hospedar localmente, veja o [ambiente Docker fixado](https://github.com/VIDORETTO/farol-rag-skill-docs/blob/main/config/ragflow/README.md).
 Mudar o modelo de embedding exige reconstruir o índice.
 
 ## Desenvolver a partir do código
@@ -130,7 +130,7 @@ python scripts/bootstrap.py --dev
 ```
 
 O bootstrap cria o ambiente virtual e instala as ferramentas de teste. Veja
-[CONTRIBUTING.md](../CONTRIBUTING.md) para o fluxo TDD e as verificações.
+[CONTRIBUTING.md](https://github.com/VIDORETTO/farol-rag-skill-docs/blob/main/CONTRIBUTING.md) para o fluxo TDD e as verificações.
 
 ## Atualizar e remover
 
@@ -138,4 +138,4 @@ Atualize com `pipx upgrade farol-kit` (ou reinstale com os mesmos extras) e rode
 `farol doctor`. Para remover, `pipx uninstall farol-kit`: seus projetos, pacotes
 e fontes não são apagados. Os modelos baixados ficam em `~/.cache/farol` e podem
 ser removidos manualmente. Para suporte, informe versão, sistema, comando e
-saída redigida conforme a [política de suporte](../community/SUPPORT.md).
+saída redigida conforme a [política de suporte](https://github.com/VIDORETTO/farol-rag-skill-docs/blob/main/community/SUPPORT.md).

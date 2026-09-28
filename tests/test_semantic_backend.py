@@ -1,4 +1,4 @@
-# seam-scope: public-seam (S3: KnowledgeBackend hybrid retrieval with an embedder)
+# seam-scope: implementation-infrastructure (Farol 3 public module seam: S3: KnowledgeBackend hybrid retrieval with an embedder)
 from __future__ import annotations
 
 from pathlib import Path

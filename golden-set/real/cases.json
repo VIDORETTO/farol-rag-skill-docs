@@ -11,70 +11,146 @@
       "source": "httpx-docs",
       "kind": "factual",
       "question": "What is the default timeout in HTTPX?",
-      "expected_text": "default timeout for network inactivity is five seconds"
+      "expected_text": "default timeout for network inactivity is five seconds",
+      "answer_keys": [
+        [
+          "5",
+          "five"
+        ],
+        [
+          "second"
+        ]
+      ]
     },
     {
       "id": "httpx-disable-env",
       "source": "httpx-docs",
       "kind": "factual",
       "question": "How do I stop HTTPX from reading proxy environment variables?",
-      "expected_text": "trust_env has to be set False"
+      "expected_text": "trust_env has to be set False",
+      "answer_keys": [
+        [
+          "trust_env"
+        ],
+        [
+          "false"
+        ]
+      ]
     },
     {
       "id": "httpx-ssl-cert-file",
       "source": "httpx-docs",
       "kind": "factual",
       "question": "Does httpx honor the SSL_CERT_FILE environment variable automatically?",
-      "expected_text": "does not automatically pull in"
+      "expected_text": "does not automatically pull in",
+      "answer_keys": [
+        [
+          "not",
+          "no",
+          "doesn't",
+          "does not"
+        ],
+        [
+          "SSL_CERT_FILE"
+        ]
+      ]
     },
     {
       "id": "httpx-socks-install",
       "source": "httpx-docs",
       "kind": "factual",
       "question": "How do I install SOCKS proxy support?",
-      "expected_text": "pip install httpx[socks]"
+      "expected_text": "pip install httpx[socks]",
+      "answer_keys": [
+        [
+          "httpx[socks]"
+        ]
+      ]
     },
     {
       "id": "httpx-http2-install",
       "source": "httpx-docs",
       "kind": "factual",
       "question": "Which extra enables HTTP/2 support?",
-      "expected_text": "pip install httpx[http2]"
+      "expected_text": "pip install httpx[http2]",
+      "answer_keys": [
+        [
+          "httpx[http2]"
+        ]
+      ]
     },
     {
       "id": "httpx-pool-timeout",
       "source": "httpx-docs",
       "kind": "factual",
       "question": "What exception is raised when no connection is available from the pool in time?",
-      "expected_text": "PoolTimeout exception is raised"
+      "expected_text": "PoolTimeout exception is raised",
+      "answer_keys": [
+        [
+          "PoolTimeout"
+        ]
+      ]
     },
     {
       "id": "httpx-limits-example",
       "source": "httpx-docs",
       "kind": "factual",
       "question": "How do I configure connection pool limits?",
-      "expected_text": "httpx.Limits(max_keepalive_connections=5, max_connections=10)"
+      "expected_text": "httpx.Limits(max_keepalive_connections=5, max_connections=10)",
+      "answer_keys": [
+        [
+          "Limits"
+        ],
+        [
+          "max_connections",
+          "max_keepalive_connections"
+        ]
+      ]
     },
     {
       "id": "httpx-follow-redirects",
       "source": "httpx-docs",
       "kind": "factual",
       "question": "How do I make a client follow redirects?",
-      "expected_text": "httpx.Client(follow_redirects=True)"
+      "expected_text": "httpx.Client(follow_redirects=True)",
+      "answer_keys": [
+        [
+          "follow_redirects"
+        ]
+      ]
     },
     {
       "id": "httpx-raise-status",
       "source": "httpx-docs",
       "kind": "factual",
       "question": "Which method raises an exception for 4xx and 5xx responses?",
-      "expected_text": "raise_for_status"
+      "expected_text": "raise_for_status",
+      "answer_keys": [
+        [
+          "raise_for_status"
+        ]
+      ]
     },
     {
       "id": "httpx-request-params",
       "source": "httpx-docs",
       "kind": "factual",
       "question": "Which parameters does httpx.Request() not support?",
-      "expected_text": "does not support the auth, timeout, follow_redirects, mounts, verify and cert parameters"
+      "expected_text": "does not support the auth, timeout, follow_redirects, mounts, verify and cert parameters",
+      "answer_keys": [
+        [
+          "auth"
+        ],
+        [
+          "timeout"
+        ],
+        [
+          "follow_redirects"
+        ],
+        [
+          "verify"
+        ]
+      ]
     },
     {
       "id": "git-checksum",
@@ -151,35 +227,65 @@
       "source": "graphrag-paper",
       "kind": "factual",
       "question": "Which community detection algorithm does GraphRAG use?",
-      "expected_text": "Leiden"
+      "expected_text": "Leiden",
+      "answer_keys": [
+        [
+          "Leiden"
+        ]
+      ]
     },
     {
       "id": "graphrag-chunks",
       "source": "graphrag-paper",
       "kind": "factual",
       "question": "How was the podcast corpus chunked?",
-      "expected_text": "1669 × 600-token text chunks"
+      "expected_text": "1669 × 600-token text chunks",
+      "answer_keys": [
+        [
+          "600"
+        ]
+      ]
     },
     {
       "id": "graphrag-indexing-time",
       "source": "graphrag-paper",
       "kind": "factual",
       "question": "How long did indexing take for the Podcast dataset?",
-      "expected_text": "took 281 minutes for the Podcast dataset"
+      "expected_text": "took 281 minutes for the Podcast dataset",
+      "answer_keys": [
+        [
+          "281"
+        ]
+      ]
     },
     {
       "id": "graphrag-graph-size",
       "source": "graphrag-paper",
       "kind": "factual",
       "question": "How large was the graph built for the Podcast data?",
-      "expected_text": "8,564 nodes and 20,691 edges"
+      "expected_text": "8,564 nodes and 20,691 edges",
+      "answer_keys": [
+        [
+          "8,564",
+          "8564",
+          "8 564"
+        ]
+      ]
     },
     {
       "id": "graphrag-query",
       "source": "graphrag-paper",
       "kind": "factual",
       "question": "How does GraphRAG answer a global query?",
-      "expected_text": "map-reduce processing of community summaries"
+      "expected_text": "map-reduce processing of community summaries",
+      "answer_keys": [
+        [
+          "map"
+        ],
+        [
+          "reduce"
+        ]
+      ]
     },
     {
       "id": "pt-httpx-timeout",
@@ -187,7 +293,14 @@
       "kind": "factual",
       "language": "pt",
       "question": "Qual é o tempo limite padrão do HTTPX?",
-      "expected_text": "default timeout for network inactivity is five seconds"
+      "expected_text": "default timeout for network inactivity is five seconds",
+      "answer_keys": [
+        [
+          "5",
+          "cinco",
+          "five"
+        ]
+      ]
     },
     {
       "id": "pt-httpx-redirects",
@@ -195,7 +308,12 @@
       "kind": "factual",
       "language": "pt",
       "question": "Como faço o cliente seguir redirecionamentos automaticamente?",
-      "expected_text": "httpx.Client(follow_redirects=True)"
+      "expected_text": "httpx.Client(follow_redirects=True)",
+      "answer_keys": [
+        [
+          "follow_redirects"
+        ]
+      ]
     },
     {
       "id": "pt-httpx-socks",
@@ -203,7 +321,12 @@
       "kind": "factual",
       "language": "pt",
       "question": "Como instalo suporte a proxy SOCKS?",
-      "expected_text": "pip install httpx[socks]"
+      "expected_text": "pip install httpx[socks]",
+      "answer_keys": [
+        [
+          "httpx[socks]"
+        ]
+      ]
     },
     {
       "id": "pt-git-rerere",

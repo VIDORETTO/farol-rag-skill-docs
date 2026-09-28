@@ -1,4 +1,4 @@
-# seam-scope: public-seam (S2: MCP JSON-RPC over stdio of `farol mcp`)
+# seam-scope: implementation-infrastructure (Farol 3 public module seam: S2: MCP JSON-RPC over stdio of `farol mcp`)
 from __future__ import annotations
 
 import json
