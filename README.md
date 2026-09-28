@@ -139,6 +139,7 @@ see [performance and scale](docs/SCALE.md).
 | `farol task next` / `farol task submit` | The skill-writing loop for your AI. |
 | `farol connect <agent>` | Install skills and the MCP server for your agent. |
 | `farol mcp --project .` | Serve skills and evidence over MCP (stdio). |
+| `farol library add` / `farol mcp --library` | One MCP server for all your projects. |
 | `farol doctor` | Check the installation and project; `--fix` repairs indexes. |
 | `farol advanced` | Lifecycle, governance and compatibility commands. |
 

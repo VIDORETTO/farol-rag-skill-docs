@@ -37,6 +37,7 @@ CATALOG: dict[str, ErrorInfo] = {
     "media_unreadable": ErrorInfo("The audio or video could not be decoded", "convert it to mp3/wav and add it again"),
     "transcript_empty": ErrorInfo("No speech was recognized", "check the audio or provide a .vtt/.srt file"),
     "schedule_unknown": ErrorInfo("Unknown scheduler", "farol sync --schedule cron"),
+    "library_unknown": ErrorInfo("No such project in the library", "farol library list"),
     # Connect
     "harness_unknown": ErrorInfo("Unknown AI agent", "farol connect claude-code"),
     "nothing_to_connect": ErrorInfo("No source has been built yet", "farol build"),
