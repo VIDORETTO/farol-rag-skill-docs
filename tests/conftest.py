@@ -9,5 +9,8 @@ explicit fake embedder, and the automatic embedder is disabled for every test
 from __future__ import annotations
 
 import os
+import tempfile
 
 os.environ.setdefault("FAROL_SEMANTIC", "0")
+# Vector caches live in the user cache by default; tests use a private one.
+os.environ.setdefault("FAROL_CACHE_DIR", tempfile.mkdtemp(prefix="farol-test-cache-"))

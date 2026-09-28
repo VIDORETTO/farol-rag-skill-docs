@@ -202,6 +202,7 @@ def plan_synthesis(
     language: str | None = None,
     task_source_tokens: int = DEFAULT_TASK_SOURCE_TOKENS,
     outline: str | None = None,
+    refresh: bool = False,
 ) -> dict[str, Any]:
     """Create (or keep) the task plan for distilling the package into a skill.
 
@@ -211,6 +212,8 @@ def plan_synthesis(
     """
 
     root = _root(package)
+    if refresh:
+        return _refresh(root)
     manifest = _manifest(root)
     slug = str((manifest.get("source") or {}).get("slug") or root.name)
     language = language or str((manifest.get("source") or {}).get("language") or "en")
@@ -335,7 +338,95 @@ def synthesis_status(package: Path | str) -> dict[str, Any]:
     counts: dict[str, int] = {}
     for task in plan["tasks"]:
         counts[task["status"]] = counts.get(task["status"], 0) + 1
-    return {"state": plan["state"], "plan_id": plan["plan_id"], "counts": counts, "tasks": plan["tasks"]}
+    return {
+        "state": plan["state"],
+        "plan_id": plan["plan_id"],
+        "counts": counts,
+        "tasks": plan["tasks"],
+        "stale_chapters": list(plan.get("stale_chapters", [])),
+    }
+
+
+def mark_stale(package: Path | str, removed_block_ids: set[str]) -> list[str]:
+    """Record chapters whose cited blocks disappeared from the corpus."""
+
+    root = _root(package)
+    path = _dir(root) / "plan.json"
+    if not path.is_file():
+        return []
+    plan = _read(path)
+    stale = set(plan.get("stale_chapters", []))
+    for summary in plan["tasks"]:
+        if summary["kind"] != "chapter":
+            continue
+        task = _load_task(root, summary["task_id"])
+        if {item["block_id"] for item in task["inputs"]["blocks"]} & set(removed_block_ids):
+            stale.add(summary["task_id"])
+    plan["stale_chapters"] = sorted(stale)
+    write_json_atomic(path, plan)
+    return plan["stale_chapters"]
+
+
+def _refresh(root: Path) -> dict[str, Any]:
+    """Reopen only stale chapters (with the current text of their sections) and the core."""
+
+    plan = _load_plan(root)
+    stale = list(plan.get("stale_chapters", []))
+    if not stale:
+        return plan
+    documents, _skipped = package_documents(root)
+    current = {
+        block["block_id"]: {**block, "path": document["path"], "document_id": document["document_id"]}
+        for document in documents
+        for block in document["blocks"]
+        if block.get("kind") not in _CONTEXT_KINDS and (block.get("text") or "").strip() and block.get("risk") != "high"
+    }
+    claimed = {
+        item["block_id"]
+        for summary in plan["tasks"]
+        if summary["kind"] == "chapter" and summary["task_id"] not in stale
+        for item in _load_task(root, summary["task_id"])["inputs"]["blocks"]
+    }
+    counter = max(
+        (
+            int(item["ref"][1:])
+            for summary in plan["tasks"]
+            if summary["kind"] == "chapter"
+            for item in _load_task(root, summary["task_id"])["inputs"]["blocks"]
+        ),
+        default=0,
+    )
+    for task_id in stale:
+        task = _load_task(root, task_id)
+        sections = {
+            (item.get("citation", "").split(":")[0], tuple(item["heading_path"])) for item in task["inputs"]["blocks"]
+        }
+        kept = [block_id for block_id in (item["block_id"] for item in task["inputs"]["blocks"]) if block_id in current]
+        extra = [
+            block_id
+            for block_id, block in current.items()
+            if block_id not in claimed
+            and block_id not in kept
+            and (block["path"], tuple(block.get("heading_path") or [])) in sections
+        ]
+        blocks = [current[block_id] for block_id in kept + extra]
+        rebuilt, counter = _chapter_task(
+            int(task_id.split("-")[1]), task["inputs"]["title"], blocks, counter, task["language"]
+        )
+        rebuilt["inputs"]["file"] = task["inputs"]["file"]
+        rebuilt["request_hash"] = content_hash({key: value for key, value in rebuilt.items() if key != "status"})
+        write_json_atomic(_dir(root) / "tasks" / f"{task_id}.json", rebuilt)
+        claimed.update(item["block_id"] for item in rebuilt["inputs"]["blocks"])
+    core = _load_task(root, "core")
+    core["status"] = "pending"
+    core.pop("output_hash", None)
+    write_json_atomic(_dir(root) / "tasks" / "core.json", core)
+    plan = _load_plan(root)
+    plan["tasks"] = [_summary(_load_task(root, item["task_id"])) for item in plan["tasks"]]
+    plan["stale_chapters"] = []
+    plan["state"] = "awaiting_agent"
+    write_json_atomic(_dir(root) / "plan.json", plan)
+    return plan
 
 
 def _render(root: Path, task: dict[str, Any], plan: Mapping[str, Any]) -> dict[str, Any]:
