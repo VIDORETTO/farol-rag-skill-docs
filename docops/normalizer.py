@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree
 
+from .safety import classify, dominated_by_high_risk
 from .web_acquirer import normalize_html
 
 SUPPORTED_SUFFIXES = {
@@ -91,9 +92,14 @@ def _title_from_markdown(content: str, fallback: str) -> str:
 
 
 def _untrusted_warnings(content: str) -> tuple[bool, list[str]]:
-    if any(pattern.search(content) for pattern in _INJECTION_PATTERNS):
+    flagged = any(pattern.search(content) for pattern in _INJECTION_PATTERNS) or classify(content).risk != "none"
+    if flagged:
         return True, ["possible prompt injection detected; content is untrusted and was not executed"]
     return False, []
+
+
+def _paragraphs(content: str) -> list[str]:
+    return [paragraph for paragraph in re.split(r"\n\s*\n", content) if paragraph.strip()]
 
 
 _TIME_TOKEN = r"\d{1,2}:\d{2}(?::\d{2})?(?:[.,]\d{1,3})?"
@@ -200,7 +206,10 @@ def _extract_locators(content: str, fmt: str) -> list[dict[str, Any]]:
 
 
 def _quality_assessment(content: str, untrusted: bool) -> tuple[str, str | None]:
-    if untrusted:
+    # Quoting an attack (security guides, papers about prompts) keeps the
+    # document; its risky blocks are excluded later, per block. Only a
+    # document dominated by high-risk directives is quarantined whole.
+    if untrusted and dominated_by_high_risk(_paragraphs(content)):
         return "quarantine", "untrusted_content"
     replacement_ratio = content.count("\ufffd") / max(len(content), 1)
     if replacement_ratio > 0.01:

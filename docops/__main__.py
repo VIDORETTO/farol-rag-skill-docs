@@ -90,6 +90,7 @@ CLI_COMPATIBILITY_MAP = {
     "doctor": "doctor",
     "index": "index",
     "mcp": "mcp",
+    "task": "task",
     "skill": "skill",
     "agents-bootstrap": "agents-bootstrap",
     "resolve": "source resolve",
@@ -834,6 +835,18 @@ def build_parser() -> argparse.ArgumentParser:
     index.add_argument("--json", action="store_true")
     mcp = commands.add_parser("mcp", help="serve a package's skills and evidence over MCP (stdio, read-only)")
     mcp.add_argument("--package", type=Path, required=True)
+    task = commands.add_parser("task", help="skill synthesis tasks for your AI agent (plan, next, submit, status)")
+    task_commands = task.add_subparsers(dest="task_command", required=True)
+    task_plan = task_commands.add_parser("plan", help="plan the chapter and core tasks")
+    task_plan.add_argument("--language")
+    task_commands.add_parser("next", help="show the next task with full instructions")
+    task_submit = task_commands.add_parser("submit", help="submit an answer directory for a task")
+    task_submit.add_argument("task_id")
+    task_submit.add_argument("output_dir", type=Path)
+    task_commands.add_parser("status", help="show task progress")
+    for sub in task_commands.choices.values():
+        sub.add_argument("--package", type=Path, default=Path.cwd())
+        sub.add_argument("--json", action="store_true")
     return parser
 
 
@@ -878,6 +891,33 @@ def _print_new_result(result: dict[str, object]) -> int:
 
 def _recovery_result(project: Path, *, run: bool) -> dict[str, object]:
     return recover_project_activation(project) if run else inspect_project_recovery(project)
+
+
+def _task_command(args: argparse.Namespace) -> int:
+    from .agent_tasks import SynthesisTaskError, next_task, plan_synthesis, submit_task, synthesis_status
+
+    try:
+        if args.task_command == "plan":
+            payload = plan_synthesis(args.package, language=args.language)
+            code = 0
+        elif args.task_command == "next":
+            payload = next_task(args.package) or {"status": "done", "message": "no pending task"}
+            code = 0
+        elif args.task_command == "submit":
+            payload = submit_task(args.package, args.task_id, args.output_dir)
+            code = 0 if payload["status"] == "accepted" else 1
+        else:
+            payload = synthesis_status(args.package)
+            code = 0
+    except SynthesisTaskError as exc:
+        payload, code = {"status": "error", "error": {"code": exc.code, "message": str(exc)}}, 2
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
+    elif args.task_command == "next" and "instructions" in payload:
+        print(payload["instructions"])
+    else:
+        print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
+    return code
 
 
 def _dispatch(args: argparse.Namespace) -> int:
@@ -1401,6 +1441,8 @@ def _dispatch(args: argparse.Namespace) -> int:
         from .mcp_server import serve
 
         return serve(args.package)
+    if args.command == "task":
+        return _task_command(args)
     if args.command == "validate":
         result = validate_package(args.package)
         print(json.dumps(result.to_dict(), indent=2, ensure_ascii=False, sort_keys=True))

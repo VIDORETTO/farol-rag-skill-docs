@@ -159,6 +159,7 @@ class KnowledgeServer:
                 "path": hit["path"],
                 "heading_path": hit["heading_path"],
                 "locators": hit["locators"],
+                "risk": hit["risk"],
                 "score": hit["score"],
             }
             for hit in result.hits

@@ -7,7 +7,9 @@ reader process (for example the MCP server) can open it by revision.
 Supported ``QueryRequest.filters``:
 
 - ``source_ids``: allowlist of eligible sources;
-- ``exclude_source_ids``: sources withdrawn or revoked after indexing.
+- ``exclude_source_ids``: sources withdrawn or revoked after indexing;
+- ``include_high_risk``: opt-in for local inspection of blocks classified as
+  ``high`` risk (prompt-injection directives); they are excluded by default.
 
 Filters are applied inside the ranking query, before ``top_k`` is cut, so an
 ineligible block can never displace an eligible one. Sources whose document
@@ -40,7 +42,7 @@ from .base import (
 )
 
 BACKEND_NAME = "local-fts"
-BACKEND_VERSION = "1"
+BACKEND_VERSION = "2"
 TOKENIZER = "unicode61 remove_diacritics 2"
 _INACTIVE_STATUSES = frozenset({"revoked", "withdrawn"})
 # Titles and headings are context carried by every child block (``heading``
@@ -175,6 +177,8 @@ class LocalFtsBackend:
             clauses = ["blocks_fts MATCH ?"]
             parameters: list[Any] = [expression]
             filters = dict(query_request.filters)
+            if filters.get("include_high_risk") is not True:
+                clauses.append("b.risk != 'high'")
             allowed = filters.get("source_ids")
             if allowed is not None:
                 allowed = [str(item) for item in allowed]
@@ -186,7 +190,7 @@ class LocalFtsBackend:
                 parameters.extend(excluded)
             sql = (
                 "SELECT b.block_id, b.document_id, b.source_id, b.source_revision_id, b.path, b.kind,"
-                " b.heading_path, b.locators, b.text, bm25(blocks_fts, 1.0, 0.5) AS score"
+                " b.heading_path, b.locators, b.text, b.risk, bm25(blocks_fts, 1.0, 0.5) AS score"
                 " FROM blocks_fts JOIN blocks b ON b.rowid = blocks_fts.rowid"
                 f" WHERE {' AND '.join(clauses)} ORDER BY score, b.rowid LIMIT ?"
             )
@@ -207,7 +211,7 @@ class LocalFtsBackend:
         with self._connect(index_revision.index_revision) as connection:
             rows = connection.execute(
                 "SELECT block_id, document_id, source_id, source_revision_id, path, kind, heading_path, locators, text,"
-                " 0.0 FROM blocks WHERE document_id = ? ORDER BY rowid",
+                " risk, 0.0 FROM blocks WHERE document_id = ? ORDER BY rowid",
                 (document_id,),
             ).fetchall()
         if not rows:
@@ -295,6 +299,7 @@ def _rows(documents: list[Any]) -> list[dict[str, Any]]:
                     "heading_path": [str(item) for item in block.get("heading_path") or []],
                     "locators": [dict(item) for item in block.get("locators") or [] if isinstance(item, Mapping)],
                     "text": text,
+                    "risk": str(block.get("risk") or "none"),
                 }
             )
     return rows
@@ -311,13 +316,13 @@ def _write_index(target: Path, index: IndexRevision, rows: list[dict[str, Any]])
                 "CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);"
                 "CREATE TABLE blocks (block_id TEXT UNIQUE NOT NULL, document_id TEXT NOT NULL,"
                 " source_id TEXT NOT NULL, source_revision_id TEXT NOT NULL, path TEXT NOT NULL, kind TEXT NOT NULL,"
-                " heading_path TEXT NOT NULL, locators TEXT NOT NULL, text TEXT NOT NULL);"
+                " heading_path TEXT NOT NULL, locators TEXT NOT NULL, text TEXT NOT NULL, risk TEXT NOT NULL);"
                 f"CREATE VIRTUAL TABLE blocks_fts USING fts5(text, heading, tokenize='{TOKENIZER}');"
             )
             connection.execute("INSERT INTO meta VALUES ('index', ?)", (json.dumps(index.to_dict(), sort_keys=True),))
             for row in rows:
                 cursor = connection.execute(
-                    "INSERT INTO blocks VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO blocks VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (
                         row["block_id"],
                         row["document_id"],
@@ -328,6 +333,7 @@ def _write_index(target: Path, index: IndexRevision, rows: list[dict[str, Any]])
                         json.dumps(row["heading_path"], ensure_ascii=False),
                         json.dumps(row["locators"], ensure_ascii=False, sort_keys=True),
                         row["text"],
+                        row["risk"],
                     ),
                 )
                 connection.execute(
@@ -344,7 +350,7 @@ def _write_index(target: Path, index: IndexRevision, rows: list[dict[str, Any]])
 
 
 def _hit(row: tuple[Any, ...]) -> dict[str, Any]:
-    block_id, document_id, source_id, source_revision_id, path, kind, heading_path, locators, text, score = row
+    block_id, document_id, source_id, source_revision_id, path, kind, heading_path, locators, text, risk, score = row
     return {
         "block_id": block_id,
         "document_id": document_id,
@@ -355,5 +361,6 @@ def _hit(row: tuple[Any, ...]) -> dict[str, Any]:
         "heading_path": json.loads(heading_path),
         "locators": json.loads(locators),
         "text": text,
+        "risk": risk,
         "score": round(-float(score), 6),
     }

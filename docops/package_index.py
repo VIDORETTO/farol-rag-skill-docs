@@ -16,6 +16,7 @@ from .backends.base import BackendUnavailable, IndexRevision
 from .backends.local_fts import LocalFtsBackend
 from .extractors import ExtractorError, ExtractorPolicy, default_registry
 from .revisions import content_hash
+from .safety import classify
 from .storage import write_json_atomic
 
 INDEX_DIR = Path("rag") / "local-index"
@@ -37,7 +38,7 @@ def _relative_locators(locators: list[dict[str, Any]], relative: str) -> list[di
     return cleaned
 
 
-def _documents(root: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def package_documents(root: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     manifest = _read_json(root / "manifest.json")
     rights = str((manifest.get("source") or {}).get("license") or "")
     sources = _read_json(root / "rag" / "sources.json").get("sources", [])
@@ -80,6 +81,7 @@ def _documents(root: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
                     {
                         **block.to_dict(),
                         "locators": _relative_locators(block.to_dict()["locators"], relative),
+                        "risk": classify(block.text or "").risk,
                     }
                     for block in result.document.blocks
                 ],
@@ -92,7 +94,7 @@ def build_package_index(package_root: Path | str) -> dict[str, Any]:
     """Index the package corpus with the local backend and activate it."""
 
     root = Path(package_root).resolve()
-    documents, skipped = _documents(root)
+    documents, skipped = package_documents(root)
     ir_revision = content_hash([document["document_id"] for document in documents])
     backend = LocalFtsBackend(root / INDEX_DIR)
     try:

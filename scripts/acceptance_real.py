@@ -15,7 +15,6 @@ import argparse
 import hashlib
 import json
 import re
-import shutil
 import sys
 import urllib.request
 from pathlib import Path
@@ -26,6 +25,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 import docops  # noqa: E402
+from docops.agent_tasks import skill_rubric  # noqa: E402
 from docops.backends import QueryRequest  # noqa: E402
 from docops.package_index import build_package_index, open_package_index  # noqa: E402
 
@@ -84,9 +84,8 @@ def _normalize(value: str) -> str:
 
 
 def _skill_quality(package: Path) -> dict[str, Any]:
-    text = (package / "skill" / "SKILL.md").read_text(encoding="utf-8")
-    scaffold = "generated_by: docops-structural-generator" in text
-    return {"distilled": not scaffold, "generator": "scaffold" if scaffold else "distilled"}
+    rubric = skill_rubric(package)
+    return {"distilled": rubric["passed"], "generator": rubric["generator"], "checks": rubric["checks"]}
 
 
 def _measure(source: dict[str, Any], cases: list[dict[str, Any]], work: Path) -> dict[str, Any]:
@@ -99,7 +98,9 @@ def _measure(source: dict[str, Any], cases: list[dict[str, Any]], work: Path) ->
         except OSError as exc:
             return {"status": "not_run", "code": "download_unavailable", "detail": type(exc).__name__}
     package = work / source["id"] / "package"
-    shutil.rmtree(package, ignore_errors=True)
+    # An existing package is refreshed with a factual update, which preserves a
+    # distilled skill exactly as users' packages are preserved.
+    existing = (package / "manifest.json").is_file()
     plan = docops.plan(
         docops.OperationRequest(
             source_dir,
@@ -108,6 +109,7 @@ def _measure(source: dict[str, Any], cases: list[dict[str, Any]], work: Path) ->
                 source_root=source_dir.parent,
                 slug=source["id"],
                 license=source["license"],
+                **({"mode": "update", "layers": ("factual",)} if existing else {}),
             ),
         )
     )
