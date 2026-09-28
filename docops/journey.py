@@ -333,3 +333,34 @@ def project_packages(root: Path | str) -> dict[str, Path]:
         for source in project.config["sources"]
         if (project.package(source["id"]) / "rag" / "local-index" / "ACTIVE.json").is_file()
     }
+
+
+def project_health(root: Path | str, *, fix: bool = False) -> dict[str, Any]:
+    """Check each built source's factual index; optionally rebuild damaged ones."""
+
+    from .backends.base import BackendError, QueryRequest
+    from .package_index import build_package_index, open_package_index
+
+    project = load_project(root)
+    issues: list[dict[str, Any]] = []
+    fixed: list[dict[str, Any]] = []
+    for source in project.config["sources"]:
+        package = project.package(source["id"])
+        if not (package / "manifest.json").is_file():
+            continue
+        problem = None
+        try:
+            backend, index = open_package_index(package)
+            backend.query(index, QueryRequest(query="health check", top_k=1))
+        except BackendError as exc:
+            problem = "index_missing" if exc.code == "index_missing" else "index_unreadable"
+        except Exception:  # a damaged SQLite file surfaces as a database error
+            problem = "index_unreadable"
+        if problem is None:
+            continue
+        if fix:
+            build_package_index(package)
+            fixed.append({"source": source["id"], "action": "rebuilt_index"})
+        else:
+            issues.append({"source": source["id"], "code": problem, "next_action": "farol doctor --fix"})
+    return {"ok": not issues, "issues": issues, "fixed": fixed}

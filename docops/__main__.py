@@ -258,6 +258,7 @@ def build_parser() -> argparse.ArgumentParser:
     doctor.add_argument(
         "--require-ragflow", action="store_true", help="require a healthy RAGFlow connection (also probes)"
     )
+    doctor.add_argument("--fix", action="store_true", help="apply safe local repairs (e.g. rebuild a damaged index)")
     resolve = commands.add_parser("resolve", help="resolve a documentation source")
     resolve.add_argument("source")
     resolve.add_argument("--root", type=Path, default=Path.cwd())
@@ -969,11 +970,20 @@ def _connect_command(args: argparse.Namespace) -> int:
         )
         code = 0
     except (ConnectError, JourneyError) as exc:
-        payload, code = {"status": "error", "error": {"code": exc.code, "message": str(exc)}}, 2
+        from .errors import next_action
+
+        payload = {
+            "status": "error",
+            "error": {"code": exc.code, "message": str(exc)},
+            "next_action": next_action(exc.code),
+        }
+        code = 2
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
     elif payload.get("status") == "error":
         print(f"error: {payload['error']['message']} ({payload['error']['code']})")
+        if payload.get("next_action"):
+            print(f"next: {payload['next_action']}")
     elif payload.get("status") == "instructions":
         print(json.dumps({"mcpServers": payload["mcpServers"]}, indent=2))
         print(payload["note"])
@@ -1002,7 +1012,13 @@ def _journey_command(args: argparse.Namespace) -> int:
             payload = status(args.project)
         code = 0 if payload.get("ok", True) else 1
     except JourneyError as exc:
-        payload = {"status": "error", "error": {"code": exc.code, "message": str(exc)}, "next_action": exc.next_action}
+        from .errors import next_action
+
+        payload = {
+            "status": "error",
+            "error": {"code": exc.code, "message": str(exc)},
+            "next_action": exc.next_action or next_action(exc.code),
+        }
         code = 2
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
@@ -1065,7 +1081,14 @@ def _task_command(args: argparse.Namespace) -> int:
             payload = synthesis_status(args.package)
             code = 0
     except SynthesisTaskError as exc:
-        payload, code = {"status": "error", "error": {"code": exc.code, "message": str(exc)}}, 2
+        from .errors import next_action
+
+        payload = {
+            "status": "error",
+            "error": {"code": exc.code, "message": str(exc)},
+            "next_action": next_action(exc.code),
+        }
+        code = 2
     if display is not None:
         payload["package"] = display
     if "instructions" in payload:
@@ -1507,7 +1530,7 @@ def _dispatch(args: argparse.Namespace) -> int:
         if args.require_ragflow:
             environment["DOCOPS_REQUIRE_RAGFLOW"] = "1"
             environment.pop("DOCOPS_SKIP_RAG", None)
-        report = run_doctor(args.root, environ=environment)
+        report = run_doctor(args.root, environ=environment, fix=args.fix)
         if args.json:
             print(report.to_json())
         else:

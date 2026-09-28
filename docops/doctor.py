@@ -144,8 +144,13 @@ def run_doctor(
     project_root: Path | str,
     *,
     environ: Mapping[str, str] | None = None,
+    fix: bool = False,
 ) -> DoctorReport:
-    """Inspect the clone and return a JSON-serializable report."""
+    """Inspect the installation (and a Farol project, if present) and return a JSON report.
+
+    ``fix=True`` applies only local, reversible repairs (rebuilding a damaged or
+    missing local index from the package's own corpus).
+    """
 
     root = Path(project_root).resolve()
     env = os.environ if environ is None else environ
@@ -243,6 +248,18 @@ def run_doctor(
     capabilities["extractors"] = (
         "native local format adapters plus legacy-text (text-fallback); third-party/remotes require opt-in"
     )
+
+    from importlib.util import find_spec
+
+    checks["extras"] = {
+        "formats": all(find_spec(name) is not None for name in ("yaml", "pypdf", "docx")),
+        "semantic": all(find_spec(name) is not None for name in ("fastembed", "numpy")),
+        "media": all(find_spec(name) is not None for name in ("yt_dlp", "faster_whisper")),
+    }
+    if (root / "farol.json").is_file():
+        from .journey import project_health
+
+        checks["project"] = project_health(root, fix=fix)
 
     required_names = ["python", "installation"]
     if checkout:

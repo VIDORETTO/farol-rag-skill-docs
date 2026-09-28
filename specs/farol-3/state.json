@@ -36,7 +36,6 @@
       "TK-112",
       "TK-115",
       "TK-116",
-      "TK-117",
       "TK-118",
       "TK-119",
       "TK-120",
@@ -56,10 +55,11 @@
       "TK-106",
       "TK-108",
       "TK-114",
-      "TK-107"
+      "TK-107",
+      "TK-117"
     ]
   },
-  "next_action": "Onda C: TK-117 (erros/doctor --fix), TK-112 (sync), README (109.6).",
+  "next_action": "Onda C: TK-112 (sync) e README (109.6).",
   "publicity_gate": "TK-122 exit criteria (SC-109)",
   "wave": "C",
   "decisions": "specs/farol-3/decisions.md",
