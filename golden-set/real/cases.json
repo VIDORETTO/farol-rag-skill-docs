@@ -180,6 +180,54 @@
       "kind": "factual",
       "question": "How does GraphRAG answer a global query?",
       "expected_text": "map-reduce processing of community summaries"
+    },
+    {
+      "id": "pt-httpx-timeout",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "language": "pt",
+      "question": "Qual é o tempo limite padrão do HTTPX?",
+      "expected_text": "default timeout for network inactivity is five seconds"
+    },
+    {
+      "id": "pt-httpx-redirects",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "language": "pt",
+      "question": "Como faço o cliente seguir redirecionamentos automaticamente?",
+      "expected_text": "httpx.Client(follow_redirects=True)"
+    },
+    {
+      "id": "pt-httpx-socks",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "language": "pt",
+      "question": "Como instalo suporte a proxy SOCKS?",
+      "expected_text": "pip install httpx[socks]"
+    },
+    {
+      "id": "pt-git-rerere",
+      "source": "progit-book",
+      "kind": "factual",
+      "language": "pt",
+      "question": "O que significa rerere no Git?",
+      "expected_text": "reuse recorded resolution"
+    },
+    {
+      "id": "pt-git-branch",
+      "source": "progit-book",
+      "kind": "factual",
+      "language": "pt",
+      "question": "Como defino main como nome padrão do branch inicial?",
+      "expected_text": "git config --global init.defaultBranch main"
+    },
+    {
+      "id": "pt-git-head",
+      "source": "progit-book",
+      "kind": "factual",
+      "language": "pt",
+      "question": "Como o Git sabe em qual branch estou?",
+      "expected_text": "special pointer called HEAD"
     }
   ]
 }

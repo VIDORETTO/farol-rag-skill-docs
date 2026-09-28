@@ -113,13 +113,30 @@ def package_documents(root: Path) -> tuple[list[dict[str, Any]], list[dict[str, 
     return documents, skipped
 
 
-def build_package_index(package_root: Path | str) -> dict[str, Any]:
-    """Index the package corpus with the local backend and activate it."""
+_AUTO = "auto"
+_EMBEDDER_CACHE: dict[str, Any] = {}
+
+
+def _resolve_embedder(embedder: Any) -> Any:
+    """``"auto"`` loads the ``semantic`` extra's model once per process, if installed."""
+
+    if embedder != _AUTO:
+        return embedder
+    if "default" not in _EMBEDDER_CACHE:
+        from .backends.semantic import load_embedder
+
+        _EMBEDDER_CACHE["default"] = load_embedder()
+    return _EMBEDDER_CACHE["default"]
+
+
+def build_package_index(package_root: Path | str, *, embedder: Any = _AUTO) -> dict[str, Any]:
+    """Index the package corpus with the local backend (hybrid when embeddings exist) and activate it."""
 
     root = Path(package_root).resolve()
     documents, skipped = package_documents(root)
     ir_revision = content_hash([document["document_id"] for document in documents])
-    backend = LocalFtsBackend(root / INDEX_DIR)
+    embedder = _resolve_embedder(embedder)
+    backend = LocalFtsBackend(root / INDEX_DIR, embedder=embedder)
     try:
         candidate = backend.prepare("package", ir_revision, metadata={"documents": documents})
         index = backend.apply(candidate)
@@ -137,10 +154,11 @@ def build_package_index(package_root: Path | str) -> dict[str, Any]:
         "documents": len(documents),
         "blocks": blocks,
         "skipped": skipped,
+        "retrieval_mode": "hybrid" if embedder is not None else "bm25",
     }
 
 
-def open_package_index(package_root: Path | str) -> tuple[LocalFtsBackend, IndexRevision]:
+def open_package_index(package_root: Path | str, *, embedder: Any = _AUTO) -> tuple[LocalFtsBackend, IndexRevision]:
     """Open the active local index of a package for read-only queries."""
 
     root = Path(package_root).resolve()
@@ -148,5 +166,8 @@ def open_package_index(package_root: Path | str) -> tuple[LocalFtsBackend, Index
     if not pointer.is_file():
         raise BackendUnavailable("index_missing", "package has no local index; run the build step first")
     revision = str(_read_json(pointer).get("index_revision") or "")
-    backend = LocalFtsBackend(root / INDEX_DIR)
-    return backend, backend.open(revision)
+    index = LocalFtsBackend(root / INDEX_DIR).open(revision)
+    # Only an index built with embeddings needs the model; plain BM25 stays light.
+    chosen = _resolve_embedder(embedder) if index.fingerprints.get("embedding") else None
+    backend = LocalFtsBackend(root / INDEX_DIR, embedder=chosen)
+    return backend, index
