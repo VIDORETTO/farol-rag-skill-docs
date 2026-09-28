@@ -264,3 +264,100 @@ def test_accepted_chapter_title_names_the_chapter_file(tmp_path: Path) -> None:
     first = core["inputs"]["chapters"][0]
     assert first["title"] == "Reliable calls: retries and timeouts"
     assert first["file"] == "01-reliable-calls-retries-and-timeouts.md"
+
+
+def _large_package(tmp_path: Path) -> Path:
+    source = tmp_path / "source"
+    source.mkdir()
+    for index, topic in enumerate(("retries", "timeouts", "auth", "proxies", "caching", "logging"), 1):
+        (source / f"{topic}.md").write_text(
+            f"# {topic.title()}\n\n## Overview\n\n{topic.title()} matter for reliable clients number {index}.\n\n"
+            f"## Details\n\nThe {topic} setting defaults to {index} and can be changed per client.\n",
+            encoding="utf-8",
+        )
+    output = tmp_path / "package"
+    result = docops.apply(
+        docops.plan(
+            docops.OperationRequest(
+                source,
+                docops.OperationOptions(output_dir=output, source_root=source.parent, slug="acme", license="MIT"),
+            )
+        )
+    )
+    assert result.ok, result.errors
+    return output
+
+
+def test_agent_outline_groups_sections_by_subject_before_chapters(tmp_path: Path) -> None:
+    package = _large_package(tmp_path)
+    plan = plan_synthesis(package, language="en", outline="agent")
+
+    outline = next_task(package)
+    assert outline["kind"] == "outline" and [task["kind"] for task in plan["tasks"]] == ["outline", "core"]
+    sections = [item["id"] for item in outline["inputs"]["sections"]]
+    assert len(sections) == 12 and "first_sentence" in outline["inputs"]["sections"][0]
+
+    half = len(sections) // 2
+    orphan = submit_task(
+        package,
+        "outline",
+        _write(
+            tmp_path / "o1",
+            {"outline.json": json.dumps({"chapters": [{"title": "Only half", "sections": sections[:half]}]})},
+        ),
+    )
+    duplicate = submit_task(
+        package,
+        "outline",
+        _write(
+            tmp_path / "o2",
+            {
+                "outline.json": json.dumps(
+                    {"chapters": [{"title": "A", "sections": sections}, {"title": "B", "sections": sections[:1]}]}
+                )
+            },
+        ),
+    )
+    unknown = submit_task(
+        package,
+        "outline",
+        _write(
+            tmp_path / "o3",
+            {"outline.json": json.dumps({"chapters": [{"title": "A", "sections": [*sections, "s999"]}]})},
+        ),
+    )
+    assert orphan["status"] == "rejected" and orphan["reasons"][0]["code"] == "orphan_sections"
+    assert duplicate["reasons"][0]["code"] == "duplicate_sections"
+    assert unknown["reasons"][0]["code"] == "unknown_sections"
+
+    by_topic: dict[str, list[str]] = {}
+    for item in outline["inputs"]["sections"]:
+        by_topic.setdefault(item["title"].split(" › ")[0].lower(), []).append(item["id"])
+    chapters = {
+        "chapters": [
+            {"title": "Resilience: retries and timeouts", "sections": by_topic["retries"] + by_topic["timeouts"]},
+            {"title": "Security and routing", "sections": by_topic["auth"] + by_topic["proxies"]},
+            {"title": "Operations", "sections": by_topic["caching"] + by_topic["logging"]},
+        ]
+    }
+    accepted = submit_task(package, "outline", _write(tmp_path / "o4", {"outline.json": json.dumps(chapters)}))
+
+    assert accepted["status"] == "accepted"
+    status = synthesis_status(package)
+    kinds = [task["kind"] for task in status["tasks"]]
+    assert kinds == ["outline", "chapter", "chapter", "chapter", "core"]
+    first = next_task(package)
+    assert first["inputs"]["title"] == "Resilience: retries and timeouts"
+    assert "retries" in json.dumps(first["inputs"]["blocks"]).lower()
+    _complete_all_chapters(package, tmp_path)
+    core = next_task(package)
+    assert core["requires"] == ["chapter-01", "chapter-02", "chapter-03"]
+
+
+def test_heuristic_outline_remains_available_as_declared_fallback(tmp_path: Path) -> None:
+    package = _large_package(tmp_path)
+
+    plan = plan_synthesis(package, language="en", task_source_tokens=20, outline="heuristic")
+
+    assert plan["outline"] == "heuristic"
+    assert next_task(package)["kind"] == "chapter"

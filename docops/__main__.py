@@ -880,6 +880,7 @@ def build_parser() -> argparse.ArgumentParser:
     task_commands = task.add_subparsers(dest="task_command", required=True)
     task_plan = task_commands.add_parser("plan", help="plan the chapter and core tasks")
     task_plan.add_argument("--language")
+    task_plan.add_argument("--outline", choices=("agent", "heuristic"), help="who plans the chapters (default: auto)")
     task_commands.add_parser("next", help="show the next task with full instructions")
     task_submit = task_commands.add_parser("submit", help="submit an answer directory for a task")
     task_submit.add_argument("task_id")
@@ -1011,7 +1012,7 @@ def _task_command(args: argparse.Namespace) -> int:
         args.package = args.package / display
     try:
         if args.task_command == "plan":
-            payload = plan_synthesis(args.package, language=args.language)
+            payload = plan_synthesis(args.package, language=args.language, outline=args.outline)
             code = 0
         elif args.task_command == "next":
             payload = next_task(args.package) or {"status": "done", "message": "no pending task"}
