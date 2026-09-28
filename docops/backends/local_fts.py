@@ -449,7 +449,7 @@ def _write_index(target: Path, index: IndexRevision, rows: list[dict[str, Any]],
                 " source_id TEXT NOT NULL, source_revision_id TEXT NOT NULL, path TEXT NOT NULL, kind TEXT NOT NULL,"
                 " heading_path TEXT NOT NULL, locators TEXT NOT NULL, text TEXT NOT NULL, risk TEXT NOT NULL);"
                 f"CREATE VIRTUAL TABLE blocks_fts USING fts5(text, heading, tokenize='{TOKENIZER}');"
-                "CREATE TABLE vectors (owner INTEGER NOT NULL, vector BLOB NOT NULL);"
+                "CREATE TABLE vectors (owner INTEGER NOT NULL, vector BLOB NOT NULL, key TEXT NOT NULL);"
             )
             connection.execute("INSERT INTO meta VALUES ('index', ?)", (json.dumps(index.to_dict(), sort_keys=True),))
             for row in rows:
@@ -483,23 +483,46 @@ def _write_index(target: Path, index: IndexRevision, rows: list[dict[str, Any]],
         raise
 
 
+def _window_key(profile: Mapping[str, Any], window: str) -> str:
+    return hashlib.sha256((json.dumps(profile, sort_keys=True) + "\n" + window).encode("utf-8")).hexdigest()
+
+
+def _vector_cache(profile: Mapping[str, Any]) -> sqlite3.Connection:
+    """Per-model cache of window vectors outside packages (rebuilds regenerate ``rag/``)."""
+
+    base = Path(os.environ.get("FAROL_CACHE_DIR") or Path.home() / ".cache" / "farol") / "vectors"
+    base.mkdir(parents=True, exist_ok=True)
+    name = hashlib.sha256(json.dumps(profile, sort_keys=True).encode("utf-8")).hexdigest()[:16]
+    connection = sqlite3.connect(base / f"{name}.sqlite")
+    connection.execute("CREATE TABLE IF NOT EXISTS vectors (key TEXT PRIMARY KEY, vector BLOB NOT NULL)")
+    return connection
+
+
 def _write_vectors(connection: sqlite3.Connection, embedder: Any) -> None:
     import numpy as np
 
     from .semantic import windows
 
-    owners: list[int] = []
-    texts: list[str] = []
-    for rowid, heading_path, text in connection.execute("SELECT rowid, heading_path, text FROM blocks ORDER BY rowid"):
-        for window in windows(text, " / ".join(json.loads(heading_path))):
-            owners.append(rowid)
-            texts.append(window)
-    for start in range(0, len(texts), 256):
-        batch = np.asarray(embedder.embed_documents(texts[start : start + 256]), dtype=np.float32)
-        for owner, vector in zip(owners[start : start + 256], batch):
-            connection.execute(
-                "INSERT INTO vectors VALUES (?, ?)", (owner, _normalized(np, vector).astype(np.float32).tobytes())
-            )
+    with closing(_vector_cache(embedder.profile)) as cache:
+        pending: list[tuple[int, str, str]] = []
+        for rowid, heading_path, text in connection.execute(
+            "SELECT rowid, heading_path, text FROM blocks ORDER BY rowid"
+        ).fetchall():
+            for window in windows(text, " / ".join(json.loads(heading_path))):
+                key = _window_key(embedder.profile, window)
+                cached = cache.execute("SELECT vector FROM vectors WHERE key = ?", (key,)).fetchone()
+                if cached:
+                    connection.execute("INSERT INTO vectors VALUES (?, ?, ?)", (rowid, cached[0], key))
+                else:
+                    pending.append((rowid, window, key))
+        for start in range(0, len(pending), 256):
+            chunk = pending[start : start + 256]
+            batch = np.asarray(embedder.embed_documents([window for _rowid, window, _key in chunk]), dtype=np.float32)
+            for (owner, _window, key), vector in zip(chunk, batch):
+                blob = _normalized(np, vector).astype(np.float32).tobytes()
+                connection.execute("INSERT INTO vectors VALUES (?, ?, ?)", (owner, blob, key))
+                cache.execute("INSERT OR REPLACE INTO vectors VALUES (?, ?)", (key, blob))
+        cache.commit()
 
 
 def _hit(row: tuple[Any, ...]) -> dict[str, Any]:

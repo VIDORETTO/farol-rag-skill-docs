@@ -97,6 +97,7 @@ CLI_COMPATIBILITY_MAP = {
     "status": "status",
     "advanced": "advanced",
     "connect": "connect",
+    "sync": "sync",
     "skill": "skill",
     "agents-bootstrap": "agents-bootstrap",
     "resolve": "source resolve",
@@ -205,7 +206,7 @@ kept out of structured output. Remove an alias only after all callers have
 migrated and the alias-usage gate is zero for one complete release window.
 """
 
-_JOURNEY_COMMANDS = ("init", "add", "build", "status", "task", "connect", "mcp", "doctor", "advanced")
+_JOURNEY_COMMANDS = ("add", "build", "sync", "status", "task", "connect", "mcp", "doctor", "advanced")
 _JOURNEY_HELP = """Typical use:
 
   farol add ./docs --license MIT     register a source (folder, file, URL, Git repo)
@@ -870,6 +871,11 @@ def build_parser() -> argparse.ArgumentParser:
     build.add_argument("sources", nargs="*", help="only these source ids")
     build.add_argument("--project", type=Path, default=Path.cwd())
     build.add_argument("--json", action="store_true")
+    sync_parser = commands.add_parser("sync", help="refresh sources, report changes and stale skill chapters")
+    sync_parser.add_argument("sources", nargs="*", help="only these source ids")
+    sync_parser.add_argument("--project", type=Path, default=Path.cwd())
+    sync_parser.add_argument("--schedule", choices=("cron", "systemd", "windows"), help="print a daily schedule")
+    sync_parser.add_argument("--json", action="store_true")
     status_parser = commands.add_parser("status", help="show each source's state and the next step")
     status_parser.add_argument("--project", type=Path, default=Path.cwd())
     status_parser.add_argument("--json", action="store_true")
@@ -891,6 +897,7 @@ def build_parser() -> argparse.ArgumentParser:
     task_plan = task_commands.add_parser("plan", help="plan the chapter and core tasks")
     task_plan.add_argument("--language")
     task_plan.add_argument("--outline", choices=("agent", "heuristic"), help="who plans the chapters (default: auto)")
+    task_plan.add_argument("--refresh", action="store_true", help="reopen only chapters made stale by source changes")
     task_commands.add_parser("next", help="show the next task with full instructions")
     task_submit = task_commands.add_parser("submit", help="submit an answer directory for a task")
     task_submit.add_argument("task_id")
@@ -997,7 +1004,7 @@ def _connect_command(args: argparse.Namespace) -> int:
 
 
 def _journey_command(args: argparse.Namespace) -> int:
-    from .journey import JourneyError, add_source, build, init_project, status
+    from .journey import JourneyError, add_source, build, init_project, status, sync
 
     try:
         if args.command == "init":
@@ -1008,6 +1015,8 @@ def _journey_command(args: argparse.Namespace) -> int:
             )
         elif args.command == "build":
             payload = build(args.project, source_ids=args.sources or None)
+        elif args.command == "sync":
+            payload = sync(args.project, source_ids=args.sources or None)
         else:
             payload = status(args.project)
         code = 0 if payload.get("ok", True) else 1
@@ -1069,7 +1078,7 @@ def _task_command(args: argparse.Namespace) -> int:
         args.package = args.package / display
     try:
         if args.task_command == "plan":
-            payload = plan_synthesis(args.package, language=args.language, outline=args.outline)
+            payload = plan_synthesis(args.package, language=args.language, outline=args.outline, refresh=args.refresh)
             code = 0
         elif args.task_command == "next":
             payload = next_task(args.package) or {"status": "done", "message": "no pending task"}
@@ -1634,7 +1643,12 @@ def _dispatch(args: argparse.Namespace) -> int:
         return serve(packages=packages)
     if args.command == "task":
         return _task_command(args)
-    if args.command in {"init", "add", "build", "status"}:
+    if args.command == "sync" and args.schedule:
+        from .journey import schedule_lines
+
+        print(schedule_lines(args.project, args.schedule), end="")
+        return 0
+    if args.command in {"init", "add", "build", "sync", "status"}:
         return _journey_command(args)
     if args.command == "connect":
         return _connect_command(args)

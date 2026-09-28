@@ -244,7 +244,10 @@ def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
         }
     index = build_package_index(package)
     synthesis = synthesis_status(package)
-    if synthesis["state"] != "installed":
+    # Never discard accepted agent work: replan only when nothing was accepted yet.
+    if synthesis["state"] == "not_planned" or (
+        synthesis["state"] == "awaiting_agent" and not synthesis.get("counts", {}).get("accepted")
+    ):
         plan_synthesis(package, language=project.config.get("language"))
     return {"ok": True, "index": {key: index[key] for key in ("documents", "blocks", "index_revision")}}
 
@@ -289,7 +292,13 @@ def _source_status(project: Project, source: dict[str, Any], state: dict[str, An
         return entry
     synthesis = synthesis_status(package)
     relative = package.relative_to(project.root).as_posix()
-    if synthesis["state"] == "installed":
+    if synthesis["state"] == "installed" and synthesis.get("stale_chapters"):
+        entry.update(
+            state="stale",
+            stale_chapters=synthesis["stale_chapters"],
+            next_action=f"farol task plan --refresh --package {relative}",
+        )
+    elif synthesis["state"] == "installed":
         entry.update(state="ready", next_action=None)
     else:
         counts = synthesis.get("counts", {})
@@ -305,14 +314,14 @@ def status(root: Path | str) -> dict[str, Any]:
     project = load_project(root)
     state = _state(project)
     sources = [_source_status(project, source, state) for source in project.config["sources"]]
-    order = ("failed", "added", "awaiting_agent", "ready")
+    order = ("failed", "added", "awaiting_agent", "stale", "ready")
     overall = next((name for name in order if any(item["state"] == name for item in sources)), "empty")
     if not sources:
         next_action = "farol add <source>"
     elif overall in {"failed", "added"}:
         next_action = "farol build"
-    elif overall == "awaiting_agent":
-        next_action = next(item["next_action"] for item in sources if item["state"] == "awaiting_agent")
+    elif overall in {"awaiting_agent", "stale"}:
+        next_action = next(item["next_action"] for item in sources if item["state"] == overall)
     else:
         next_action = "farol mcp --project ."
     return {
@@ -364,3 +373,75 @@ def project_health(root: Path | str, *, fix: bool = False) -> dict[str, Any]:
         else:
             issues.append({"source": source["id"], "code": problem, "next_action": "farol doctor --fix"})
     return {"ok": not issues, "issues": issues, "fixed": fixed}
+
+
+def _indexed_blocks(package: Path) -> set[str]:
+    import sqlite3
+    from contextlib import closing
+
+    pointer = package / "rag" / "local-index" / "ACTIVE.json"
+    if not pointer.is_file():
+        return set()
+    revision = json.loads(pointer.read_text(encoding="utf-8")).get("index_revision")
+    path = package / "rag" / "local-index" / f"{revision}.sqlite"
+    try:
+        with closing(sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)) as connection:
+            return {row[0] for row in connection.execute("SELECT block_id FROM blocks")}
+    except sqlite3.Error:
+        return set()
+
+
+def sync(root: Path | str, *, source_ids: list[str] | None = None) -> dict[str, Any]:
+    """Refresh every source and report what changed and which skill chapters went stale."""
+
+    from .agent_tasks import mark_stale
+
+    project = load_project(root)
+    before = {
+        source["id"]: _indexed_blocks(project.package(source["id"]))
+        for source in project.config["sources"]
+        if not source_ids or source["id"] in source_ids
+    }
+    report = build(root, source_ids=source_ids)
+    changes: dict[str, dict[str, Any]] = {}
+    for source_id, previous in before.items():
+        package = project.package(source_id)
+        current = _indexed_blocks(package)
+        removed = previous - current
+        added = current - previous
+        state = "no_change" if previous and not removed and not added else "changed" if previous else "new"
+        changes[source_id] = {"state": state, "added": len(added), "removed": len(removed)}
+        if removed:
+            mark_stale(package, removed)
+    refreshed = status(root)
+    for entry in refreshed["sources"]:
+        if entry["id"] in changes:
+            entry["changes"] = changes[entry["id"]]
+    refreshed["ok"] = report["ok"]
+    refreshed["built"] = report["built"]
+    return refreshed
+
+
+def schedule_lines(root: Path | str, kind: str) -> str:
+    """Exact scheduler configuration for a daily `farol sync` (printed, never installed)."""
+
+    import sys
+
+    project = Path(root).resolve()
+    command = f"{sys.executable} -m docops sync --project {project}"
+    if kind == "cron":
+        return (
+            "# Add with `crontab -e` (runs daily at 03:00):\n"
+            f"0 3 * * * cd {project} && {command} >> {project / '.farol' / 'sync.log'} 2>&1\n"
+        )
+    if kind == "systemd":
+        return (
+            "# ~/.config/systemd/user/farol-sync.service\n[Unit]\nDescription=Farol sync\n\n[Service]\n"
+            f"Type=oneshot\nWorkingDirectory={project}\nExecStart={command}\n\n"
+            "# ~/.config/systemd/user/farol-sync.timer\n[Unit]\nDescription=Daily Farol sync\n\n[Timer]\n"
+            "OnCalendar=daily\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n\n"
+            "# then: systemctl --user enable --now farol-sync.timer\n"
+        )
+    if kind == "windows":
+        return f'schtasks /Create /SC DAILY /ST 03:00 /TN "Farol sync" /TR "{command}"\n'
+    raise JourneyError("schedule_unknown", "choose cron, systemd or windows")
