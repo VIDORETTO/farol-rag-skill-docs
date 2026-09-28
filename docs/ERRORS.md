@@ -48,6 +48,7 @@ Every error printed by Farol carries one of these codes and a next step.
 | `package_unknown` | No package with that name | `call list_skills to see packages` |
 | `plan_missing` | No synthesis plan yet | `farol task plan` |
 | `project_missing` | No Farol project here | `farol add <source>` |
+| `project_version_unsupported` | farol.json comes from a newer Farol | `pipx upgrade farol-kit` |
 | `revision_mismatch` | The query targets another project revision | `reopen the reader` |
 | `schedule_unknown` | Unknown scheduler | `farol sync --schedule cron` |
 | `skill_unknown` | No skill with that name | `call list_skills` |

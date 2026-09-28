@@ -18,6 +18,7 @@ class ErrorInfo(NamedTuple):
 CATALOG: dict[str, ErrorInfo] = {
     # Project and sources
     "project_missing": ErrorInfo("No Farol project here", "farol add <source>"),
+    "project_version_unsupported": ErrorInfo("farol.json comes from a newer Farol", "pipx upgrade farol-kit"),
     "no_sources": ErrorInfo("The project has no sources", "farol add <source>"),
     "source_not_found": ErrorInfo("The source path does not exist", "check the path, then farol add <source>"),
     "source_id_taken": ErrorInfo("Another source already uses that id", "farol add <source> --name <new-id>"),
