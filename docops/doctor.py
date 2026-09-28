@@ -14,7 +14,6 @@ import shutil
 import sys
 import tomllib
 from dataclasses import dataclass
-from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Mapping
 from urllib.parse import urlsplit
@@ -23,6 +22,8 @@ from .agent_skill import find_skill_root
 from .backends.base import BackendError
 from .backends.ragflow import RagFlowAdapter
 from .config_audit import audit_config_file
+from .distribution import DISTRIBUTION_NAMES
+from .distribution import installed_version as installed_distribution_version
 from .extractors import default_registry
 from .runtime import platform_venv_name, venv_config_matches_host
 
@@ -157,13 +158,10 @@ def run_doctor(
     python = discover_python(root, environ=env)
     try:
         metadata = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
-        checkout = metadata.get("project", {}).get("name") == "consulta-documentacao"
+        checkout = metadata.get("project", {}).get("name") in DISTRIBUTION_NAMES
     except (OSError, ValueError):
         checkout = (root / "docops" / "__init__.py").is_file()
-    try:
-        installed_version = version("consulta-documentacao")
-    except PackageNotFoundError:
-        installed_version = None
+    installed_version = installed_distribution_version()
     try:
         operator_skill = find_skill_root() / "SKILL.md"
     except FileNotFoundError:

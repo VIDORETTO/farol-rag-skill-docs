@@ -324,12 +324,9 @@ def _error(identifier: Any, code: int, message: str) -> dict[str, Any]:
 
 
 def _version() -> str:
-    try:
-        from importlib.metadata import version
+    from .distribution import installed_version
 
-        return version("consulta-documentacao")
-    except Exception:  # pragma: no cover - source checkout without metadata
-        return "0"
+    return installed_version() or "0"
 
 
 def serve(
