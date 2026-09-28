@@ -47,6 +47,24 @@ quando o impacto atravessar uma fronteira controlada pelo produto.
 | Artefatos e publicação | originais privados, caches e credenciais são excluídos; candidate, wheel, supply-chain e clean clone são auditados | licença da fonte e autorização de publicação continuam decisão humana |
 | Processos locais | limpeza atinge somente o PID exato criado pelo projeto; nenhum comando global encerra Python | leitores de filesystem podem observar janelas específicas de troca de diretório |
 
+## Conteúdo hostil e prompt injection
+
+Fontes são dados, nunca instruções. O módulo `docops/safety.py` classifica cada
+bloco em `none`, `suspicious` ou `high`:
+
+- `high` — diretiva dirigida à IA leitora (ignorar instruções anteriores, assumir
+  outro papel, revelar segredos, enviar dados para URL, invocar ferramentas).
+  Esses blocos nunca são devolvidos pelo MCP nem aceitos em skills; um documento
+  dominado por eles (≥ 25% dos parágrafos) vai inteiro para quarentena.
+- `suspicious` — texto legítimo no contexto, mas parecido com prompt ou com
+  caracteres invisíveis/bidi/Unicode tags; é devolvido marcado com `risk`.
+
+Toda resposta do MCP com evidência inclui a nota de conteúdo não confiável.
+Limites: é uma camada determinística por padrões, testada contra um corpus
+adversarial rotulado (`tests/fixtures/adversarial/`) e medida contra falsos
+positivos no corpus real; não substitui a política do harness nem garante
+detecção de ataques novos, ofuscados ou em idiomas não cobertos.
+
 ## Transporte e credenciais
 
 O arquivo `config.yaml` usa caminhos relativos e transporte `stdio`. Para testar

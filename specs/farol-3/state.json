@@ -29,7 +29,6 @@
   "open_decisions": [],
   "tickets": {
     "ready": [
-      "TK-105",
       "TK-107",
       "TK-108"
     ],
@@ -40,7 +39,6 @@
       "TK-109",
       "TK-111",
       "TK-112",
-      "TK-113",
       "TK-114",
       "TK-115",
       "TK-116",
@@ -57,10 +55,12 @@
       "TK-101",
       "TK-103",
       "TK-104",
-      "TK-110"
+      "TK-110",
+      "TK-105",
+      "TK-113"
     ]
   },
-  "next_action": "Onda B: TK-105 (síntese pelo agente) → TK-113 (injeção por bloco) → TK-102 → TK-106.",
+  "next_action": "Onda B: TK-102 (jornada add/build/status) → TK-106 (taxonomia pelo agente).",
   "publicity_gate": "TK-122 exit criteria (SC-109)",
   "wave": "B",
   "decisions": "specs/farol-3/decisions.md",
