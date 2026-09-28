@@ -91,6 +91,11 @@ CLI_COMPATIBILITY_MAP = {
     "index": "index",
     "mcp": "mcp",
     "task": "task",
+    "init": "init",
+    "add": "add",
+    "build": "build",
+    "status": "status",
+    "advanced": "advanced",
     "skill": "skill",
     "agents-bootstrap": "agents-bootstrap",
     "resolve": "source resolve",
@@ -199,6 +204,17 @@ kept out of structured output. Remove an alias only after all callers have
 migrated and the alias-usage gate is zero for one complete release window.
 """
 
+_JOURNEY_COMMANDS = ("init", "add", "build", "status", "task", "mcp", "doctor", "advanced")
+_JOURNEY_HELP = """Typical use:
+
+  farol add ./docs --license MIT     register a source (folder, file, URL, Git repo)
+  farol build                        extract, index and prepare skill tasks
+  farol task next                    let your AI agent write the skill, task by task
+  farol mcp --project .              serve skills and cited facts to your AI (MCP)
+
+Run `farol advanced` for lifecycle, package and compatibility commands.
+"""
+
 _CANONICAL_GROUP_HELP = {
     "lifecycle": "lifecycle status source event worker candidate reader rag learning feedback",
     "init": "init start status answer finalize",
@@ -219,9 +235,9 @@ def _expand_canonical_argv(argv: list[str]) -> list[str]:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="docops",
-        description="Portable documentation lifecycle operator",
-        epilog=_CANONICAL_HELP,
+        prog="farol",
+        description="Turn documentation, books, papers and repositories into skills and cited evidence for your AI.",
+        epilog=_JOURNEY_HELP,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     commands = parser.add_subparsers(dest="command", required=True)
@@ -833,8 +849,33 @@ def build_parser() -> argparse.ArgumentParser:
     index = commands.add_parser("index", help="build the local factual index of a package (no services needed)")
     index.add_argument("package", type=Path)
     index.add_argument("--json", action="store_true")
-    mcp = commands.add_parser("mcp", help="serve a package's skills and evidence over MCP (stdio, read-only)")
-    mcp.add_argument("--package", type=Path, required=True)
+    mcp = commands.add_parser("mcp", help="serve your knowledge to an AI agent over MCP (stdio, read-only)")
+    mcp_target = mcp.add_mutually_exclusive_group()
+    mcp_target.add_argument("--package", type=Path, help="serve a single package")
+    mcp_target.add_argument("--project", type=Path, help="serve every package of a project (default: current dir)")
+    init = commands.add_parser("init", help="create a Farol project (farol.json) in the current directory")
+    init.add_argument("--language", help="language of the generated skills, e.g. en or pt-BR")
+    init.add_argument("--project", type=Path, default=Path.cwd())
+    init.add_argument("--json", action="store_true")
+    add = commands.add_parser("add", help="add a source: folder, file, URL or Git repository")
+    add.add_argument("source")
+    add.add_argument("--license", help="license of the source, e.g. MIT or CC-BY-4.0")
+    add.add_argument("--name", help="short id for the source (default: derived from the source)")
+    add.add_argument("--redistribution", choices=("private-only", "internal", "public"))
+    add.add_argument("--project", type=Path, default=Path.cwd())
+    add.add_argument("--json", action="store_true")
+    build = commands.add_parser("build", help="build or refresh every source: facts, index and synthesis tasks")
+    build.add_argument("sources", nargs="*", help="only these source ids")
+    build.add_argument("--project", type=Path, default=Path.cwd())
+    build.add_argument("--json", action="store_true")
+    status_parser = commands.add_parser("status", help="show each source's state and the next step")
+    status_parser.add_argument("--project", type=Path, default=Path.cwd())
+    status_parser.add_argument("--json", action="store_true")
+    commands.add_parser("advanced", help="list advanced and compatibility commands")
+    parser.set_defaults(_command_help={action.dest: action.help or "" for action in commands._choices_actions})
+    commands.metavar = "{" + ",".join(_JOURNEY_COMMANDS) + "}"
+    visible = {action.dest: action for action in commands._choices_actions if action.dest in _JOURNEY_COMMANDS}
+    commands._choices_actions = [visible[name] for name in _JOURNEY_COMMANDS if name in visible]
     task = commands.add_parser("task", help="skill synthesis tasks for your AI agent (plan, next, submit, status)")
     task_commands = task.add_subparsers(dest="task_command", required=True)
     task_plan = task_commands.add_parser("plan", help="plan the chapter and core tasks")
@@ -845,7 +886,8 @@ def build_parser() -> argparse.ArgumentParser:
     task_submit.add_argument("output_dir", type=Path)
     task_commands.add_parser("status", help="show task progress")
     for sub in task_commands.choices.values():
-        sub.add_argument("--package", type=Path, default=Path.cwd())
+        sub.add_argument("--package", type=Path, default=Path.cwd(), help="package, or a project directory")
+        sub.add_argument("--source", help="inside a project: the source id to work on")
         sub.add_argument("--json", action="store_true")
     return parser
 
@@ -893,9 +935,80 @@ def _recovery_result(project: Path, *, run: bool) -> dict[str, object]:
     return recover_project_activation(project) if run else inspect_project_recovery(project)
 
 
+def _advanced_help() -> str:
+    helps = build_parser().get_default("_command_help")
+    lines = ["Advanced and compatibility commands (flat spelling):", ""]
+    lines.extend(
+        f"  {name:<30} {text}".rstrip() for name, text in sorted(helps.items()) if name not in _JOURNEY_COMMANDS
+    )
+    return "\n".join(lines) + "\n\n" + _CANONICAL_HELP
+
+
+def _journey_command(args: argparse.Namespace) -> int:
+    from .journey import JourneyError, add_source, build, init_project, status
+
+    try:
+        if args.command == "init":
+            payload = init_project(args.project, language=args.language)
+        elif args.command == "add":
+            payload = add_source(
+                args.project, args.source, license=args.license, name=args.name, redistribution=args.redistribution
+            )
+        elif args.command == "build":
+            payload = build(args.project, source_ids=args.sources or None)
+        else:
+            payload = status(args.project)
+        code = 0 if payload.get("ok", True) else 1
+    except JourneyError as exc:
+        payload = {"status": "error", "error": {"code": exc.code, "message": str(exc)}, "next_action": exc.next_action}
+        code = 2
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
+    else:
+        print(_journey_text(args.command, payload))
+    return code
+
+
+def _journey_text(command: str, payload: dict[str, object]) -> str:
+    if payload.get("status") == "error":
+        error = payload["error"]
+        lines = [f"error: {error['message']} ({error['code']})"]  # type: ignore[index]
+    elif command == "init":
+        lines = [f"created {payload['path']} for project {payload['project']}"]
+    elif command == "add":
+        source = payload["source"]
+        lines = [f"{payload['status']}: {source['id']} ← {source['input']}"]  # type: ignore[index]
+    else:
+        lines = [f"project {payload.get('project')}: {payload.get('state')}"]
+        for source in payload.get("sources", []):  # type: ignore[union-attr]
+            line = f"  {source['id']:<24} {source['state']}"
+            if source.get("tasks"):
+                line += f"  (skill tasks {source['tasks']['accepted']}/{source['tasks']['total']})"
+            lines.append(line)
+            lines.extend(f"    ! {warning}" for warning in source.get("warnings", []))
+            lines.extend(f"    ✗ {error['message']}" for error in source.get("errors", []))
+    next_action = payload.get("next_action")
+    if next_action:
+        lines.append(f"next: {next_action}")
+    return "\n".join(lines)
+
+
 def _task_command(args: argparse.Namespace) -> int:
     from .agent_tasks import SynthesisTaskError, next_task, plan_synthesis, submit_task, synthesis_status
 
+    display = None
+    if not (args.package / "manifest.json").is_file() and (args.package / "farol.json").is_file():
+        from .journey import status as project_status
+
+        report = project_status(args.package)
+        candidates = [item for item in report["sources"] if item["state"] in {"awaiting_agent", "ready"}]
+        chosen = next((item for item in candidates if item["id"] == args.source), None) if args.source else None
+        chosen = chosen or next((item for item in candidates if item["state"] == "awaiting_agent"), None)
+        if chosen is None:
+            print(json.dumps({"status": "done", "message": "no source is waiting for the agent"}, indent=2))
+            return 0
+        display = f"packages/{chosen['id']}"
+        args.package = args.package / display
     try:
         if args.task_command == "plan":
             payload = plan_synthesis(args.package, language=args.language)
@@ -911,6 +1024,10 @@ def _task_command(args: argparse.Namespace) -> int:
             code = 0
     except SynthesisTaskError as exc:
         payload, code = {"status": "error", "error": {"code": exc.code, "message": str(exc)}}, 2
+    if display is not None:
+        payload["package"] = display
+    if "instructions" in payload:
+        payload["instructions"] = payload["instructions"].replace("<package>", display or str(args.package))
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
     elif args.task_command == "next" and "instructions" in payload:
@@ -1440,9 +1557,23 @@ def _dispatch(args: argparse.Namespace) -> int:
     if args.command == "mcp":
         from .mcp_server import serve
 
-        return serve(args.package)
+        if args.package is not None:
+            return serve(args.package)
+        from .journey import JourneyError, project_packages
+
+        try:
+            packages = project_packages(args.project or Path.cwd())
+        except JourneyError as exc:
+            print(json.dumps({"status": "error", "error": {"code": exc.code, "message": str(exc)}}), file=sys.stderr)
+            return 2
+        return serve(packages=packages)
     if args.command == "task":
         return _task_command(args)
+    if args.command in {"init", "add", "build", "status"}:
+        return _journey_command(args)
+    if args.command == "advanced":
+        print(_advanced_help())
+        return 0
     if args.command == "validate":
         result = validate_package(args.package)
         print(json.dumps(result.to_dict(), indent=2, ensure_ascii=False, sort_keys=True))

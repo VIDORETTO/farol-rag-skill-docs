@@ -77,6 +77,8 @@ _PRESERVED_CONCEPTUAL_METADATA = (
     ".docops/generated-artifacts.json",
     ".docops/generated-skill.json",
     ".docops/skill-enrichment.json",
+    # Agent synthesis state and lineage belong to the conceptual layer.
+    ".docops/synthesis",
     ".docops/evaluation.json",
     ".docops/release-evidence.json",
     ".docops/policy.json",

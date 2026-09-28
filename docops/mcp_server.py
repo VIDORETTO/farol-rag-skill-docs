@@ -39,6 +39,7 @@ TOOLS: list[dict[str, Any]] = [
             "properties": {
                 "query": {"type": "string", "description": "What to look for, in natural words."},
                 "top_k": {"type": "integer", "minimum": 1, "maximum": _MAX_TOP_K, "default": 5},
+                "package": {"type": "string", "description": "Limit the search to one package (see list_skills)."},
             },
             "required": ["query"],
             "additionalProperties": False,
@@ -50,7 +51,7 @@ TOOLS: list[dict[str, Any]] = [
         "description": "Return every indexed block of one source document, in order, with locators.",
         "inputSchema": {
             "type": "object",
-            "properties": {"document_id": {"type": "string"}},
+            "properties": {"document_id": {"type": "string"}, "package": {"type": "string"}},
             "required": ["document_id"],
             "additionalProperties": False,
         },
@@ -110,90 +111,135 @@ def _frontmatter(text: str) -> dict[str, str]:
 
 
 class KnowledgeServer:
-    def __init__(self, package_root: Path | str) -> None:
-        self.root = Path(package_root).resolve()
-        self._backend: LocalFtsBackend | None = None
-        self._index: IndexRevision | None = None
+    """Serve one package, or every package of a project (``packages`` by name)."""
+
+    def __init__(self, package_root: Path | str | None = None, *, packages: Mapping[str, Path] | None = None) -> None:
+        if packages is None:
+            root = Path(package_root or ".").resolve()
+            packages = {root.name: root}
+        self.packages = {name: Path(path).resolve() for name, path in packages.items()}
+        self._readers: dict[str, tuple[LocalFtsBackend, IndexRevision]] = {}
 
     # -- reader pinning -------------------------------------------------
-    def _active_revision(self) -> str | None:
-        pointer = self.root / INDEX_DIR / ACTIVE_POINTER
+    @staticmethod
+    def _active_revision(root: Path) -> str | None:
+        pointer = root / INDEX_DIR / ACTIVE_POINTER
         try:
             return str(json.loads(pointer.read_text(encoding="utf-8")).get("index_revision") or "") or None
         except (OSError, ValueError):
             return None
 
-    def _reader(self) -> tuple[LocalFtsBackend, IndexRevision]:
-        active = self._active_revision()
+    def _reader(self, name: str) -> tuple[LocalFtsBackend, IndexRevision] | None:
+        root = self.packages[name]
+        active = self._active_revision(root)
         if active is None:
-            raise ToolError("index_missing", "the package has no factual index yet; run `farol index <package>`")
-        if self._index is None or self._index.index_revision != active:
-            self._backend, self._index = open_package_index(self.root)
-        assert self._backend is not None
-        return self._backend, self._index
+            return None
+        cached = self._readers.get(name)
+        if cached is None or cached[1].index_revision != active:
+            cached = open_package_index(root)
+            self._readers[name] = cached
+        return cached
+
+    def _selected(self, package: str | None) -> list[str]:
+        if package is None:
+            return list(self.packages)
+        if package not in self.packages:
+            raise ToolError("package_unknown", "no package with that name; see list_skills")
+        return [package]
 
     # -- skills -----------------------------------------------------------
-    def _skill_dirs(self) -> dict[str, Path]:
-        skills: dict[str, Path] = {}
-        for folder in ("skill", "router"):
-            path = self.root / folder / "SKILL.md"
-            if path.is_file() and not path.is_symlink():
-                name = _frontmatter(path.read_text(encoding="utf-8")).get("name") or folder
-                skills[name] = path.parent
+    def _skill_dirs(self) -> dict[str, tuple[str, Path]]:
+        skills: dict[str, tuple[str, Path]] = {}
+        for package, root in self.packages.items():
+            for folder in ("skill", "router"):
+                path = root / folder / "SKILL.md"
+                if path.is_file() and not path.is_symlink():
+                    name = _frontmatter(path.read_text(encoding="utf-8")).get("name") or f"{package}-{folder}"
+                    skills[name] = (package, path.parent)
         return skills
 
     # -- tools ------------------------------------------------------------
-    def search_knowledge(self, query: str, top_k: int = 5) -> dict[str, Any]:
+    def search_knowledge(self, query: str, top_k: int = 5, package: str | None = None) -> dict[str, Any]:
         if not isinstance(query, str) or not query.strip():
             raise ToolError("invalid_query", "query must be a non-empty string")
         top_k = max(1, min(int(top_k), _MAX_TOP_K))
-        backend, index = self._reader()
-        result = backend.query(index, QueryRequest(query=query, top_k=top_k))
-        hits = [
-            {
-                "citation": citation(hit),
-                "text": hit["text"],
-                "document_id": hit["document_id"],
-                "source_id": hit["source_id"],
-                "source_revision_id": hit["source_revision_id"],
-                "path": hit["path"],
-                "heading_path": hit["heading_path"],
-                "locators": hit["locators"],
-                "risk": hit["risk"],
-                "score": hit["score"],
-            }
-            for hit in result.hits
-        ]
-        return {
-            "outcome": result.outcome,
-            "index_revision": index.index_revision,
+        hits: list[dict[str, Any]] = []
+        revisions: dict[str, str] = {}
+        for name in self._selected(package):
+            reader = self._reader(name)
+            if reader is None:
+                continue
+            backend, index = reader
+            revisions[name] = index.index_revision
+            for hit in backend.query(index, QueryRequest(query=query, top_k=top_k)).hits:
+                hits.append(
+                    {
+                        "package": name,
+                        "citation": citation(hit),
+                        "text": hit["text"],
+                        "document_id": hit["document_id"],
+                        "source_id": hit["source_id"],
+                        "source_revision_id": hit["source_revision_id"],
+                        "path": hit["path"],
+                        "heading_path": hit["heading_path"],
+                        "locators": hit["locators"],
+                        "risk": hit["risk"],
+                        "score": hit["score"],
+                    }
+                )
+        if not revisions:
+            raise ToolError("index_missing", "no factual index yet; run `farol build` (or `farol index <package>`)")
+        hits.sort(key=lambda item: item["score"], reverse=True)
+        hits = hits[:top_k]
+        result: dict[str, Any] = {
+            "outcome": "ok" if hits else "insufficient_evidence",
             "note": _UNTRUSTED_NOTE,
             "hits": hits,
         }
+        if len(self.packages) == 1:
+            result["index_revision"] = next(iter(revisions.values()))
+        else:
+            result["index_revisions"] = revisions
+        return result
 
-    def get_document(self, document_id: str) -> dict[str, Any]:
-        backend, index = self._reader()
-        document = backend.get_document(index, str(document_id))
-        for block in document["blocks"]:
-            block["citation"] = citation(block)
-        return {"index_revision": index.index_revision, "note": _UNTRUSTED_NOTE, **document}
+    def get_document(self, document_id: str, package: str | None = None) -> dict[str, Any]:
+        for name in self._selected(package):
+            reader = self._reader(name)
+            if reader is None:
+                continue
+            backend, index = reader
+            try:
+                document = backend.get_document(index, str(document_id))
+            except BackendError:
+                continue
+            for block in document["blocks"]:
+                block["citation"] = citation(block)
+            return {"package": name, "index_revision": index.index_revision, "note": _UNTRUSTED_NOTE, **document}
+        raise ToolError("document_unknown", "document is not part of the indexed packages")
 
     def list_skills(self) -> dict[str, Any]:
         skills = []
-        for name, folder in sorted(self._skill_dirs().items()):
+        for name, (package, folder) in sorted(self._skill_dirs().items()):
             meta = _frontmatter((folder / "SKILL.md").read_text(encoding="utf-8"))
             chapters = sorted(
                 path.name for path in (folder / "chapters").glob("*.md") if path.is_file() and not path.is_symlink()
             )
             skills.append(
-                {"name": name, "description": meta.get("description", ""), "path": folder.name, "chapters": chapters}
+                {
+                    "name": name,
+                    "package": package,
+                    "description": meta.get("description", ""),
+                    "path": folder.name,
+                    "chapters": chapters,
+                }
             )
         return {"skills": skills}
 
     def get_skill(self, name: str, chapter: str | None = None) -> dict[str, Any]:
-        folder = self._skill_dirs().get(str(name))
-        if folder is None:
-            raise ToolError("skill_unknown", "no skill with that name in this package")
+        found = self._skill_dirs().get(str(name))
+        if found is None:
+            raise ToolError("skill_unknown", "no skill with that name; see list_skills")
+        package, folder = found
         if chapter is None:
             path = folder / "SKILL.md"
         else:
@@ -202,7 +248,7 @@ class KnowledgeServer:
             path = folder / "chapters" / str(chapter)
         if not path.is_file() or path.is_symlink():
             raise ToolError("chapter_unknown", "chapter not found for this skill")
-        return {"name": name, "chapter": chapter, "markdown": path.read_text(encoding="utf-8")}
+        return {"name": name, "package": package, "chapter": chapter, "markdown": path.read_text(encoding="utf-8")}
 
     # -- protocol ---------------------------------------------------------
     def handle(self, message: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -282,8 +328,14 @@ def _version() -> str:
         return "0"
 
 
-def serve(package_root: Path | str, stdin: TextIO | None = None, stdout: TextIO | None = None) -> int:
-    server = KnowledgeServer(package_root)
+def serve(
+    package_root: Path | str | None = None,
+    stdin: TextIO | None = None,
+    stdout: TextIO | None = None,
+    *,
+    packages: Mapping[str, Path] | None = None,
+) -> int:
+    server = KnowledgeServer(package_root, packages=packages)
     source = stdin or sys.stdin
     sink = stdout or sys.stdout
     for line in source:
