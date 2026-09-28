@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .manifest import redact_url
+from .normalizer import markdown_headings
 from .primitives import safe_relpath, write_if_changed, write_json_if_changed
 
 _GENERATED_ARTIFACTS_SCHEMA_VERSION = 1
@@ -127,9 +128,7 @@ def skill_artifacts(slug: str, entries: list[dict[str, Any]], source: dict[str, 
         if chapter_name in used_chapter_names:
             chapter_name = f"{Path(chapter_name).stem}--{index}.md"
         used_chapter_names.add(chapter_name)
-        headings = [
-            line.strip() for line in str(entry.get("content", "")).splitlines() if line.lstrip().startswith("#")
-        ]
+        headings = [text for _level, text in markdown_headings(str(entry.get("content", "")))]
         source_value = entry.get("canonical", entry.get("source", "unknown"))
         chapter = [
             f"# {title}",
@@ -140,7 +139,7 @@ def skill_artifacts(slug: str, entries: list[dict[str, Any]], source: dict[str, 
             "",
         ]
         if headings:
-            chapter.extend(["## Sections", "", *[f"- {heading.lstrip('#').strip()}" for heading in headings[:40]], ""])
+            chapter.extend(["## Sections", "", *[f"- {heading}" for heading in headings[:40]], ""])
         chapter.extend(["## Source file", "", f"`{destination}`", ""])
         chapter_files.append((chapter_name, "\n".join(chapter)))
         chapter_lines.append(f"- [{title}](chapters/{chapter_name}) — `{destination}`")

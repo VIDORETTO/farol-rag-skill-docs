@@ -96,6 +96,7 @@ CLI_COMPATIBILITY_MAP = {
     "build": "build",
     "status": "status",
     "advanced": "advanced",
+    "connect": "connect",
     "skill": "skill",
     "agents-bootstrap": "agents-bootstrap",
     "resolve": "source resolve",
@@ -204,13 +205,13 @@ kept out of structured output. Remove an alias only after all callers have
 migrated and the alias-usage gate is zero for one complete release window.
 """
 
-_JOURNEY_COMMANDS = ("init", "add", "build", "status", "task", "mcp", "doctor", "advanced")
+_JOURNEY_COMMANDS = ("init", "add", "build", "status", "task", "connect", "mcp", "doctor", "advanced")
 _JOURNEY_HELP = """Typical use:
 
   farol add ./docs --license MIT     register a source (folder, file, URL, Git repo)
   farol build                        extract, index and prepare skill tasks
   farol task next                    let your AI agent write the skill, task by task
-  farol mcp --project .              serve skills and cited facts to your AI (MCP)
+  farol connect claude-code          install skills + MCP for Claude Code, codex, cursor, opencode
 
 Run `farol advanced` for lifecycle, package and compatibility commands.
 """
@@ -871,6 +872,14 @@ def build_parser() -> argparse.ArgumentParser:
     status_parser = commands.add_parser("status", help="show each source's state and the next step")
     status_parser.add_argument("--project", type=Path, default=Path.cwd())
     status_parser.add_argument("--json", action="store_true")
+    connect_parser = commands.add_parser("connect", help="connect your AI agent: skills + MCP server")
+    connect_parser.add_argument("harness", choices=("claude-code", "codex", "cursor", "opencode", "generic"))
+    connect_parser.add_argument("--project", type=Path, default=Path.cwd())
+    connect_parser.add_argument("--target", type=Path, help="repository/workspace to configure (default: project)")
+    connect_parser.add_argument("--scope", choices=("project", "user"), default="project")
+    connect_parser.add_argument("--dry-run", action="store_true", help="show the changes without writing")
+    connect_parser.add_argument("--remove", action="store_true", help="undo a previous connect")
+    connect_parser.add_argument("--json", action="store_true")
     commands.add_parser("advanced", help="list advanced and compatibility commands")
     parser.set_defaults(_command_help={action.dest: action.help or "" for action in commands._choices_actions})
     commands.metavar = "{" + ",".join(_JOURNEY_COMMANDS) + "}"
@@ -943,6 +952,38 @@ def _advanced_help() -> str:
         f"  {name:<30} {text}".rstrip() for name, text in sorted(helps.items()) if name not in _JOURNEY_COMMANDS
     )
     return "\n".join(lines) + "\n\n" + _CANONICAL_HELP
+
+
+def _connect_command(args: argparse.Namespace) -> int:
+    from .connect import ConnectError, connect
+    from .journey import JourneyError
+
+    try:
+        payload = connect(
+            args.project,
+            args.harness,
+            target=args.target,
+            scope=args.scope,
+            dry_run=args.dry_run,
+            remove=args.remove,
+        )
+        code = 0
+    except (ConnectError, JourneyError) as exc:
+        payload, code = {"status": "error", "error": {"code": exc.code, "message": str(exc)}}, 2
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
+    elif payload.get("status") == "error":
+        print(f"error: {payload['error']['message']} ({payload['error']['code']})")
+    elif payload.get("status") == "instructions":
+        print(json.dumps({"mcpServers": payload["mcpServers"]}, indent=2))
+        print(payload["note"])
+    else:
+        print(f"{payload['status']}: {payload['harness']} at {payload['target']}")
+        for change in payload.get("changes", []):
+            print(f"  {change['action']:<7} {change['path']}")
+        if payload.get("next_action"):
+            print(f"next: {payload['next_action']}")
+    return code
 
 
 def _journey_command(args: argparse.Namespace) -> int:
@@ -1572,6 +1613,8 @@ def _dispatch(args: argparse.Namespace) -> int:
         return _task_command(args)
     if args.command in {"init", "add", "build", "status"}:
         return _journey_command(args)
+    if args.command == "connect":
+        return _connect_command(args)
     if args.command == "advanced":
         print(_advanced_help())
         return 0

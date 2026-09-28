@@ -83,12 +83,34 @@ class NormalizationResult:
         }
 
 
-def _title_from_markdown(content: str, fallback: str) -> str:
+_FENCE = re.compile(r"^\s*(```|~~~)")
+_HEADING = re.compile(r"^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$")
+
+
+def markdown_headings(content: str) -> list[tuple[int, str]]:
+    """Return ``(level, text)`` of Markdown headings, ignoring fenced code blocks."""
+
+    headings: list[tuple[int, str]] = []
+    fence: str | None = None
     for line in content.splitlines():
-        match = re.match(r"^\s*#\s+(.+?)\s*$", line)
-        if match:
-            return match.group(1).strip()
-    return fallback
+        marker = _FENCE.match(line)
+        if marker:
+            if fence is None:
+                fence = marker.group(1)
+            elif marker.group(1) == fence:
+                fence = None
+            continue
+        if fence is None:
+            match = _HEADING.match(line)
+            if match:
+                headings.append((len(match.group(1)), match.group(2).strip()))
+    return headings
+
+
+def _title_from_markdown(content: str, fallback: str) -> str:
+    headings = markdown_headings(content)
+    top = next((text for level, text in headings if level == 1), None)
+    return top or (headings[0][1] if headings else fallback)
 
 
 def _untrusted_warnings(content: str) -> tuple[bool, list[str]]:
