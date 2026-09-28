@@ -169,7 +169,7 @@ class LocalFtsBackend:
             },
         )
         target = self._path(index.index_revision)
-        if not target.is_file():
+        if not _index_intact(target):
             _write_index(target, index, rows, self.embedder)
         return index
 
@@ -348,6 +348,18 @@ class LocalFtsBackend:
     def _ensure_open(self) -> None:
         if self._closed:
             raise BackendUnavailable("backend_closed", "local-fts backend is closed")
+
+
+def _index_intact(path: Path) -> bool:
+    """Reuse an existing immutable index only if it is a readable SQLite index."""
+
+    if not path.is_file():
+        return False
+    try:
+        with closing(sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)) as connection:
+            return connection.execute("SELECT 1 FROM meta WHERE key = 'index'").fetchone() is not None
+    except sqlite3.Error:
+        return False
 
 
 def _eligibility(filters: Mapping[str, Any]) -> tuple[str, list[Any]]:
