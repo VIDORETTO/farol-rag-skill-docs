@@ -49,6 +49,10 @@ _INACTIVE_STATUSES = frozenset({"revoked", "withdrawn"})
 # column); indexing them as evidence lets a bare title outrank the fact.
 _CONTEXT_ONLY_KINDS = frozenset({"title", "heading"})
 _TOKEN = re.compile(r"\w+", re.UNICODE)
+# Measured on the real acceptance corpus with the default model: answers score
+# 0.40-0.64 (median), queries without an answer up to 0.54.
+VECTOR_FLOOR = 0.35
+VECTOR_ONLY_MIN = 0.55
 _INDEX_FILE = re.compile(r"^index-[0-9a-f]{24}$")
 
 
@@ -85,10 +89,12 @@ class LocalFtsBackend:
     backend_name = BACKEND_NAME
     expected_version = BACKEND_VERSION
 
-    def __init__(self, index_dir: Path | str) -> None:
+    def __init__(self, index_dir: Path | str, *, embedder: Any | None = None) -> None:
         self.index_dir = Path(index_dir)
+        self.embedder = embedder
         self._candidates: dict[str, BackendCandidate] = {}
         self._closed = False
+        self._vectors: dict[str, tuple[Any, Any]] = {}
 
     def probe(self, config: Mapping[str, Any] | None = None) -> ProbeResult:
         self._ensure_open()
@@ -125,6 +131,7 @@ class LocalFtsBackend:
                 "project_revision": project_revision,
                 "ir_revision": ir_revision,
                 "documents": documents,
+                "embedding": self.embedder.profile if self.embedder is not None else None,
             }
         )
         candidate = BackendCandidate(
@@ -155,11 +162,15 @@ class LocalFtsBackend:
             backend_version=BACKEND_VERSION,
             state="queryable",
             mapping_hash=content_hash([row["block_id"] for row in rows]),
-            fingerprints={"tokenizer": TOKENIZER, "sqlite": sqlite3.sqlite_version},
+            fingerprints={
+                "tokenizer": TOKENIZER,
+                "sqlite": sqlite3.sqlite_version,
+                **({"embedding": json.dumps(self.embedder.profile, sort_keys=True)} if self.embedder else {}),
+            },
         )
         target = self._path(index.index_revision)
         if not target.is_file():
-            _write_index(target, index, rows)
+            _write_index(target, index, rows, self.embedder)
         return index
 
     def open(self, index_revision: str) -> IndexRevision:
@@ -185,40 +196,101 @@ class LocalFtsBackend:
             raise BackendUnavailable("index_unknown", "index revision does not belong to local-fts")
         if query_request.project_revision and query_request.project_revision != index_revision.project_revision:
             raise BackendUnavailable("revision_mismatch", "query project revision does not match the index revision")
+        stored = index_revision.fingerprints.get("embedding")
+        mode, degraded = "bm25", []
+        if stored:
+            if self.embedder is None:
+                degraded.append("semantic extra unavailable: install farol-kit[semantic] for hybrid retrieval")
+            elif json.dumps(self.embedder.profile, sort_keys=True) != stored:
+                raise BackendError(
+                    "embedding_profile_changed",
+                    "the index was built with another embedding model; rebuild it (farol build or farol index)",
+                )
+            else:
+                mode = "hybrid"
+        eligibility, parameters = _eligibility(dict(query_request.filters))
         expression = _match_expression(query_request.query)
-        hits: list[dict[str, Any]] = []
-        if expression:
-            clauses = ["blocks_fts MATCH ?"]
-            parameters: list[Any] = [expression]
-            filters = dict(query_request.filters)
-            if filters.get("include_high_risk") is not True:
-                clauses.append("b.risk != 'high'")
-            allowed = filters.get("source_ids")
-            if allowed is not None:
-                allowed = [str(item) for item in allowed]
-                clauses.append(f"b.source_id IN ({','.join('?' * len(allowed)) or 'NULL'})")
-                parameters.extend(allowed)
-            excluded = [str(item) for item in filters.get("exclude_source_ids") or []]
-            if excluded:
-                clauses.append(f"b.source_id NOT IN ({','.join('?' * len(excluded))})")
-                parameters.extend(excluded)
-            sql = (
-                "SELECT b.block_id, b.document_id, b.source_id, b.source_revision_id, b.path, b.kind,"
-                " b.heading_path, b.locators, b.text, b.risk, bm25(blocks_fts, 1.0, 0.5) AS score"
-                " FROM blocks_fts JOIN blocks b ON b.rowid = blocks_fts.rowid"
-                f" WHERE {' AND '.join(clauses)} ORDER BY score, b.rowid LIMIT ?"
-            )
-            parameters.append(query_request.top_k)
-            with self._connect(index_revision.index_revision) as connection:
-                for row in connection.execute(sql, parameters):
-                    hits.append(_hit(row))
+        pool = query_request.top_k if mode == "bm25" else max(50, query_request.top_k)
+        with self._connect(index_revision.index_revision) as connection:
+            lexical: list[int] = []
+            if expression:
+                lexical = [
+                    rowid
+                    for (rowid,) in connection.execute(
+                        "SELECT b.rowid FROM blocks_fts JOIN blocks b ON b.rowid = blocks_fts.rowid"
+                        f" WHERE blocks_fts MATCH ? AND {eligibility}"
+                        " ORDER BY bm25(blocks_fts, 1.0, 0.5), b.rowid LIMIT ?",
+                        [expression, *parameters, pool],
+                    )
+                ]
+            if mode == "hybrid":
+                similarity = self._vector_ranking(
+                    connection, index_revision, query_request.query, eligibility, parameters
+                )
+                floor = float(self.embedder.profile.get("min_similarity", VECTOR_FLOOR))
+                alone = float(self.embedder.profile.get("min_similarity_alone", VECTOR_ONLY_MIN))
+                vector = [rowid for rowid, score in similarity if score >= floor][:pool]
+                # Without any lexical evidence a vector neighbour must be clearly
+                # relevant; otherwise the backend abstains instead of guessing.
+                if not lexical and not (similarity and similarity[0][1] >= alone):
+                    vector = []
+                fused = _reciprocal_rank_fusion(lexical, vector)
+                ranked = sorted(fused, key=lambda rowid: (-fused[rowid], rowid))
+                scores = fused
+            else:
+                ranked = lexical
+                scores = {rowid: 1.0 / (61 + position) for position, rowid in enumerate(ranked)}
+            selected = ranked[: query_request.top_k]
+            rows = {
+                row[0]: row[1:]
+                for row in connection.execute(
+                    "SELECT rowid, block_id, document_id, source_id, source_revision_id, path, kind, heading_path,"
+                    f" locators, text, risk, 0.0 FROM blocks WHERE rowid IN ({','.join('?' * len(selected)) or 'NULL'})",
+                    selected,
+                )
+            }
+        hits = []
+        for rowid in selected:
+            hit = _hit(rows[rowid])
+            hit["score"] = round(scores[rowid] * 1000, 6)
+            hits.append(hit)
+        metadata: dict[str, Any] = {"backend": BACKEND_NAME, "version": BACKEND_VERSION, "retrieval_mode": mode}
+        if degraded:
+            metadata["degraded"] = degraded
         return EvidenceResult(
             index_revision=index_revision.index_revision,
             query=query_request,
             hits=hits,
             outcome="ok" if hits else "insufficient_evidence",
-            metadata={"backend": BACKEND_NAME, "version": BACKEND_VERSION, "retrieval_mode": "bm25"},
+            metadata=metadata,
         )
+
+    def _vector_ranking(
+        self, connection: sqlite3.Connection, index: IndexRevision, query: str, eligibility: str, parameters: list[Any]
+    ) -> list[tuple[int, float]]:
+        import numpy as np
+
+        cached = self._vectors.get(index.index_revision)
+        if cached is None:
+            owners, blobs = [], []
+            for owner, blob in connection.execute("SELECT owner, vector FROM vectors ORDER BY rowid"):
+                owners.append(owner)
+                blobs.append(np.frombuffer(blob, dtype=np.float32))
+            cached = (np.array(owners), np.stack(blobs) if blobs else np.zeros((0, 1), dtype=np.float32))
+            self._vectors[index.index_revision] = cached
+        owners, matrix = cached
+        if not len(owners):
+            return []
+        eligible = {
+            rowid for (rowid,) in connection.execute(f"SELECT b.rowid FROM blocks b WHERE {eligibility}", parameters)
+        }
+        query_vector = _normalized(np, self.embedder.embed_query(query))
+        similarities = matrix @ query_vector
+        best: dict[int, float] = {}
+        for owner, similarity in zip(owners.tolist(), similarities.tolist()):
+            if owner in eligible and similarity > best.get(owner, -2.0):
+                best[owner] = similarity
+        return sorted(best.items(), key=lambda item: (-item[1], item[0]))
 
     def get_document(self, index_revision: IndexRevision, document_id: str) -> dict[str, Any]:
         self._ensure_open()
@@ -278,6 +350,39 @@ class LocalFtsBackend:
             raise BackendUnavailable("backend_closed", "local-fts backend is closed")
 
 
+def _eligibility(filters: Mapping[str, Any]) -> tuple[str, list[Any]]:
+    """SQL applied to lexical and vector candidates alike, before any ranking cut."""
+
+    clauses = ["1 = 1"]
+    parameters: list[Any] = []
+    if filters.get("include_high_risk") is not True:
+        clauses.append("b.risk != 'high'")
+    allowed = filters.get("source_ids")
+    if allowed is not None:
+        allowed = [str(item) for item in allowed]
+        clauses.append(f"b.source_id IN ({','.join('?' * len(allowed)) or 'NULL'})")
+        parameters.extend(allowed)
+    excluded = [str(item) for item in filters.get("exclude_source_ids") or []]
+    if excluded:
+        clauses.append(f"b.source_id NOT IN ({','.join('?' * len(excluded))})")
+        parameters.extend(excluded)
+    return " AND ".join(clauses), parameters
+
+
+def _reciprocal_rank_fusion(*rankings: list[int], k: int = 60) -> dict[int, float]:
+    fused: dict[int, float] = {}
+    for ranking in rankings:
+        for position, rowid in enumerate(ranking, 1):
+            fused[rowid] = fused.get(rowid, 0.0) + 1.0 / (k + position)
+    return fused
+
+
+def _normalized(np: Any, vector: Any) -> Any:
+    vector = np.asarray(vector, dtype=np.float32)
+    norm = float(np.linalg.norm(vector))
+    return vector / norm if norm else vector
+
+
 def _rows(documents: list[Any]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -319,7 +424,7 @@ def _rows(documents: list[Any]) -> list[dict[str, Any]]:
     return rows
 
 
-def _write_index(target: Path, index: IndexRevision, rows: list[dict[str, Any]]) -> None:
+def _write_index(target: Path, index: IndexRevision, rows: list[dict[str, Any]], embedder: Any | None = None) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     handle, temporary = tempfile.mkstemp(prefix=f".{target.stem}.", suffix=".tmp", dir=target.parent)
     os.close(handle)
@@ -332,6 +437,7 @@ def _write_index(target: Path, index: IndexRevision, rows: list[dict[str, Any]])
                 " source_id TEXT NOT NULL, source_revision_id TEXT NOT NULL, path TEXT NOT NULL, kind TEXT NOT NULL,"
                 " heading_path TEXT NOT NULL, locators TEXT NOT NULL, text TEXT NOT NULL, risk TEXT NOT NULL);"
                 f"CREATE VIRTUAL TABLE blocks_fts USING fts5(text, heading, tokenize='{TOKENIZER}');"
+                "CREATE TABLE vectors (owner INTEGER NOT NULL, vector BLOB NOT NULL);"
             )
             connection.execute("INSERT INTO meta VALUES ('index', ?)", (json.dumps(index.to_dict(), sort_keys=True),))
             for row in rows:
@@ -354,6 +460,8 @@ def _write_index(target: Path, index: IndexRevision, rows: list[dict[str, Any]])
                     "INSERT INTO blocks_fts (rowid, text, heading) VALUES (?, ?, ?)",
                     (cursor.lastrowid, row["text"], " ".join(row["heading_path"])),
                 )
+            if embedder is not None:
+                _write_vectors(connection, embedder)
             connection.commit()
         finally:
             connection.close()
@@ -361,6 +469,25 @@ def _write_index(target: Path, index: IndexRevision, rows: list[dict[str, Any]])
     except BaseException:
         Path(temporary).unlink(missing_ok=True)
         raise
+
+
+def _write_vectors(connection: sqlite3.Connection, embedder: Any) -> None:
+    import numpy as np
+
+    from .semantic import windows
+
+    owners: list[int] = []
+    texts: list[str] = []
+    for rowid, heading_path, text in connection.execute("SELECT rowid, heading_path, text FROM blocks ORDER BY rowid"):
+        for window in windows(text, " / ".join(json.loads(heading_path))):
+            owners.append(rowid)
+            texts.append(window)
+    for start in range(0, len(texts), 256):
+        batch = np.asarray(embedder.embed_documents(texts[start : start + 256]), dtype=np.float32)
+        for owner, vector in zip(owners[start : start + 256], batch):
+            connection.execute(
+                "INSERT INTO vectors VALUES (?, ?)", (owner, _normalized(np, vector).astype(np.float32).tobytes())
+            )
 
 
 def _hit(row: tuple[Any, ...]) -> dict[str, Any]:

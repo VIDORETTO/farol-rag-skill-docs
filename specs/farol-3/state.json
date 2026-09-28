@@ -36,7 +36,6 @@
       "TK-109",
       "TK-111",
       "TK-112",
-      "TK-114",
       "TK-115",
       "TK-116",
       "TK-117",
@@ -57,10 +56,11 @@
       "TK-113",
       "TK-102",
       "TK-106",
-      "TK-108"
+      "TK-108",
+      "TK-114"
     ]
   },
-  "next_action": "Onda C: TK-114 antecipado (busca híbrida, lacuna de vocabulário medida), depois TK-107, TK-117, TK-112.",
+  "next_action": "Onda C: TK-107 (vídeo/áudio), TK-117 (erros), TK-112 (sync); README (TK-109.6).",
   "publicity_gate": "TK-122 exit criteria (SC-109)",
   "wave": "C",
   "decisions": "specs/farol-3/decisions.md",
