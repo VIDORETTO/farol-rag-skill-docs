@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "name": "consulta-documentacao",
+  "name": "farol-kit",
   "display_name": "Farol",
-  "description": "Farol — portable, deterministic documentation-to-knowledge orchestration with an external RAGFlow backend.",
+  "description": "Farol — turn documentation, books, papers, videos and repositories into agent skills and cited evidence for any AI (MCP), locally.",
   "version": "2.0.0rc1",
   "maturity": "release-candidate",
   "license": "MIT",
@@ -10,7 +10,13 @@
   "homepage": "https://github.com/VIDORETTO/farol-rag-skill-docs",
   "issues": "https://github.com/VIDORETTO/farol-rag-skill-docs/issues",
   "documentation": "https://github.com/VIDORETTO/farol-rag-skill-docs/tree/main/docs",
-  "topics": ["agent-skills", "documentation", "knowledge-base", "mcp", "rag"],
+  "topics": [
+    "agent-skills",
+    "documentation",
+    "knowledge-base",
+    "mcp",
+    "rag"
+  ],
   "ownership": {
     "codeowners": ".github/CODEOWNERS",
     "maintainers": "community/MAINTAINERS.md"

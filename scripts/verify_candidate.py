@@ -329,7 +329,7 @@ def _metadata_errors(bundle_root: Path, manifest: dict[str, Any], version: str) 
     errors: list[dict[str, str]] = []
     # The published v1.1.0 wheel keeps this distribution identifier for
     # compatibility; Farol is the current public product name.
-    if metadata.get("name") != "consulta-documentacao":
+    if metadata.get("name") not in {"farol-kit", "consulta-documentacao"}:
         errors.append({"code": "metadata_name_mismatch", "message": "repository metadata name is inconsistent"})
     if metadata.get("version") != version or metadata.get("version") != manifest.get("version"):
         errors.append(
@@ -362,7 +362,7 @@ def _metadata_errors(bundle_root: Path, manifest: dict[str, Any], version: str) 
     except (OSError, UnicodeError):
         readme = ""
     readme_version = re.search(
-        r"(?m)^\*\*Versão do pacote:\*\*\s+(?:\[v?([0-9]+\.[0-9]+\.[0-9]+(?:[A-Za-z0-9.+-]*))\]\([^)]*\)|`v?([0-9]+\.[0-9]+\.[0-9]+(?:[A-Za-z0-9.+-]*))`)",
+        r"(?m)^\*\*(?:Versão do pacote|Version):\*\*\s+(?:\[v?([0-9]+\.[0-9]+\.[0-9]+(?:[A-Za-z0-9.+-]*))\]\([^)]*\)|`v?([0-9]+\.[0-9]+\.[0-9]+(?:[A-Za-z0-9.+-]*))`)",
         readme,
     )
     readme_value = (readme_version.group(1) or readme_version.group(2)) if readme_version else None

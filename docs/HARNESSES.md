@@ -1,27 +1,53 @@
 # Harnesses e contrato de integração
 
-O Farol entrega Agent Skills, router, corpus normalizado e um manifesto de
-handoff. O arquivo `harness.json` é relativo e descreve o adapter externo
-RAGFlow; ele não contém endpoint, token ou caminho pessoal.
+O Farol entrega a cada agente de IA (harness) duas coisas: **Agent Skills**
+(`SKILL.md` + capítulos, uma por fonte, mais o router) e o servidor **MCP**
+`farol` (stdio, somente leitura). O harness escolhe o modelo e escreve a
+resposta final; o Farol nunca chama modelo.
 
-## Estado verificado em 20 de setembro de 2026
+## Conectar
 
-| Componente | Versão | Resultado |
-|---|---:|---|
-| Agent Skill externo `book-to-skill` | commit `526f362552562d88c1a8bbf8012d2cee93f831d5` | duas skills reais, lineage, validator e scan aprovados |
-| RAGFlow | `0.27.2` | health, dataset, upload, parse, chunks, retrieval, rebuild e cleanup aprovados |
-| Docling + RapidOCR | `2.129.0` + ONNX Runtime `1.30.0` | PDF escaneado de duas páginas aprovado |
-| Release gate full | árvore candidata baseada em `93bb8894d816aad3c3b3682ccec317db1da39d45` | `25/25`, `1045 passed`, `12 skipped`, zero falhas/bloqueios |
+```bash
+farol connect claude-code --target ~/meu-repositorio
+```
 
-Os testes não publicam, fazem commit, iniciam modelos no core nem armazenam
-credenciais. Integrações externas ausentes permanecem `blocked`/`not_run`.
+| Harness | Skills | MCP | Verificado em 2026-09-28 |
+|---|---|---|---|
+| `claude-code` | `.claude/skills/<fonte>/` | `.mcp.json` (`type: stdio`) | listado pelo Claude Code 2.1.283; resposta real com citações `path:linha` via MCP |
+| `codex` | `.agents/skills/<fonte>/` | `.codex/config.toml` (bloco gerenciado) | `codex mcp list` lista `farol` como `enabled` |
+| `cursor` | via MCP (`get_skill`) + `.cursor/rules/farol.mdc` | `.cursor/mcp.json` | formato conforme documentação oficial |
+| `opencode` | `.opencode/skills/<fonte>/` | `opencode.json` (`type: local`) | `opencode mcp list` mostra o servidor como conectado |
+| `generic` | pastas indicadas | JSON impresso | qualquer cliente MCP stdio |
 
-## Passos comuns
+`--scope user` configura o usuário (`~/.claude/skills`, `~/.codex/config.toml`…)
+em vez de um repositório; `--dry-run` mostra as mudanças; `--remove` desfaz.
+Arquivos de configuração que você não editou depois do `connect` voltam
+byte a byte ao original; nos demais, só a entrada `farol` é removida.
 
-1. Prepare somente as dependências do core com `python scripts/bootstrap.py --dev`.
-2. Gere um pacote com `python -m docops run <fonte> --output <pacote> --license <id>`.
-3. Carregue `<pacote>/skill` e `<pacote>/router` no harness de Agent Skills.
-4. Para RAG factual, instale os extras em Python 3.13 e configure fora do repositório:
+## Ferramentas MCP
+
+| Ferramenta | Uso |
+|---|---|
+| `list_skills` | skills disponíveis (uma por fonte, mais routers) e capítulos |
+| `get_skill` | `SKILL.md` ou um capítulo, para conceitos e decisões |
+| `search_knowledge` | fatos literais com `citation` (`path:linha`, página ou `(at HH:MM:SS)`) e `risk` |
+| `get_document` | todos os blocos de um documento, em ordem |
+
+Sem evidência, `search_knowledge` retorna `insufficient_evidence`; o agente deve
+abster-se em vez de adivinhar. Todo texto retornado vem marcado como conteúdo
+não confiável; blocos com diretivas para IA (`risk: high`) nunca são retornados.
+
+## Contrato do pacote
+
+`harness.json` de cada pacote declara a geração ativa, as skills e o bloco
+`mcp` (`command`, `args`, `tools`), sem caminhos pessoais nem credenciais. O
+contrato canônico está em `schemas/harness.schema.json`.
+
+## Backend RAGFlow (opcional)
+
+Com o extra `ragflow` (Python 3.13) e uma instância RAGFlow 0.27.2 própria, a
+integração factual pode usar o RAGFlow em vez do índice local. Configure fora do
+repositório:
 
 ```text
 DOCOPS_RAGFLOW_ENDPOINT=https://...
@@ -30,23 +56,6 @@ DOCOPS_RAGFLOW_IMAGE_DIGEST=<repository>@sha256:<64-hex>
 DOCOPS_RAGFLOW_SDK_VERSION=0.27.2
 ```
 
-5. Execute `python scripts/run_release_gates.py --profile ragflow --json`.
-
-O core não inicia RAGFlow automaticamente. O perfil de desenvolvimento usa
-loopback explícito; qualquer endpoint remoto exige HTTPS. `harness.json` mantém
-somente identidade do adapter, versão, capacidades e `config.yaml` relativo.
-
-## Handoff
-
-O harness externo escolhe o modelo e produz a resposta final. O Farol fornece
-as skills, o router e evidências com locators canônicos. Afirmações factuais
-devem citar `path#secao`, `path:linha` ou locator equivalente; sem evidência
-elegível, o resultado deve ser abstenção ou conflito.
-
-O contrato canônico está em `schemas/harness.schema.json`. A decisão de
-publicação continua manual e não é concedida pelo manifesto.
-
-O estado integrado em `main` contém a implementação da release candidate
-`v2.0.0-rc.1`; o commit de integração não altera o resultado dos recibos de 20
-de setembro. A promoção de uma release estável 2.0 ainda depende de nova
-revisão humana, tag e release explícitas.
+O core não inicia o RAGFlow automaticamente; endpoints remotos exigem HTTPS.
+A evidência histórica da integração RAGFlow 0.27.2 está em
+[specs/farol-2/evidence](../specs/farol-2/evidence/TK-013.md).

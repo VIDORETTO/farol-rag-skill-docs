@@ -3,9 +3,9 @@ requires = ["setuptools>=84.0.0,<85.0.0", "wheel>=0.45.0,<0.48.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "consulta-documentacao"
+name = "farol-kit"
 version = "2.0.0rc1"
-description = "Farol — portable, deterministic documentation-to-knowledge orchestration with an external RAGFlow backend."
+description = "Farol — turn documentation, books, papers, videos and repositories into agent skills and cited evidence for any AI (MCP), locally."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
