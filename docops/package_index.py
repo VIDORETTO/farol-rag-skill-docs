@@ -27,7 +27,23 @@ def _read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _relative_locators(locators: list[dict[str, Any]], relative: str) -> list[dict[str, Any]]:
+def _page_ranges(locators: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """A page spans from its heading to the next page heading (not the next section)."""
+
+    pages = sorted(
+        (item for item in locators if item.get("kind") == "page" and "number" in item),
+        key=lambda item: int(item.get("line_start", 0)),
+    )
+    ranges = []
+    for index, page in enumerate(pages):
+        end = int(pages[index + 1]["line_start"]) - 1 if index + 1 < len(pages) else 10**9
+        ranges.append({**page, "line_end": end})
+    return ranges
+
+
+def _relative_locators(
+    locators: list[dict[str, Any]], relative: str, pages: list[dict[str, Any]] | None = None
+) -> list[dict[str, Any]]:
     # Extractors record the absolute origin of the file they read; published
     # evidence must only cite the package-relative path.
     cleaned = []
@@ -35,6 +51,12 @@ def _relative_locators(locators: list[dict[str, Any]], relative: str) -> list[di
         value = {key: item for key, item in locator.items() if key != "origin"}
         value["path"] = relative
         cleaned.append(value)
+    line = next((item.get("line") for item in cleaned if item.get("kind") == "line"), None)
+    if isinstance(line, int):
+        for page in pages or []:
+            if int(page.get("line_start", 0)) <= line <= int(page.get("line_end", -1)):
+                cleaned.append({"kind": "page", "page": int(page["number"]), "label": str(page.get("label"))})
+                break
     return cleaned
 
 
@@ -70,6 +92,7 @@ def package_documents(root: Path) -> tuple[list[dict[str, Any]], list[dict[str, 
         if result.document is None:
             skipped.append({"path": relative, "code": "extraction_empty"})
             continue
+        pages = _page_ranges(entry.get("locators") or [])
         documents.append(
             {
                 "document_id": result.document.document_id,
@@ -80,7 +103,7 @@ def package_documents(root: Path) -> tuple[list[dict[str, Any]], list[dict[str, 
                 "blocks": [
                     {
                         **block.to_dict(),
-                        "locators": _relative_locators(block.to_dict()["locators"], relative),
+                        "locators": _relative_locators(block.to_dict()["locators"], relative, pages),
                         "risk": classify(block.text or "").risk,
                     }
                     for block in result.document.blocks

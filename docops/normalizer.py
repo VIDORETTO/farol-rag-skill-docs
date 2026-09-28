@@ -296,16 +296,110 @@ def _load_yaml(path: Path) -> Any:
         raise ValueError(f"invalid YAML: {exc}") from exc
 
 
+_ARXIV_ID = re.compile(r"\barXiv:\s*(\d{4}\.\d{4,5}(?:v\d+)?)", re.I)
+_DOI = re.compile(r"\b(10\.\d{4,9}/[^\s\"<>]+[^\s\"<>.,;])")
+
+
+def _pdf_outline(reader: Any) -> dict[int, list[str]]:
+    """Map page index → titles of outline entries (two levels) that start on it."""
+
+    starts: dict[int, list[str]] = {}
+
+    def walk(items: Any, depth: int) -> None:
+        for item in items:
+            if isinstance(item, list):
+                if depth < 2:
+                    walk(item, depth + 1)
+                continue
+            try:
+                page = reader.get_destination_page_number(item)
+            except Exception:
+                continue
+            title = " ".join(str(getattr(item, "title", "") or "").split())
+            if title and page is not None and page >= 0:
+                starts.setdefault(page, []).append(title)
+
+    try:
+        walk(reader.outline, 1)
+    except Exception:
+        return {}
+    return starts
+
+
+def _split_at_titles(text: str, titles: list[str]) -> list[tuple[str | None, str]]:
+    """Split one page's text where each outline title appears as a line."""
+
+    segments: list[tuple[str | None, str]] = []
+    remaining = text
+    current: str | None = None
+    for title in titles:
+        pattern = re.compile(rf"^[\s\dA-Z.]{{0,8}}{re.escape(title)}\s*$", re.I | re.M)
+        match = pattern.search(remaining)
+        if match:
+            segments.append((current, remaining[: match.start()]))
+            remaining = remaining[match.end() :]
+        else:
+            segments.append((current, ""))
+        current = title
+    segments.append((current, remaining))
+    return [(title, body.strip()) for title, body in segments if body.strip() or title is not None]
+
+
+_MARKDOWN_SYNTAX = re.compile(r"^\s*(?:#|```|~~~|>|\|)|^\s*([=\-_*])\1{2,}\s*$")
+
+
+def _pdf_page_markdown(text: str) -> str:
+    """Render extracted PDF text as Markdown without accidental syntax.
+
+    PDF text is not Markdown: shell prompts (``# ...``), fences, quotes, tables or
+    rules must stay text, so such lines are escaped and kept in their paragraph.
+    Paragraph boundaries are left as extracted (measured: splitting pages into
+    short paragraphs lowered recall on the real acceptance corpus).
+    """
+
+    return "\n".join("\\" + line.lstrip() if _MARKDOWN_SYNTAX.match(line) else line for line in text.splitlines())
+
+
+def _pdf_markdown(reader: Any) -> str:
+    """Pages as ``## Page N`` with the document outline as ``### section`` headings."""
+
+    outline = _pdf_outline(reader)
+    pages = [(page.extract_text() or "").strip() for page in reader.pages]
+    head = " ".join(pages[:2])
+    metadata = [f"- Pages: {len(pages)}"]
+    title = str(getattr(reader.metadata, "title", None) or "").strip() if reader.metadata else ""
+    if title:
+        metadata.insert(0, f"- Title: {title}")
+    if arxiv := _ARXIV_ID.search(head):
+        metadata.append(f"- arXiv: {arxiv.group(1)}")
+    if doi := _DOI.search(head):
+        metadata.append(f"- DOI: {doi.group(1)}")
+    parts: list[str] = []
+    current: str | None = None
+    for index, text in enumerate(pages, 1):
+        if not text:
+            continue
+        lines = [f"## Page {index}"]
+        for section, body in _split_at_titles(text, outline.get(index - 1, [])):
+            section = section or current
+            if section:
+                lines.append(f"### {section}")
+            if body:
+                lines.append(_pdf_page_markdown(body))
+            current = section
+        parts.append("\n\n".join(lines))
+    # Metadata goes last so it never becomes the parent section of the content.
+    parts.append("## Metadata\n\n" + "\n".join(metadata))
+    return "\n\n".join(parts) if any(pages) else ""
+
+
 def _extract_pdf(path: Path) -> str:
     text_parts: list[str] = []
     try:
         from pypdf import PdfReader  # type: ignore[import-not-found]
 
         reader = PdfReader(str(path))
-        for index, page in enumerate(reader.pages, 1):
-            text = (page.extract_text() or "").strip()
-            if text:
-                text_parts.append(f"## Page {index}\n\n{text}")
+        text_parts = [_pdf_markdown(reader)]
     except ImportError:
         try:
             import fitz  # type: ignore[import-not-found]

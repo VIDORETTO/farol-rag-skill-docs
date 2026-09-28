@@ -116,6 +116,7 @@ def _parse_markdown(text: str, origin: str) -> tuple[list[dict[str, Any]], list[
     blocks: list[dict[str, Any]] = []
     links = re.findall(r"\[[^\]]+\]\((https?://[^)\s]+)", text)
     heading_path: list[str] = []
+    levels: list[int] = []
     index = 0
     while index < len(lines):
         line = lines[index]
@@ -127,7 +128,12 @@ def _parse_markdown(text: str, origin: str) -> tuple[list[dict[str, Any]], list[
         if heading:
             level = len(heading.group(1))
             label = heading.group(2).strip()
-            heading_path = heading_path[: max(level - 1, 0)] + [label]
+            # A stack of real levels: a document may start at H2 (no H1).
+            while levels and levels[-1] >= level:
+                levels.pop()
+                heading_path.pop()
+            levels.append(level)
+            heading_path = [*heading_path, label]
             blocks.append({"kind": "heading", "text": label, "heading_path": list(heading_path), "line": index + 1})
             index += 1
             continue

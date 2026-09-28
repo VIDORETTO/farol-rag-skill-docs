@@ -34,6 +34,7 @@ CHAPTER_OUTPUT_TOKENS = 2_500
 CORE_OUTPUT_TOKENS = 4_000
 MAX_OUTPUT_BYTES = 256 * 1024
 _CONTEXT_KINDS = frozenset({"title", "heading"})
+_PAGE_HEADING = re.compile(r"Page \d+", re.I)
 _REF = re.compile(r"\[(b\d+(?:\s*,\s*b\d+)*)\]")
 _CHAPTER_SECTIONS: dict[str, tuple[str, ...]] = {
     "Core idea": ("core idea", "ideia central"),
@@ -127,7 +128,9 @@ def _sections(documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 continue
             if block.get("risk") == "high":
                 continue
-            key = (document["path"], tuple(block.get("heading_path") or [])[:2])
+            # Page headings of PDFs are locators, not subjects: group by the outline.
+            topical = tuple(part for part in block.get("heading_path") or [] if not _PAGE_HEADING.fullmatch(part))
+            key = (document["path"], topical[:2] or tuple(block.get("heading_path") or [])[:1])
             section = index.get(key)
             if section is None:
                 title = " › ".join(key[1]) or Path(document["path"]).stem

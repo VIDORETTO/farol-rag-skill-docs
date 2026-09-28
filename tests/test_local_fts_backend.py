@@ -126,3 +126,21 @@ def test_headings_are_context_not_evidence(tmp_path: Path) -> None:
     result = backend.query(index, QueryRequest(query="retries", top_k=5))
 
     assert [hit["block_id"] for hit in result.hits] == ["p-retries"]
+
+
+def test_function_words_do_not_decide_the_ranking(tmp_path: Path) -> None:
+    chatty = {
+        **RELEASE,
+        "blocks": [
+            _block("b-chatty", "What is it that the one in the middle is? It is what it is.", ["Notes"], line=1)
+        ],
+    }
+    backend, index = _index(tmp_path, [GUIDE, chatty])
+
+    result = backend.query(index, QueryRequest(query="what is the maximum of attempts", top_k=1))
+    only_function_words = backend.query(index, QueryRequest(query="what is it", top_k=1))
+    unknown_subject = backend.query(index, QueryRequest(query="what is the kubernetes setting", top_k=3))
+
+    assert result.hits[0]["block_id"] == "b-retry"
+    assert only_function_words.hits[0]["block_id"] == "b-chatty"
+    assert unknown_subject.outcome == "insufficient_evidence"
