@@ -32,9 +32,6 @@
     "blocked": [],
     "draft": [
       "TK-111",
-      "TK-119",
-      "TK-120",
-      "TK-121",
       "TK-122"
     ],
     "in_progress": [],
@@ -56,10 +53,13 @@
       "TK-109",
       "TK-115",
       "TK-116",
-      "TK-118"
+      "TK-118",
+      "TK-119",
+      "TK-120",
+      "TK-121"
     ]
   },
-  "next_action": "Onda E: TK-119 (prova de valor), TK-111 (release), TK-121 (distribuição), TK-120 (site).",
+  "next_action": "TK-111: gate release no commit limpo; depois publicação (autorização do mantenedor) e beta (TK-122).",
   "publicity_gate": "TK-122 exit criteria (SC-109)",
   "wave": "E",
   "decisions": "specs/farol-3/decisions.md",

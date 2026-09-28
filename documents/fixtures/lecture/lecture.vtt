@@ -1,0 +1,12 @@
+WEBVTT
+Kind: captions
+Language: en
+
+00:00:01.000 --> 00:00:05.000
+Welcome to this synthetic lecture about the Acme client.
+
+00:00:42.000 --> 00:00:48.000
+The client retries five times with exponential backoff.
+
+00:01:30.000 --> 00:01:36.000
+Version two removed the legacy orders endpoint.

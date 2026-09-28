@@ -58,4 +58,4 @@ DOCOPS_RAGFLOW_SDK_VERSION=0.27.2
 
 O core não inicia o RAGFlow automaticamente; endpoints remotos exigem HTTPS.
 A evidência histórica da integração RAGFlow 0.27.2 está em
-[specs/farol-2/evidence](../specs/farol-2/evidence/TK-013.md).
+[specs/farol-2/evidence](https://github.com/VIDORETTO/farol-rag-skill-docs/blob/main/specs/farol-2/evidence/TK-013.md).

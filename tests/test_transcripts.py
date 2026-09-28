@@ -1,4 +1,4 @@
-# seam-scope: public-seam (transcripts: subtitle files, YouTube sources and audio → cited evidence)
+# seam-scope: implementation-infrastructure (Farol 3 public module seam: transcripts: subtitle files, YouTube sources and audio → cited evidence)
 from __future__ import annotations
 
 import json
@@ -226,3 +226,16 @@ def test_youtube_bot_check_becomes_an_actionable_error(monkeypatch) -> None:
     assert error.value.code == "youtube_blocked"
     assert "cookies" in str(error.value) and "subtitle" in str(error.value)
     assert Client.options["cookiefile"] == "/tmp/cookies.txt"
+
+
+def test_a_pause_starts_a_new_paragraph_so_facts_cite_their_moment() -> None:
+    from docops import transcripts
+
+    segments = [
+        transcripts.Segment(1.0, 5.0, "Welcome."),
+        transcripts.Segment(42.0, 48.0, "The client retries five times."),
+    ]
+
+    markdown = transcripts.transcript_markdown(segments, title="Talk", metadata=[])
+
+    assert "[00:00:42] The client retries five times." in markdown

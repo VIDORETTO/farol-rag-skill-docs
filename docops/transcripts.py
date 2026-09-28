@@ -19,7 +19,8 @@ from dataclasses import dataclass
 from typing import Any, Iterable
 
 MEDIA_SUFFIXES = {".mp3", ".m4a", ".wav", ".ogg", ".flac", ".mp4", ".webm", ".mkv", ".mov"}
-_PARAGRAPH_SECONDS = 45.0
+_PARAGRAPH_SECONDS = 30.0
+_PAUSE_SECONDS = 4.0
 _CUE = re.compile(
     r"(?P<start>\d{1,2}:\d{2}(?::\d{2})?[.,]\d{1,3})\s*-->\s*(?P<end>\d{1,2}:\d{2}(?::\d{2})?[.,]\d{1,3})"
 )
@@ -101,7 +102,7 @@ def transcript_markdown(
     metadata: list[str],
     chapters: list[dict[str, Any]] | None = None,
 ) -> str:
-    """Timestamped paragraphs (about 45 s each), grouped under chapter headings."""
+    """Timestamped paragraphs (at most 30 s, split at pauses), grouped under chapter headings."""
 
     marks = sorted(
         (float(chapter.get("start_time") or 0), str(chapter.get("title") or "").strip())
@@ -122,7 +123,11 @@ def transcript_markdown(
             flush()
             chapter_index += 1
             parts.append(f"## {marks[chapter_index][1]}")
-        if paragraph and segment.start - paragraph[0].start >= _PARAGRAPH_SECONDS:
+        # A pause or a long paragraph starts a new one, so each fact cites a precise moment.
+        if paragraph and (
+            segment.start - paragraph[0].start >= _PARAGRAPH_SECONDS
+            or segment.start - paragraph[-1].end >= _PAUSE_SECONDS
+        ):
             flush()
         paragraph.append(segment)
     flush()

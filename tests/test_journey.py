@@ -1,4 +1,4 @@
-# seam-scope: public-seam (S1: `farol init/add/build/status` journey and `farol mcp --project`)
+# seam-scope: implementation-infrastructure (Farol 3 public module seam: S1: `farol init/add/build/status` journey and `farol mcp --project`)
 from __future__ import annotations
 
 import json

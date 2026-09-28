@@ -1,4 +1,4 @@
-# seam-scope: public-seam (S1/S7: `farol sync`, refresh of stale skills, scheduling)
+# seam-scope: implementation-infrastructure (Farol 3 public module seam: S1/S7: `farol sync`, refresh of stale skills, scheduling)
 from __future__ import annotations
 
 import json

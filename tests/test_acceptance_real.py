@@ -1,4 +1,4 @@
-# seam-scope: public-seam (S6: scripts/acceptance_real.py --json)
+# seam-scope: implementation-infrastructure (Farol 3 public module seam: S6: scripts/acceptance_real.py --json)
 from __future__ import annotations
 
 import hashlib

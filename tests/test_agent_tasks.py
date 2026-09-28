@@ -1,4 +1,4 @@
-# seam-scope: public-seam (S1/S5: agent synthesis task protocol of a package)
+# seam-scope: implementation-infrastructure (Farol 3 public module seam: S1/S5: agent synthesis task protocol of a package)
 from __future__ import annotations
 
 import json

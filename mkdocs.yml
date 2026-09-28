@@ -1,0 +1,65 @@
+site_name: Farol
+site_description: Turn documentation, books, papers, videos and repositories into skills and cited evidence for any AI agent.
+site_url: https://vidoretto.github.io/farol-rag-skill-docs/
+repo_url: https://github.com/VIDORETTO/farol-rag-skill-docs
+edit_uri: edit/main/docs/
+docs_dir: docs
+strict: true
+theme:
+  name: material
+  logo: farol-logo.png
+  favicon: farol-logo.png
+  features:
+    - navigation.sections
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+nav:
+  - Home: index.md
+  - Getting started: GETTING-STARTED.md
+  - Recipes: EXAMPLES.md
+  - Connecting agents: HARNESSES.md
+  - Reference:
+      - CLI: reference/cli.md
+      - MCP tools: reference/mcp.md
+      - Errors: ERRORS.md
+  - Operating:
+      - Value benchmark: BENCHMARK.md
+      - Performance and scale: SCALE.md
+      - Compatibility and versioning: COMPATIBILITY.md
+      - Architecture: ARCHITECTURE.md
+not_in_nav: |
+  /*
+  /**/*
+exclude_docs: |
+  archive/
+  ACCEPTANCE.md
+  DEPENDENCIES.md
+  RELEASE.md
+  RELEASE-NOTES-*.md
+  CONTRACT-COMPATIBILITY.md
+  requirements.txt
+  master-evolution/
+  main-consolidation/
+  continuous-knowledge/
+  adr/
+validation:
+  links:
+    not_found: warn
+    absolute_links: ignore
+    unrecognized_links: ignore

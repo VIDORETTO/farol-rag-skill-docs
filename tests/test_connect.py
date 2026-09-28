@@ -1,4 +1,4 @@
-# seam-scope: public-seam (S1: `farol connect <harness>`)
+# seam-scope: implementation-infrastructure (Farol 3 public module seam: S1: `farol connect <harness>`)
 from __future__ import annotations
 
 import json

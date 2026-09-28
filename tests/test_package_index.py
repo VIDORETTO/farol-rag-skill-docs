@@ -1,4 +1,4 @@
-# seam-scope: public-seam (package local index built from a generated package)
+# seam-scope: implementation-infrastructure (Farol 3 public module seam: package local index built from a generated package)
 from __future__ import annotations
 
 import json

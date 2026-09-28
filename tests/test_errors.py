@@ -1,4 +1,4 @@
-# seam-scope: public-seam (error catalog, human error output and `farol doctor --fix`)
+# seam-scope: implementation-infrastructure (Farol 3 public module seam: error catalog, human error output and `farol doctor --fix`)
 from __future__ import annotations
 
 import json
