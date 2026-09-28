@@ -28,9 +28,7 @@
   },
   "open_decisions": [],
   "tickets": {
-    "ready": [
-      "TK-107"
-    ],
+    "ready": [],
     "blocked": [],
     "draft": [
       "TK-109",
@@ -57,10 +55,11 @@
       "TK-102",
       "TK-106",
       "TK-108",
-      "TK-114"
+      "TK-114",
+      "TK-107"
     ]
   },
-  "next_action": "Onda C: TK-107 (vídeo/áudio), TK-117 (erros), TK-112 (sync); README (TK-109.6).",
+  "next_action": "Onda C: TK-117 (erros/doctor --fix), TK-112 (sync), README (109.6).",
   "publicity_gate": "TK-122 exit criteria (SC-109)",
   "wave": "C",
   "decisions": "specs/farol-3/decisions.md",

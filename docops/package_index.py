@@ -42,7 +42,10 @@ def _page_ranges(locators: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _relative_locators(
-    locators: list[dict[str, Any]], relative: str, pages: list[dict[str, Any]] | None = None
+    locators: list[dict[str, Any]],
+    relative: str,
+    pages: list[dict[str, Any]] | None = None,
+    timestamps: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     # Extractors record the absolute origin of the file they read; published
     # evidence must only cite the package-relative path.
@@ -53,6 +56,10 @@ def _relative_locators(
         cleaned.append(value)
     line = next((item.get("line") for item in cleaned if item.get("kind") == "line"), None)
     if isinstance(line, int):
+        for stamp in timestamps or []:
+            if int(stamp.get("line_start", 0)) == line:
+                cleaned.append({"kind": "timestamp", "start": stamp.get("start"), "label": stamp.get("label")})
+                break
         for page in pages or []:
             if int(page.get("line_start", 0)) <= line <= int(page.get("line_end", -1)):
                 cleaned.append({"kind": "page", "page": int(page["number"]), "label": str(page.get("label"))})
@@ -93,6 +100,7 @@ def package_documents(root: Path) -> tuple[list[dict[str, Any]], list[dict[str, 
             skipped.append({"path": relative, "code": "extraction_empty"})
             continue
         pages = _page_ranges(entry.get("locators") or [])
+        timestamps = [item for item in entry.get("locators") or [] if item.get("kind") == "timestamp"]
         documents.append(
             {
                 "document_id": result.document.document_id,
@@ -103,7 +111,7 @@ def package_documents(root: Path) -> tuple[list[dict[str, Any]], list[dict[str, 
                 "blocks": [
                     {
                         **block.to_dict(),
-                        "locators": _relative_locators(block.to_dict()["locators"], relative, pages),
+                        "locators": _relative_locators(block.to_dict()["locators"], relative, pages, timestamps),
                         "risk": classify(block.text or "").risk,
                     }
                     for block in result.document.blocks

@@ -57,7 +57,7 @@ def output_inside_source(source: Path, output_dir: Path) -> bool:
 def destination_for_file(path: Path, base: Path, normalized: NormalizationResult) -> str:
     relative = path.name if base.is_file() else path.relative_to(base).as_posix()
     safe = safe_relpath(relative)
-    if normalized.format in {"html", "pdf", "docx", "openapi", "ipynb", "xlsx", "pptx"}:
+    if normalized.format in {"html", "pdf", "docx", "openapi", "ipynb", "xlsx", "pptx", "transcript"}:
         safe = safe.with_suffix(".md")
     return safe.as_posix()
 

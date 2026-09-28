@@ -153,15 +153,34 @@
       ]
     },
     {
-      "id": "cc-video",
-      "kind": "video",
-      "status": "pending_extractor",
-      "title": "YouTube CC-BY video with captions (chosen in TK-107)",
-      "license": "CC-BY-4.0",
-      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "id": "wikimedia-audio",
+      "kind": "audio",
+      "title": "Wikipedia - Chojn\u00f3w (spoken, Wikimedia Commons)",
+      "license": "CC0-1.0",
+      "license_url": "https://commons.wikimedia.org/wiki/File:Wikipedia_-_Chojn%C3%B3w_(spoken_by_AI_voice).mp3",
       "purpose": "local-acceptance",
       "redistribution": "forbidden",
-      "files": []
+      "requires": "media extra (faster-whisper)",
+      "files": [
+        {
+          "name": "chojnow.mp3",
+          "url": "https://upload.wikimedia.org/wikipedia/commons/2/2a/Wikipedia_-_Chojn%C3%B3w_%28spoken_by_AI_voice%29.mp3",
+          "sha256": "d6c998f2fc799a23d9c5fefb1709057247fb407a8fcef58b9ca36d4895a3b6c7"
+        }
+      ]
+    },
+    {
+      "id": "youtube-cc-video",
+      "kind": "video",
+      "status": "pending_extractor",
+      "note": "YouTube requires sign-in from this datacenter IP (youtube_blocked); run with FAROL_YTDLP_COOKIES or from a residential connection",
+      "title": "CC-BY YouTube video with captions",
+      "license": "CC-BY-3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "purpose": "local-acceptance",
+      "redistribution": "forbidden",
+      "files": [],
+      "not_run_code": "youtube_blocked"
     }
   ]
 }

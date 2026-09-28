@@ -228,6 +228,27 @@
       "language": "pt",
       "question": "Como o Git sabe em qual branch estou?",
       "expected_text": "special pointer called HEAD"
+    },
+    {
+      "id": "audio-first-mention",
+      "source": "wikimedia-audio",
+      "kind": "factual",
+      "question": "When was the town first mentioned in records?",
+      "expected_text": "first mentioned in a note dated 1272"
+    },
+    {
+      "id": "audio-population",
+      "source": "wikimedia-audio",
+      "kind": "factual",
+      "question": "How many people live in the town?",
+      "expected_text": "14,900 people"
+    },
+    {
+      "id": "audio-products",
+      "source": "wikimedia-audio",
+      "kind": "factual",
+      "question": "What products are made there?",
+      "expected_text": "agricultural machinery"
     }
   ]
 }

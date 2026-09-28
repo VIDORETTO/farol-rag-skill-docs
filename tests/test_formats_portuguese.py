@@ -132,17 +132,22 @@ def test_missing_native_locator_declares_normalized_section_limit(tmp_path: Path
     )
 
 
-def test_native_transcription_formats_require_external_markdown(tmp_path: Path) -> None:
+def test_subtitle_files_are_native_transcripts_and_other_caption_formats_stay_external(tmp_path: Path) -> None:
+    # Farol 3.0 (TK-107) ingests WebVTT/SRT natively; ASS/SSA still need Markdown.
     vtt = tmp_path / "captions.vtt"
+    ass = tmp_path / "captions.ass"
     markdown = tmp_path / "captions.md"
     vtt.write_text("WEBVTT\n\n00:00.000 --> 00:01.000\ntexto\n", encoding="utf-8")
+    ass.write_text("[Script Info]\n", encoding="utf-8")
     markdown.write_text("[00:00.000] texto transcrito\n", encoding="utf-8")
 
     vtt_result = normalize_file(vtt)
+    ass_result = normalize_file(ass)
     markdown_result = normalize_file(markdown)
 
-    assert vtt_result.status == "ignored"
-    assert vtt_result.error_code == "external_transcription_required"
+    assert vtt_result.status == "accepted"
+    assert any(locator["kind"] == "timestamp" for locator in vtt_result.locators)
+    assert ass_result.error_code == "external_transcription_required"
     assert any(locator["kind"] == "timestamp" for locator in markdown_result.locators)
 
 
