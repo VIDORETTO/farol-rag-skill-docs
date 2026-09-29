@@ -144,3 +144,22 @@ def test_function_words_do_not_decide_the_ranking(tmp_path: Path) -> None:
     assert result.hits[0]["block_id"] == "b-retry"
     assert only_function_words.hits[0]["block_id"] == "b-chatty"
     assert unknown_subject.outcome == "insufficient_evidence"
+
+
+def test_a_sentence_introducing_code_carries_that_code(tmp_path: Path) -> None:
+    document = {
+        **GUIDE,
+        "blocks": [
+            _block("p-lead", "To enable HTTP/2, install the optional dependencies:", ["HTTP/2"], line=7),
+            _block("c-install", "$ pip install acme[h2]", ["HTTP/2"], line=9, kind="code"),
+            _block("p-plain", "HTTP/2 is not enabled by default.", ["HTTP/2"], line=12),
+            _block("c-unrelated", "client = acme.Client()", ["HTTP/2"], line=14, kind="code"),
+        ],
+    }
+    backend, index = _index(tmp_path, [document])
+
+    hits = {hit["block_id"]: hit for hit in backend.query(index, QueryRequest(query="enable HTTP/2", top_k=5)).hits}
+
+    assert hits["p-lead"]["text"].endswith("$ pip install acme[h2]")
+    assert hits["p-lead"]["locators"][0]["line"] == 7
+    assert "acme.Client" not in hits["p-plain"]["text"]
