@@ -7,15 +7,26 @@
   "maturity": "stable",
   "license": "MIT",
   "repository": "https://github.com/VIDORETTO/farol-rag-skill-docs",
-  "homepage": "https://github.com/VIDORETTO/farol-rag-skill-docs",
+  "homepage": "https://vidoretto.github.io/farol-rag-skill-docs/",
   "issues": "https://github.com/VIDORETTO/farol-rag-skill-docs/issues",
-  "documentation": "https://github.com/VIDORETTO/farol-rag-skill-docs/tree/main/docs",
+  "documentation": "https://vidoretto.github.io/farol-rag-skill-docs/",
   "topics": [
     "agent-skills",
+    "ai-agents",
+    "book-to-skill",
+    "citations",
+    "claude-code",
+    "codex",
+    "cursor",
     "documentation",
     "knowledge-base",
+    "llm",
+    "local-first",
     "mcp",
-    "rag"
+    "pdf",
+    "python",
+    "rag",
+    "youtube"
   ],
   "ownership": {
     "codeowners": ".github/CODEOWNERS",
@@ -23,13 +34,13 @@
   },
   "support": "docs/SUPPORT-MATRIX.json",
   "release": {
-    "status": "pre-release",
-    "publication_automated": false,
+    "status": "release",
+    "publication_automated": true,
     "human_authorization_required": true,
     "protections_and_permissions": "authenticated-admin-reviewed",
-    "tag": "v2.0.0-rc.1",
+    "tag": "v3.0.0",
     "commit": null,
-    "url": null,
+    "url": "https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v3.0.0",
     "published_at": null
   }
 }
