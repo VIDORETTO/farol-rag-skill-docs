@@ -35,7 +35,7 @@
   "support": "docs/SUPPORT-MATRIX.json",
   "release": {
     "status": "release",
-    "publication_automated": true,
+    "publication_automated": false,
     "human_authorization_required": true,
     "protections_and_permissions": "authenticated-admin-reviewed",
     "tag": "v3.0.0",
