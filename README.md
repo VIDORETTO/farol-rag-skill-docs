@@ -119,10 +119,14 @@ English sources. Hybrid search, top 5:
 
 | Source | Questions | Answer found | Citations with locator |
 |---|---|---|---|
-| HTTPX documentation (21 pages) | 13 | 77% | 100% |
+| HTTPX documentation (21 pages) | 13 | 92% | 100% |
 | *Pro Git* book (~500 pages) | 13 | 92% | 100% |
 | GraphRAG paper (arXiv) | 5 | 100% | 100% |
 | Spoken article (audio, local speech recognition) | 3 | 100% | 100% |
+
+Every measured source is also distilled into a skill that passes the quality
+rubric with valid lineage (the book: 22 chapters). A separate validation split
+of questions, never used to tune retrieval, scores 85% on the HTTPX docs.
 
 In a [value benchmark](docs/BENCHMARK.md) with Claude Haiku, answers with Farol
 were 89% correct (83% with a verifiable citation) using 1.4k prompt tokens,
