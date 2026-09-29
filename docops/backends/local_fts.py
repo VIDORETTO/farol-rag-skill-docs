@@ -42,12 +42,17 @@ from .base import (
 )
 
 BACKEND_NAME = "local-fts"
-BACKEND_VERSION = "2"
+BACKEND_VERSION = "3"
 TOKENIZER = "unicode61 remove_diacritics 2"
 _INACTIVE_STATUSES = frozenset({"revoked", "withdrawn"})
 # Titles and headings are context carried by every child block (``heading``
 # column); indexing them as evidence lets a bare title outrank the fact.
 _CONTEXT_ONLY_KINDS = frozenset({"title", "heading"})
+# Documentation often states a fact in a sentence that ends with ":" and puts
+# the answer in the code block right after it ("To enable HTTP/2, install:" /
+# "pip install httpx[http2]"). Such a sentence carries the code with it.
+_INTRODUCES = (":", "...", "\u2026")
+_ATTACHED_CODE_MAX_CHARS = 600
 _TOKEN = re.compile(r"\w+", re.UNICODE)
 # Measured on the real acceptance corpus with the default model: answers score
 # 0.40-0.64 (median), queries without an answer up to 0.54.
@@ -407,7 +412,7 @@ def _rows(documents: list[Any]) -> list[dict[str, Any]]:
         blocks = document.get("blocks")
         if not document_id or not isinstance(blocks, list):
             raise BackendError("document_invalid", "candidate documents require document_id and blocks")
-        for block in blocks:
+        for position, block in enumerate(blocks):
             if not isinstance(block, Mapping):
                 continue
             block_id = str(block.get("block_id") or "")
@@ -419,6 +424,16 @@ def _rows(documents: list[Any]) -> list[dict[str, Any]]:
             if block_id in seen:
                 raise BackendError("block_duplicate", "block ids must be unique within an index revision")
             seen.add(block_id)
+            following = blocks[position + 1] if position + 1 < len(blocks) else None
+            if (
+                str(block.get("kind") or "") != "code"
+                and text.rstrip().endswith(_INTRODUCES)
+                and isinstance(following, Mapping)
+                and following.get("kind") == "code"
+                and following.get("heading_path") == block.get("heading_path")
+                and isinstance(following.get("text"), str)
+            ):
+                text = f"{text}\n{following['text'][:_ATTACHED_CODE_MAX_CHARS]}"
             rows.append(
                 {
                     "block_id": block_id,

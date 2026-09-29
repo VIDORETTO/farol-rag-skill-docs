@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "review": {
+    "status": "pending_human_review",
+    "authored_by": "agent",
+    "split": "validation",
+    "note": "13 answerable blocks sampled with random.seed(20260928) from the httpx-docs package; questions written from the block text before any retrieval run. Never tune retrieval against this split; use it to compare before/after a change."
+  },
+  "cases": [
+    {
+      "id": "httpx-val-what-can-i-use-instead-of-requests-session-in-ht",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "What can I use instead of requests.Session() in HTTPX?",
+      "expected_text": "is what you can use instead of"
+    },
+    {
+      "id": "httpx-val-how-do-i-bind-outgoing-connections-to-a-specific",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "How do I bind outgoing connections to a specific local address?",
+      "expected_text": "local_address=\"0.0.0.0\""
+    },
+    {
+      "id": "httpx-val-how-can-i-inspect-or-modify-the-installed-event-",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "How can I inspect or modify the installed event hooks after creating a client?",
+      "expected_text": "event_hooks` property"
+    },
+    {
+      "id": "httpx-val-can-form-encoded-data-include-multiple-values-fo",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "Can form encoded data include multiple values for the same key?",
+      "expected_text": "multiple values from a given key"
+    },
+    {
+      "id": "httpx-val-which-url-keys-are-used-when-mapping-transports-",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "Which URL keys are used when mapping transports with mounts?",
+      "expected_text": "full URL schemes"
+    },
+    {
+      "id": "httpx-val-what-happens-by-default-after-5-seconds-of-netwo",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "What happens by default after 5 seconds of network inactivity?",
+      "expected_text": "TimeoutException` after 5 seconds"
+    },
+    {
+      "id": "httpx-val-which-parameter-should-i-use-to-upload-raw-text-",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "Which parameter should I use to upload raw text or binary content?",
+      "expected_text": "prefer to use a `content` parameter"
+    },
+    {
+      "id": "httpx-val-can-i-chain-raise-for-status-and-then-read-json",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "Can I chain raise_for_status() and then read JSON?",
+      "expected_text": "raise_for_status().json()"
+    },
+    {
+      "id": "httpx-val-how-do-i-route-all-requests-through-one-proxy-us",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "How do I route all requests through one proxy using mounts?",
+      "expected_text": "\"all://\": httpx.HTTPTransport(proxy="
+    },
+    {
+      "id": "httpx-val-how-do-i-fix-the-handshake-operation-timed-out-o",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "How do I fix 'The handshake operation timed out' on HTTPS requests when using a proxy?",
+      "expected_text": "httpx.HTTPTransport(proxy=\"http://myproxy.org\")"
+    },
+    {
+      "id": "httpx-val-when-should-request-extensions-be-used",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "When should request extensions be used?",
+      "expected_text": "may not be available on all transports"
+    },
+    {
+      "id": "httpx-val-how-do-i-set-a-base-url-for-every-request-made-b",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "How do I set a base URL for every request made by a client?",
+      "expected_text": "base_url='http://httpbin.org'"
+    },
+    {
+      "id": "httpx-val-what-does-httpx-build-on",
+      "source": "httpx-docs",
+      "kind": "factual",
+      "question": "What does HTTPX build on?",
+      "expected_text": "well-established usability of"
+    }
+  ]
+}
