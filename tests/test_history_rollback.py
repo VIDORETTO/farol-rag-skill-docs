@@ -37,6 +37,7 @@ def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
 
@@ -179,6 +180,7 @@ def test_rollback_recovers_after_promotion_crash_before_retry(tmp_path: Path, fa
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={**os.environ, "DOCOPS_TEST_PROMOTION_FAILPOINT": failpoint},
     )
     assert crashed.returncode == 86, crashed.stdout + crashed.stderr

@@ -38,6 +38,7 @@ def _prepare_candidate(tmp_path: Path, *, without_ci_evidence: bool = False) -> 
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env=environment,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
@@ -71,6 +72,7 @@ def test_release_candidate_identity_is_structured_and_fail_closed_without_ci_evi
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env=environment,
     )
 
@@ -96,6 +98,7 @@ def test_release_verification_requires_an_independent_source_root(tmp_path: Path
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1
@@ -129,6 +132,7 @@ def test_candidate_falls_back_when_bootstrap_no_install_leaves_a_venv_without_pi
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert bootstrapped.returncode == 0, bootstrapped.stdout + bootstrapped.stderr
 
@@ -155,6 +159,7 @@ def test_candidate_falls_back_when_bootstrap_no_install_leaves_a_venv_without_pi
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env=environment,
     )
 
@@ -180,6 +185,7 @@ def test_candidate_verification_rejects_source_mutation_after_digest(tmp_path: P
             check=False,
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
     finally:
         source.write_bytes(original)

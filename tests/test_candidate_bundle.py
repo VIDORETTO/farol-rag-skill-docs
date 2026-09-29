@@ -82,6 +82,7 @@ def test_candidate_bundle_has_new_identity_and_reproducible_release_assets(tmp_p
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 0, completed.stderr
@@ -104,6 +105,7 @@ def test_candidate_bundle_has_new_identity_and_reproducible_release_assets(tmp_p
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert verified.returncode == 0, verified.stdout
 
@@ -114,6 +116,7 @@ def test_candidate_bundle_has_new_identity_and_reproducible_release_assets(tmp_p
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert tampered.returncode == 1
     assert "digest" in tampered.stdout.casefold()
@@ -127,6 +130,7 @@ def test_candidate_bundle_has_new_identity_and_reproducible_release_assets(tmp_p
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert inconsistent.returncode == 1
     assert "metadata_version_mismatch" in inconsistent.stdout
@@ -146,6 +150,7 @@ def test_candidate_bundle_excludes_private_originals_and_runtime_state(tmp_path:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 0, completed.stdout + completed.stderr
@@ -175,6 +180,7 @@ def test_candidate_verifier_requires_every_release_and_community_asset(tmp_path:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert prepared.returncode == 0, prepared.stdout + prepared.stderr
 
@@ -188,6 +194,7 @@ def test_candidate_verifier_requires_every_release_and_community_asset(tmp_path:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1
@@ -207,6 +214,7 @@ def test_candidate_verifier_rejects_readme_version_drift(tmp_path: Path) -> None
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert prepared.returncode == 0, prepared.stdout + prepared.stderr
     manifest = json.loads((output / "candidate-manifest.json").read_text(encoding="utf-8"))
@@ -223,6 +231,7 @@ def test_candidate_verifier_rejects_readme_version_drift(tmp_path: Path) -> None
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1
@@ -237,6 +246,7 @@ def test_candidate_verifier_rejects_changelog_version_drift(tmp_path: Path) -> N
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert prepared.returncode == 0, prepared.stdout + prepared.stderr
     manifest = json.loads((output / "candidate-manifest.json").read_text(encoding="utf-8"))
@@ -253,6 +263,7 @@ def test_candidate_verifier_rejects_changelog_version_drift(tmp_path: Path) -> N
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1
@@ -267,6 +278,7 @@ def test_candidate_verifier_rejects_code_version_drift(tmp_path: Path) -> None:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert prepared.returncode == 0, prepared.stdout + prepared.stderr
     manifest = json.loads((output / "candidate-manifest.json").read_text(encoding="utf-8"))
@@ -289,6 +301,7 @@ def test_candidate_verifier_rejects_code_version_drift(tmp_path: Path) -> None:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1
@@ -317,6 +330,7 @@ def test_rag_candidate_records_model_provenance_without_distributing_model_cache
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert prepared.returncode == 0, prepared.stdout + prepared.stderr
@@ -338,6 +352,7 @@ def test_rag_candidate_records_model_provenance_without_distributing_model_cache
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert verified.returncode == 1
     assert "prohibited_model_cache" in verified.stdout

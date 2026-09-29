@@ -32,6 +32,7 @@ def test_support_checker_rejects_a_platform_claim_without_a_matching_workflow_jo
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1
@@ -64,6 +65,7 @@ def test_support_checker_rejects_a_claim_when_its_job_does_not_execute_the_profi
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1
@@ -135,6 +137,7 @@ def test_support_checker_rejects_package_without_candidate_artifact(tmp_path: Pa
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1
@@ -172,6 +175,7 @@ def test_support_checker_rejects_broad_rag_artifact(tmp_path: Path) -> None:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1
@@ -213,6 +217,7 @@ def test_support_checker_rejects_every_broad_integration_artifact_path(
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1
@@ -249,6 +254,7 @@ def test_support_checker_rejects_a_gate_marker_that_is_only_a_comment(tmp_path: 
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1
@@ -280,6 +286,7 @@ def test_support_checker_rejects_quick_job_without_pip_check(tmp_path: Path) -> 
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1
@@ -298,6 +305,7 @@ def test_support_checker_rejects_tolerated_python_as_supported(tmp_path: Path) -
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1

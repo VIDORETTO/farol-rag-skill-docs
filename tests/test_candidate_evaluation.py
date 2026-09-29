@@ -151,6 +151,7 @@ def test_evaluate_cli_imports_external_response_receipt(tmp_path: Path) -> None:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1, completed.stdout + completed.stderr

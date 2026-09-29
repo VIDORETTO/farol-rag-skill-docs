@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shlex
 import subprocess
@@ -94,7 +95,12 @@ def _farol_context(package: Path, question: str) -> str:
 def _ask(harness: str, prompt: str, timeout: int) -> dict[str, Any]:
     started = time.monotonic()
     completed = subprocess.run(
-        shlex.split(harness), input=prompt, capture_output=True, text=True, encoding="utf-8", timeout=timeout
+        shlex.split(harness, posix=os.name != "nt"),
+        input=prompt,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=timeout,
     )
     output = completed.stdout.strip()
     try:
