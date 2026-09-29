@@ -38,6 +38,7 @@ def test_clean_clone_reports_an_actionable_bootstrap_when_interpreter_is_unavail
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 2
@@ -61,6 +62,7 @@ def test_clean_clone_reports_an_actionable_bootstrap_when_interpreter_is_unavail
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert bootstrapped.returncode == 2
     assert json.loads(bootstrapped.stdout)["code"] == "bootstrap_interpreter_missing"

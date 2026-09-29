@@ -186,6 +186,7 @@ def test_evaluation_is_invalidated_when_a_composition_artifact_changes(tmp_path:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert evaluated.returncode == 0, evaluated.stdout + evaluated.stderr
     assert json.loads(evaluated.stdout)["ok"] is True
@@ -374,6 +375,7 @@ def test_interrupted_candidate_resumes_and_rejects_arbitrary_candidate_entries(t
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env=environment,
     )
     assert interrupted.returncode == 87
@@ -417,6 +419,7 @@ def test_structurally_invalid_candidate_is_rejected_and_cannot_be_validated(tmp_
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert validation.returncode != 0
     rejected = [item for item in docops.inspect(output)["candidates"] if item.get("candidate_id") == candidate_id]

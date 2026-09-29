@@ -76,6 +76,7 @@ def test_next_public_operation_recovers_after_crash_between_promotion_renames(tm
         env=environment,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         check=False,
     )
     assert crashed.returncode == 86, crashed.stderr
@@ -138,6 +139,7 @@ def test_next_public_operation_finalizes_a_crash_after_new_generation_install(tm
         env=environment,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         check=False,
     )
     assert crashed.returncode == 86, crashed.stderr
@@ -207,6 +209,7 @@ def test_next_public_operation_recovers_when_process_dies_between_rename_and_jou
         env=environment,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         check=False,
     )
 

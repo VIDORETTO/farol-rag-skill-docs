@@ -14,6 +14,7 @@ def _run_cli(*args: str, env: dict[str, str] | None = None) -> subprocess.Comple
         [sys.executable, "-m", "docops", *args],
         cwd=ROOT,
         text=True,
+        encoding="utf-8",
         capture_output=True,
         env=env,
     )

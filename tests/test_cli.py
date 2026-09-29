@@ -15,6 +15,7 @@ def test_doctor_command_emits_machine_readable_report(tmp_path: Path) -> None:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={**__import__("os").environ, "DOCOPS_SKIP_RAG": "1"},
     )
 
@@ -36,6 +37,7 @@ def test_doctor_required_ragflow_fails_with_actionable_json_without_credentials(
         [sys.executable, "-m", "docops", "doctor", "--root", str(tmp_path), "--require-ragflow", "--json"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env=environment,
     )
     assert completed.returncode == 1
@@ -67,6 +69,7 @@ def test_project_init_resumes_across_cli_processes_without_repeating_answers(tmp
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert started.returncode == 2, started.stderr
     started_payload = json.loads(started.stdout)
@@ -94,6 +97,7 @@ def test_project_init_resumes_across_cli_processes_without_repeating_answers(tmp
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert answered.returncode == 0, answered.stderr
 
@@ -112,6 +116,7 @@ def test_project_init_resumes_across_cli_processes_without_repeating_answers(tmp
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert inspected.returncode == 0, inspected.stderr
     inspected_payload = json.loads(inspected.stdout)
@@ -149,6 +154,7 @@ def test_evaluate_command_never_emits_the_golden_query(tmp_path: Path) -> None:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert created.returncode == 0, created.stdout + created.stderr
     query = "customer-merger-confidential-roadmap"
@@ -192,6 +198,7 @@ def test_evaluate_command_never_emits_the_golden_query(tmp_path: Path) -> None:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert evaluated.returncode == 0, evaluated.stdout + evaluated.stderr
@@ -210,6 +217,7 @@ def test_resolve_and_run_commands_are_consumable_by_a_harness(tmp_path: Path) ->
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert resolved.returncode == 0, resolved.stderr
     assert json.loads(resolved.stdout)["selected"]["kind"] == "local"
@@ -232,6 +240,7 @@ def test_resolve_and_run_commands_are_consumable_by_a_harness(tmp_path: Path) ->
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
     assert executed.returncode == 0, executed.stderr
     assert json.loads(executed.stdout)["ok"] is True
@@ -261,6 +270,7 @@ def test_plan_command_emits_a_reviewable_no_effects_plan(tmp_path: Path) -> None
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 0, completed.stderr
@@ -279,6 +289,7 @@ def test_config_audit_command_rejects_an_unauthenticated_http_profile(tmp_path: 
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1
@@ -291,6 +302,7 @@ def test_resolve_command_does_not_echo_url_credentials(tmp_path: Path) -> None:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 0
@@ -319,6 +331,7 @@ def test_cli_returns_structured_json_for_invalid_pipeline_options(tmp_path: Path
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1

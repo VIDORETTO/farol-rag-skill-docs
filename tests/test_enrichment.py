@@ -104,6 +104,7 @@ def _submit(
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
 
@@ -172,6 +173,7 @@ def test_candidate_submit_rejects_scope_escape_without_touching_active(tmp_path:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert submitted.returncode != 0

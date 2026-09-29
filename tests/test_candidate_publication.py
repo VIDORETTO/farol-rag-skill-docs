@@ -57,6 +57,7 @@ def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
 
@@ -118,6 +119,7 @@ def test_candidate_content_flag_does_not_authorize_publication(tmp_path: Path) -
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 1, completed.stdout + completed.stderr
@@ -351,6 +353,7 @@ def test_candidate_publication_recovers_a_journaled_crash_before_retry(tmp_path:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={**os.environ, "DOCOPS_TEST_PROMOTION_FAILPOINT": failpoint},
     )
     assert crashed.returncode == 86, crashed.stdout + crashed.stderr

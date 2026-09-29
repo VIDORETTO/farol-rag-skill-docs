@@ -35,6 +35,7 @@ def test_release_gate_plan_is_sequential_and_declares_isolated_outputs(tmp_path:
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     assert completed.returncode == 0, completed.stdout + completed.stderr
@@ -63,6 +64,7 @@ def test_release_gate_report_preserves_versions_denominators_and_skip_reason(tmp
         check=False,
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
     report = json.loads(completed.stdout)
