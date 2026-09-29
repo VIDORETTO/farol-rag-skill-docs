@@ -101,6 +101,22 @@ def test_changed_cited_block_marks_only_its_chapter_stale_and_refresh_reopens_it
     assert status(project)["sources"][0]["state"] == "ready"
 
 
+def test_refresh_follows_sections_that_gained_a_deeper_heading(tmp_path: Path) -> None:
+    project, package, source = _distilled_project(tmp_path)
+    (source / "guide.md").write_text(
+        "# Guide\n\n## Retries\n\nRetries are automatic.\n\n### Limits\n\nThe client retries 7 times.\n",
+        encoding="utf-8",
+    )
+
+    entry = sync(project)["sources"][0]
+    plan_synthesis(package, refresh=True)
+    task = next_task(package)
+
+    assert entry["state"] == "stale" and task["task_id"] == entry["stale_chapters"][0]
+    blocks = json.dumps(task["inputs"]["blocks"])
+    assert "7 times" in blocks and "automatic" in blocks and "/v1/orders" not in blocks
+
+
 def test_unchanged_blocks_reuse_their_embeddings(tmp_path: Path) -> None:
     import pytest
 

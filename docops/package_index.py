@@ -143,6 +143,8 @@ def build_package_index(package_root: Path | str, *, embedder: Any = _AUTO) -> d
     root = Path(package_root).resolve()
     documents, skipped = package_documents(root)
     ir_revision = content_hash([document["document_id"] for document in documents])
+    pointer = root / INDEX_DIR / ACTIVE_POINTER
+    replaced = str(_read_json(pointer).get("index_revision") or "") if pointer.is_file() else ""
     embedder = _resolve_embedder(embedder)
     backend = LocalFtsBackend(root / INDEX_DIR, embedder=embedder)
     try:
@@ -152,9 +154,10 @@ def build_package_index(package_root: Path | str, *, embedder: Any = _AUTO) -> d
         backend.close()
     blocks = sum(len(document["blocks"]) for document in documents)
     write_json_atomic(
-        root / INDEX_DIR / ACTIVE_POINTER,
+        pointer,
         {"schema_version": 1, "backend": index.backend, "index_revision": index.index_revision},
     )
+    _prune_indexes(root / INDEX_DIR, keep={index.index_revision, replaced})
     return {
         "status": index.state,
         "backend": index.backend,
@@ -164,6 +167,22 @@ def build_package_index(package_root: Path | str, *, embedder: Any = _AUTO) -> d
         "skipped": skipped,
         "retrieval_mode": "hybrid" if embedder is not None else "bm25",
     }
+
+
+def _prune_indexes(index_dir: Path, *, keep: set[str]) -> None:
+    """Remove superseded index files, keeping the active one and the one it replaced.
+
+    The replaced index stays because a running reader (``farol mcp``) may still
+    have it open; anything older is disk the user never gets back otherwise.
+    """
+
+    for path in index_dir.glob("index-*.sqlite"):
+        if path.stem in keep:
+            continue
+        try:
+            path.unlink()
+        except OSError:
+            continue  # in use on Windows; the next build removes it
 
 
 def open_package_index(package_root: Path | str, *, embedder: Any = _AUTO) -> tuple[LocalFtsBackend, IndexRevision]:

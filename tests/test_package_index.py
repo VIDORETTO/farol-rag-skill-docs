@@ -60,3 +60,21 @@ def test_rebuilding_the_package_index_is_deterministic(tmp_path: Path) -> None:
     assert backend.query(index, QueryRequest(query="exponential backoff", top_k=1)).hits[0]["path"] == (
         "rag/documents/guide.md"
     )
+
+
+def test_rebuilding_keeps_only_the_active_index_and_the_one_it_replaced(tmp_path: Path) -> None:
+    package = _package(tmp_path)
+    first = build_package_index(package)["index_revision"]
+    index_dir = package / "rag" / "local-index"
+    active = index_dir / f"{first}.sqlite"
+    older, previous = "index-" + "a" * 24, "index-" + "b" * 24
+    for name in (older, previous):
+        (index_dir / f"{name}.sqlite").write_bytes(active.read_bytes())
+    (index_dir / "ACTIVE.json").write_text(
+        json.dumps({"schema_version": 1, "backend": "local-fts", "index_revision": previous}), encoding="utf-8"
+    )
+
+    report = build_package_index(package)
+
+    remaining = sorted(path.name for path in index_dir.glob("index-*.sqlite"))
+    assert remaining == sorted([f"{report['index_revision']}.sqlite", f"{previous}.sqlite"])

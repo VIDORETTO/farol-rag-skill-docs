@@ -381,34 +381,29 @@ def _refresh(root: Path) -> dict[str, Any]:
         for block in document["blocks"]
         if block.get("kind") not in _CONTEXT_KINDS and (block.get("text") or "").strip() and block.get("risk") != "high"
     }
+    existing = {(block["path"], tuple(block.get("heading_path") or [])) for block in current.values()}
+    chapters = [_load_task(root, summary["task_id"]) for summary in plan["tasks"] if summary["kind"] == "chapter"]
     claimed = {
-        item["block_id"]
-        for summary in plan["tasks"]
-        if summary["kind"] == "chapter" and summary["task_id"] not in stale
-        for item in _load_task(root, summary["task_id"])["inputs"]["blocks"]
+        item["block_id"] for task in chapters if task["task_id"] not in stale for item in task["inputs"]["blocks"]
     }
-    counter = max(
-        (
-            int(item["ref"][1:])
-            for summary in plan["tasks"]
-            if summary["kind"] == "chapter"
-            for item in _load_task(root, summary["task_id"])["inputs"]["blocks"]
-        ),
-        default=0,
-    )
-    for task_id in stale:
-        task = _load_task(root, task_id)
-        sections = {
+    counter = max((int(item["ref"][1:]) for task in chapters for item in task["inputs"]["blocks"]), default=0)
+    sections = {
+        task["task_id"]: {
             (item.get("citation", "").split(":")[0], tuple(item["heading_path"])) for item in task["inputs"]["blocks"]
         }
+        for task in chapters
+    }
+    owners: dict[str, list[str]] = {task_id: [] for task_id in stale}
+    for block_id, block in current.items():
+        if block_id in claimed:
+            continue
+        owner = _owner(block, sections, existing)
+        if owner in owners:
+            owners[owner].append(block_id)
+    for task_id in stale:
+        task = _load_task(root, task_id)
         kept = [block_id for block_id in (item["block_id"] for item in task["inputs"]["blocks"]) if block_id in current]
-        extra = [
-            block_id
-            for block_id, block in current.items()
-            if block_id not in claimed
-            and block_id not in kept
-            and (block["path"], tuple(block.get("heading_path") or [])) in sections
-        ]
+        extra = [block_id for block_id in owners[task_id] if block_id not in kept]
         blocks = [current[block_id] for block_id in kept + extra]
         rebuilt, counter = _chapter_task(
             int(task_id.split("-")[1]), task["inputs"]["title"], blocks, counter, task["language"]
@@ -416,7 +411,6 @@ def _refresh(root: Path) -> dict[str, Any]:
         rebuilt["inputs"]["file"] = task["inputs"]["file"]
         rebuilt["request_hash"] = content_hash({key: value for key, value in rebuilt.items() if key != "status"})
         write_json_atomic(_dir(root) / "tasks" / f"{task_id}.json", rebuilt)
-        claimed.update(item["block_id"] for item in rebuilt["inputs"]["blocks"])
     core = _load_task(root, "core")
     core["status"] = "pending"
     core.pop("output_hash", None)
@@ -427,6 +421,39 @@ def _refresh(root: Path) -> dict[str, Any]:
     plan["state"] = "awaiting_agent"
     write_json_atomic(_dir(root) / "plan.json", plan)
     return plan
+
+
+def _owner(
+    block: Mapping[str, Any],
+    sections: Mapping[str, set[tuple[str, tuple[str, ...]]]],
+    existing: set[tuple[str, tuple[str, ...]]],
+) -> str | None:
+    """The chapter whose sections best contain a current block.
+
+    Exact section matches win; otherwise the chapter with the longest section
+    that prefixes the block's heading path (a heading was added below it), and
+    last a vanished section that the block's path prefixes (a heading was
+    removed). This keeps chapters whole when a normalizer upgrade restructures
+    headings instead of leaving them empty.
+    """
+
+    path, heading = block["path"], tuple(block.get("heading_path") or [])
+    best: tuple[int, str | None] = (0, None)
+    for task_id, chapter_sections in sections.items():
+        for section_path, section_heading in chapter_sections:
+            if section_path != path:
+                continue
+            if section_heading == heading:
+                score = 2 * len(heading) + 2
+            elif section_heading and heading[: len(section_heading)] == section_heading:
+                score = 2 * len(section_heading) + 1
+            elif heading and section_heading[: len(heading)] == heading and (path, section_heading) not in existing:
+                score = 2 * len(heading)
+            else:
+                continue
+            if score > best[0]:
+                best = (score, task_id)
+    return best[1]
 
 
 def _render(root: Path, task: dict[str, Any], plan: Mapping[str, Any]) -> dict[str, Any]:
