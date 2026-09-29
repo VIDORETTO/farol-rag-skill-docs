@@ -312,10 +312,10 @@ _ARXIV_ID = re.compile(r"\barXiv:\s*(\d{4}\.\d{4,5}(?:v\d+)?)", re.I)
 _DOI = re.compile(r"\b(10\.\d{4,9}/[^\s\"<>]+[^\s\"<>.,;])")
 
 
-def _pdf_outline(reader: Any) -> dict[int, list[str]]:
-    """Map page index → titles of outline entries (two levels) that start on it."""
+def _pdf_outline(reader: Any) -> dict[int, list[tuple[int, str]]]:
+    """Map page index → ``(depth, title)`` of outline entries (two levels) starting on it."""
 
-    starts: dict[int, list[str]] = {}
+    starts: dict[int, list[tuple[int, str]]] = {}
 
     def walk(items: Any, depth: int) -> None:
         for item in items:
@@ -329,7 +329,7 @@ def _pdf_outline(reader: Any) -> dict[int, list[str]]:
                 continue
             title = " ".join(str(getattr(item, "title", "") or "").split())
             if title and page is not None and page >= 0:
-                starts.setdefault(page, []).append(title)
+                starts.setdefault(page, []).append((depth, title))
 
     try:
         walk(reader.outline, 1)
@@ -338,23 +338,23 @@ def _pdf_outline(reader: Any) -> dict[int, list[str]]:
     return starts
 
 
-def _split_at_titles(text: str, titles: list[str]) -> list[tuple[str | None, str]]:
+def _split_at_titles(text: str, titles: list[tuple[int, str]]) -> list[tuple[tuple[int, str] | None, str]]:
     """Split one page's text where each outline title appears as a line."""
 
-    segments: list[tuple[str | None, str]] = []
+    segments: list[tuple[tuple[int, str] | None, str]] = []
     remaining = text
-    current: str | None = None
-    for title in titles:
-        pattern = re.compile(rf"^[\s\dA-Z.]{{0,8}}{re.escape(title)}\s*$", re.I | re.M)
+    current: tuple[int, str] | None = None
+    for entry in titles:
+        pattern = re.compile(rf"^[\s\dA-Z.]{{0,8}}{re.escape(entry[1])}\s*$", re.I | re.M)
         match = pattern.search(remaining)
         if match:
             segments.append((current, remaining[: match.start()]))
             remaining = remaining[match.end() :]
         else:
             segments.append((current, ""))
-        current = title
+        current = entry
     segments.append((current, remaining))
-    return [(title, body.strip()) for title, body in segments if body.strip() or title is not None]
+    return [(entry, body.strip()) for entry, body in segments if body.strip() or entry is not None]
 
 
 _MARKDOWN_SYNTAX = re.compile(r"^\s*(?:#|```|~~~|>|\|)|^\s*([=\-_*])\1{2,}\s*$")
@@ -387,18 +387,21 @@ def _pdf_markdown(reader: Any) -> str:
     if doi := _DOI.search(head):
         metadata.append(f"- DOI: {doi.group(1)}")
     parts: list[str] = []
-    current: str | None = None
+    path: list[str] = []  # [chapter] or [chapter, section], carried across pages
     for index, text in enumerate(pages, 1):
         if not text:
             continue
         lines = [f"## Page {index}"]
-        for section, body in _split_at_titles(text, outline.get(index - 1, [])):
-            section = section or current
-            if section:
-                lines.append(f"### {section}")
+        for entry, body in _split_at_titles(text, outline.get(index - 1, [])):
+            if entry is not None:
+                depth, title = entry
+                path = [title] if depth == 1 or not path else [path[0], title]
+            if path:
+                lines.append(f"### {path[0]}")
+                if len(path) > 1:
+                    lines.append(f"#### {path[1]}")
             if body:
                 lines.append(_pdf_page_markdown(body))
-            current = section
         parts.append("\n\n".join(lines))
     # Metadata goes last so it never becomes the parent section of the content.
     parts.append("## Metadata\n\n" + "\n".join(metadata))
