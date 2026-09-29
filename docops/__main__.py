@@ -1973,7 +1973,24 @@ def _dispatch(args: argparse.Namespace) -> int:
     return 2
 
 
+def _utf8_stdio() -> None:
+    """Speak UTF-8 on stdio whatever the platform code page.
+
+    MCP clients and JSON consumers expect UTF-8, and legacy Windows code pages
+    (cp1252 on pipes) cannot even encode the arrows Farol prints.
+    """
+
+    for stream, errors in ((sys.stdin, "strict"), (sys.stdout, "strict"), (sys.stderr, "backslashreplace")):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None and (getattr(stream, "encoding", "") or "").replace("-", "").lower() != "utf8":
+            try:
+                reconfigure(encoding="utf-8", errors=errors)
+            except (OSError, ValueError):
+                continue
+
+
 def main(argv: list[str] | None = None) -> int:
+    _utf8_stdio()
     raw_argv = list(sys.argv[1:] if argv is None else argv)
     if len(raw_argv) == 2 and raw_argv[0] in _CANONICAL_GROUP_HELP and raw_argv[1] in {"-h", "--help"}:
         print(f"usage: docops {_CANONICAL_GROUP_HELP[raw_argv[0]]}")

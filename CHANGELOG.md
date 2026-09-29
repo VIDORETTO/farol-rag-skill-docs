@@ -36,7 +36,8 @@ locally.
   comments taken as scaffold titles, reuse of a damaged index file, repeated
   PDF section titles merged across chapters (two-level outline), refresh of
   skills after headings are restructured, and superseded index files piling
-  up on disk (only the active and previous index are kept).
+  up on disk (only the active and previous index are kept), and CLI and MCP
+  output on Windows code pages (stdio is always UTF-8).
 
 ## 2.0.0 release-candidate follow-ups (not published separately)
 
