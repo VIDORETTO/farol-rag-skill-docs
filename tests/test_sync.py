@@ -102,6 +102,9 @@ def test_changed_cited_block_marks_only_its_chapter_stale_and_refresh_reopens_it
 
 
 def test_unchanged_blocks_reuse_their_embeddings(tmp_path: Path) -> None:
+    import pytest
+
+    pytest.importorskip("numpy")  # hybrid retrieval belongs to the optional `semantic` extra
     from docops.backends import QueryRequest
     from docops.package_index import build_package_index, open_package_index
 

@@ -162,3 +162,34 @@ def test_pdf_text_is_not_parsed_as_markdown() -> None:
     assert markdown_headings(rendered) == []
     assert "\\# On branch master" in rendered and "\\```not a fence" in rendered
     assert "Git has three main states that your files can reside in" in rendered
+
+
+def test_nested_outline_keeps_chapter_context_for_repeated_section_titles(tmp_path: Path) -> None:
+    texts = [
+        "Basics. Summary. Basics end here.",
+        "Branching. Summary. Branching ends here.",
+    ]
+    writer = PdfWriter(clone_from=PdfReader(io.BytesIO(_pdf(texts))))
+    for page, chapter in enumerate(("Basics", "Branching")):
+        parent = writer.add_outline_item(chapter, page)
+        writer.add_outline_item("Summary", page, parent=parent)
+    buffer = io.BytesIO()
+    writer.write(buffer)
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "book.pdf").write_bytes(buffer.getvalue())
+    output = tmp_path / "package"
+    docops.apply(
+        docops.plan(
+            docops.OperationRequest(
+                source,
+                docops.OperationOptions(output_dir=output, source_root=source.parent, slug="book", license="MIT"),
+            )
+        )
+    )
+    build_package_index(output)
+    plan_synthesis(output, language="en", outline="agent")
+
+    titles = [section["title"] for section in next_task(output)["inputs"]["sections"]]
+
+    assert "Basics › Summary" in titles and "Branching › Summary" in titles
