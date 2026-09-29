@@ -29,8 +29,14 @@ locally.
   error catalog with next steps, `farol doctor --fix`, recorded public surface
   and semver policy.
 - Distribution renamed to `farol-kit` (the old name is still recognised).
+- **Better answers from technical docs**: a sentence that introduces a code
+  block ("install the optional extra:") is indexed with that code, so the
+  command itself is returned (HTTPX golden 77% → 92%, held-out split 77% → 85%).
 - Fixed: headings of documents without H1, PDF text parsed as Markdown, code
-  comments taken as scaffold titles, and reuse of a damaged index file.
+  comments taken as scaffold titles, reuse of a damaged index file, repeated
+  PDF section titles merged across chapters (two-level outline), refresh of
+  skills after headings are restructured, and superseded index files piling
+  up on disk (only the active and previous index are kept).
 
 ## 2.0.0 release-candidate follow-ups (not published separately)
 

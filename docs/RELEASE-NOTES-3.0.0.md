@@ -23,7 +23,7 @@ by Farol, and **cited evidence** served over MCP. Everything runs locally.
 
 | | Result |
 |---|---|
-| Acceptance corpus (hybrid, top 5) | HTTPX docs 77%, *Pro Git* 92%, GraphRAG paper 100%, spoken article 100%; 100% of hits with locators |
+| Acceptance corpus (hybrid, top 5) | HTTPX docs 92% (validation split 85%), *Pro Git* 92%, GraphRAG paper 100%, spoken article 100%; 100% of hits with locators; every measured source distilled (rubric and lineage pass) |
 | Value benchmark (Claude Haiku, 18 questions) | Farol 89% correct, 83% with verifiable citation, 1.4k prompt tokens; raw corpus 100% / 0% / 27k tokens; no context 22% |
 | 500-page book on 2 vCPU / 4 GB | 10 s build (BM25) or 75 s (hybrid) |
 
