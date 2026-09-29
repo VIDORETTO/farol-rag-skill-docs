@@ -33,9 +33,7 @@
       "TK-122"
     ],
     "draft": [],
-    "in_progress": [
-      "TK-111"
-    ],
+    "in_progress": [],
     "verified": [],
     "implemented": [
       "TK-101",
@@ -57,10 +55,17 @@
       "TK-118",
       "TK-119",
       "TK-120",
-      "TK-121"
+      "TK-121",
+      "TK-111"
     ]
   },
-  "next_action": "Mantenedor: push da branch farol-3/onda-a + PR (CI macOS/Windows), configurar Trusted Publisher PyPI (farol-kit, ambiente pypi) e GitHub Pages, autorizar tag v3.0.0; depois recrutar beta (TK-122).",
+  "next_action": "Recrutar e acompanhar pelo menos cinco beta testers pela issue #19 (TK-122); publicação PyPI permanece diferida.",
+  "release": {
+    "tag": "v3.0.0",
+    "sha": "34067b13ef4daebf9f24b0bbb6fbaba11e66e64e",
+    "url": "https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v3.0.0",
+    "pypi": "not_run"
+  },
   "publicity_gate": "TK-122 exit criteria (SC-109)",
   "wave": "E",
   "decisions": "specs/farol-3/decisions.md",

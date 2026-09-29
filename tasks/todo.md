@@ -1,7 +1,5 @@
 # Checkpoint Farol 3.0 — 2026-09-28
 
-- Branch `farol-3/onda-a` (não enviada). Ondas A–E implementadas; TK-101–TK-121 `implemented`.
-- TK-111 `in_progress`: gate `release` 10/10 local; aceitação real com 4/4 fontes medidas destiladas
-  (evidência em `specs/farol-3/evidence/TK-111.md`); YouTube `not_run` (IP bloqueado).
-- Próximo (mantenedor): push + PR, PyPI Trusted Publisher, GitHub Pages, tag `v3.0.0`; depois beta TK-122.
-- Venv local `.venv` (uv, Python 3.13); corpus em `data/acceptance/` (ignorado).
+- `main` recebeu a PR #18; tag `v3.0.0` e GitHub Release publicadas no SHA `34067b13ef4daebf9f24b0bbb6fbaba11e66e64e`.
+- TK-111 `implemented` para GitHub Release; PyPI `not_run` intencional. Evidência em `specs/farol-3/evidence/TK-111.md`.
+- Próximo: fechar beta TK-122 via issue #19 fixada; PyPI requer Trusted Publisher e decisão separada de publicação.

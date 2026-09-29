@@ -36,7 +36,7 @@ Divulgação ampla só após F9 (beta). Parte 2 em [spec-prontidao.md](spec-pron
 | [TK-109](tickets/TK-109.md) | connect + instalação | TK-104 | implemented |
 | [TK-107](tickets/TK-107.md) | Transcrição YouTube/áudio/vídeo | D-02 | implemented |
 | [TK-108](tickets/TK-108.md) | Papers | — | implemented |
-| [TK-111](tickets/TK-111.md) | Release 3.0 | 101–105, 109, 110 | in_progress (gates ok; publicação aguarda autorização) |
+| [TK-111](tickets/TK-111.md) | Release 3.0 | 101–105, 109, 110 | implemented (GitHub Release v3.0.0; PyPI diferido) |
 | [TK-112](tickets/TK-112.md) | `farol sync` | TK-102, TK-105 | implemented |
 | [TK-113](tickets/TK-113.md) | Defesa contra prompt injection | TK-104, TK-105 | implemented |
 | [TK-114](tickets/TK-114.md) | Busca híbrida semântica (extra) | TK-103, TK-101, D-05 | implemented |
