@@ -26,28 +26,28 @@ Divulgação ampla só após F9 (beta). Parte 2 em [spec-prontidao.md](spec-pron
 
 | Ticket | Entrega | Requer | Estado |
 |---|---|---|---|
-| [TK-101](tickets/TK-101.md) | Corpus real e aceitação | — | ready |
-| [TK-110](tickets/TK-110.md) | Dieta de processo/superfície | — | ready |
-| [TK-103](tickets/TK-103.md) | Backend local FTS5 | D-01 | blocked (D-01) |
-| [TK-104](tickets/TK-104.md) | Servidor MCP stdio | TK-103 | draft |
-| [TK-105](tickets/TK-105.md) | Tarefas de síntese para o agente | — | ready |
-| [TK-106](tickets/TK-106.md) | Taxonomia pelo agente | TK-105 | draft |
-| [TK-102](tickets/TK-102.md) | Jornada add/build/status | TK-103, TK-105 | draft |
-| [TK-109](tickets/TK-109.md) | connect + instalação | TK-104 | draft |
-| [TK-107](tickets/TK-107.md) | Transcrição YouTube/áudio/vídeo | D-02 | blocked (D-02) |
-| [TK-108](tickets/TK-108.md) | Papers | — | ready |
-| [TK-111](tickets/TK-111.md) | Release 3.0 | 101–105, 109, 110 | draft |
-| [TK-112](tickets/TK-112.md) | `farol sync` | TK-102, TK-105 | draft |
-| [TK-113](tickets/TK-113.md) | Defesa contra prompt injection | TK-104, TK-105 | draft |
-| [TK-114](tickets/TK-114.md) | Busca híbrida semântica (extra) | TK-103, TK-101, D-05 | blocked (D-05) |
-| [TK-115](tickets/TK-115.md) | Escala medida e progresso | TK-102, TK-107, TK-108 | draft |
-| [TK-116](tickets/TK-116.md) | Biblioteca e MCP multi-pacote | TK-104 | draft |
-| [TK-117](tickets/TK-117.md) | Erros que ensinam, `doctor --fix` | TK-102 | draft |
-| [TK-118](tickets/TK-118.md) | Semver e testes de upgrade | TK-102, TK-104, TK-110 | draft |
-| [TK-119](tickets/TK-119.md) | Prova de valor com vs. sem | TK-101, TK-104, TK-105 | draft |
-| [TK-120](tickets/TK-120.md) | Site de docs e pacotes demo | TK-109, TK-117, D-06, D-07 | blocked |
-| [TK-121](tickets/TK-121.md) | Attestation, SBOM, container | TK-111 | draft |
-| [TK-122](tickets/TK-122.md) | Beta fechado (gate de divulgação) | TK-111, TK-113, TK-117, TK-120, D-08 | blocked |
+| [TK-101](tickets/TK-101.md) | Corpus real e aceitação | — | implemented |
+| [TK-110](tickets/TK-110.md) | Dieta de processo/superfície | — | implemented |
+| [TK-103](tickets/TK-103.md) | Backend local FTS5 | D-01 | implemented |
+| [TK-104](tickets/TK-104.md) | Servidor MCP stdio | TK-103 | implemented |
+| [TK-105](tickets/TK-105.md) | Tarefas de síntese para o agente | — | implemented |
+| [TK-106](tickets/TK-106.md) | Taxonomia pelo agente | TK-105 | implemented |
+| [TK-102](tickets/TK-102.md) | Jornada add/build/status | TK-103, TK-105 | implemented |
+| [TK-109](tickets/TK-109.md) | connect + instalação | TK-104 | implemented |
+| [TK-107](tickets/TK-107.md) | Transcrição YouTube/áudio/vídeo | D-02 | implemented |
+| [TK-108](tickets/TK-108.md) | Papers | — | implemented |
+| [TK-111](tickets/TK-111.md) | Release 3.0 | 101–105, 109, 110 | in_progress (gates ok; publicação aguarda autorização) |
+| [TK-112](tickets/TK-112.md) | `farol sync` | TK-102, TK-105 | implemented |
+| [TK-113](tickets/TK-113.md) | Defesa contra prompt injection | TK-104, TK-105 | implemented |
+| [TK-114](tickets/TK-114.md) | Busca híbrida semântica (extra) | TK-103, TK-101, D-05 | implemented |
+| [TK-115](tickets/TK-115.md) | Escala medida e progresso | TK-102, TK-107, TK-108 | implemented |
+| [TK-116](tickets/TK-116.md) | Biblioteca e MCP multi-pacote | TK-104 | implemented |
+| [TK-117](tickets/TK-117.md) | Erros que ensinam, `doctor --fix` | TK-102 | implemented |
+| [TK-118](tickets/TK-118.md) | Semver e testes de upgrade | TK-102, TK-104, TK-110 | implemented |
+| [TK-119](tickets/TK-119.md) | Prova de valor com vs. sem | TK-101, TK-104, TK-105 | implemented |
+| [TK-120](tickets/TK-120.md) | Site de docs e pacotes demo | TK-109, TK-117, D-06, D-07 | implemented |
+| [TK-121](tickets/TK-121.md) | Attestation, SBOM, container | TK-111 | implemented |
+| [TK-122](tickets/TK-122.md) | Beta fechado (gate de divulgação) | TK-111, TK-113, TK-117, TK-120, D-08 | blocked (recrutar beta testers) |
 
 ## Grafo
 
