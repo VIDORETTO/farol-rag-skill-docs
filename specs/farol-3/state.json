@@ -29,12 +29,13 @@
   "open_decisions": [],
   "tickets": {
     "ready": [],
-    "blocked": [],
-    "draft": [
-      "TK-111",
+    "blocked": [
       "TK-122"
     ],
-    "in_progress": [],
+    "draft": [],
+    "in_progress": [
+      "TK-111"
+    ],
     "verified": [],
     "implemented": [
       "TK-101",
@@ -59,7 +60,7 @@
       "TK-121"
     ]
   },
-  "next_action": "TK-111: gate release no commit limpo; depois publicação (autorização do mantenedor) e beta (TK-122).",
+  "next_action": "Mantenedor: push da branch farol-3/onda-a + PR (CI macOS/Windows), configurar Trusted Publisher PyPI (farol-kit, ambiente pypi) e GitHub Pages, autorizar tag v3.0.0; depois recrutar beta (TK-122).",
   "publicity_gate": "TK-122 exit criteria (SC-109)",
   "wave": "E",
   "decisions": "specs/farol-3/decisions.md",
