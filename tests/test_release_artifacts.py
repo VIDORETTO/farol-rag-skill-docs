@@ -57,3 +57,12 @@ def test_container_runs_as_non_root_and_serves_mcp() -> None:
     assert "USER farol" in text and 'ENTRYPOINT ["farol"]' in text
     assert 'CMD ["mcp", "--project", "/knowledge"]' in text
     json.loads("{}")
+
+
+def test_github_release_does_not_wait_for_an_unconfigured_pypi() -> None:
+    import yaml
+
+    jobs = yaml.safe_load((ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8"))["jobs"]
+
+    assert "publish-pypi" not in jobs["github-release"]["needs"]
+    assert "vars.PYPI_PUBLISH == 'true'" in jobs["publish-pypi"]["if"]

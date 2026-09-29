@@ -51,7 +51,7 @@ Claude Code, asked a question.
 Requires Python 3.11–3.13.
 
 ```bash
-pipx install "farol-kit[semantic] @ git+https://github.com/VIDORETTO/farol-rag-skill-docs"
+pipx install "farol-kit[semantic] @ git+https://github.com/VIDORETTO/farol-rag-skill-docs@v3.0.0"
 
 mkdir my-knowledge && cd my-knowledge
 farol add ./path/to/docs --license MIT
@@ -60,8 +60,8 @@ farol build
 farol connect claude-code --target ~/my-repo
 ```
 
-`farol add` accepts a folder, file, URL, Git repository, `arXiv:<id>` or a
-YouTube link; `farol connect` also supports `codex`, `cursor`, `opencode` and
+`farol add` accepts a folder (including a cloned repository), file, URL,
+`arXiv:<id>` or a YouTube link; `farol connect` also supports `codex`, `cursor`, `opencode` and
 `generic`. Then ask your agent to write the skill:
 
 > Run `farol task next` in `~/my-knowledge`, do the task, submit it with
@@ -78,7 +78,7 @@ options, every agent and troubleshooting.
 |---|---|---|
 | Markdown, HTML, reStructuredText, AsciiDoc, text | folder or file | `file:line`, section |
 | Documentation websites | URL (robots.txt, sitemaps and limits respected) | `file:line` |
-| Git repositories | URL or local path (docs by default, code on request) | `file:line`, symbol |
+| Code repositories | local clone (docs and source files) | `file:line` |
 | PDF books and papers | file, or `arXiv:<id>` | `file:line (page N)`, outline sections |
 | DOCX, EPUB, notebooks, spreadsheets, slides | file | `file:line`, sheet, slide |
 | Subtitles (WebVTT, SRT) | file | `(at HH:MM:SS)` |
@@ -90,6 +90,27 @@ Optional extras: `semantic` (multilingual hybrid search, recommended),
 `media` (YouTube and speech recognition), `ocr` (scanned documents) and
 `ragflow` (use an external [RAGFlow](https://github.com/infiniflow/ragflow)
 server as the search backend).
+
+## Use cases
+
+Farol is for any situation where you want your AI to **know a body of text
+well and prove what it says**. Each case below uses the same three steps:
+`farol add`, `farol build`, `farol connect`.
+
+| You want to… | Add | What your agent gains |
+|---|---|---|
+| **Code against a library or API** your model doesn't know (new, niche, internal or post-cutoff) | the docs site or `docs/` folder, the changelog | Current usage patterns and pitfalls as a skill; exact signatures, defaults and error types with `file:line` citations instead of guesses. |
+| **Onboard onto a codebase** | a local clone of the repository (docs and source) | Architecture notes, conventions and "where is X defined" answers pointing at `file:line`. |
+| **Learn from a book** | the PDF or EPUB | A book-to-skill distillation (mental models, decision rules, chapters) plus page-cited quotes when you need the exact wording. |
+| **Keep up with research** | `arXiv:<id>` papers | Method, results and limits per paper; answers cite page and section, so claims about numbers can be checked. |
+| **Use talks, courses and meetings** | YouTube links, lecture recordings, subtitles | Searchable transcripts with `(at HH:MM:SS)` citations, so you can jump to the moment something was said. |
+| **Answer from internal knowledge** (runbooks, policies, specs, wikis) | local folders, DOCX, spreadsheets, slides | A private assistant that stays on your machine — no upload, no API key — and says "not in the sources" instead of inventing. |
+| **Support and consulting** | product manuals, release notes, FAQs | Answers with a citation you can paste back to the customer; `farol sync` refreshes when a new version ships. |
+| **Build a personal library** | everything above, across projects | `farol library` serves all your packages through **one** MCP server, each source kept separate and citable. |
+
+When it is **not** the right tool: very small texts that fit comfortably in
+the prompt (just paste them), questions that need live data or web search, and
+images or equations (text only for now).
 
 ## How it works
 

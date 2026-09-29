@@ -63,6 +63,9 @@ python scripts/run_release_gates.py --profile full --timeout 3600 --json
    `farol-kit`, owner `VIDORETTO`, repository `farol-rag-skill-docs`, workflow
    `release.yml`, environment `pypi`.
 2. **GitHub environment** `pypi` with required reviewers (the maintainer).
+   Then set the repository variable `PYPI_PUBLISH=true`; until it is set, a
+   tag creates the GitHub release (wheel, sdist, SBOM, checksums, provenance)
+   and skips PyPI.
 3. **GitHub Pages**: Settings → Pages → Source: GitHub Actions (used by
    `.github/workflows/docs.yml` on pushes to `main`).
 
@@ -75,13 +78,13 @@ python scripts/run_release_gates.py --profile full --timeout 3600 --json
    `git push origin v<version>`.
 4. The `Release` workflow builds the wheel and sdist, installs them in a clean
    environment, writes a CycloneDX SBOM and `SHA256SUMS`, attests provenance,
-   publishes to PyPI after the `pypi` environment approval and creates the
-   GitHub release with the notes file.
+   creates the GitHub release with the notes file and, when `PYPI_PUBLISH` is
+   `true`, publishes to PyPI after the `pypi` environment approval.
 
 ## 5. Verify what was published
 
 ```text
-pipx install farol-kit==<version>
+pipx install farol-kit==<version>   # or: pipx install "farol-kit @ git+https://github.com/VIDORETTO/farol-rag-skill-docs@v<version>"
 farol doctor
 gh attestation verify farol_kit-<version>-py3-none-any.whl --repo VIDORETTO/farol-rag-skill-docs
 python scripts/build_sbom.py verify --directory <downloaded-release-assets>
