@@ -1,5 +1,40 @@
 # Changelog
 
+## Unreleased (planned 3.1.0)
+
+Additions only; nothing public was removed or renamed. Not tagged or published
+yet (decision D-308 in `specs/farol-3.1/decisions.md`).
+
+- **Read around a fact**: hits carry `block_id`; new MCP tool `get_context`
+  (neighbours or the whole section, within `max_tokens`); `get_document` pages
+  with `offset`/`limit`. On the Pro Git book, context costs 1.3k tokens instead
+  of 219k for the whole document.
+- **Library ranking**: several packages are merged on one scale without
+  reordering any package: MRR@5 0.38 → 0.48 and wrong-package hits 40% → 6%
+  on the acceptance corpus.
+- **Optional local reranker** (`FAROL_RERANKER=<model>`, opt-in) and embedding
+  profiles with query/passage prefixes; a model that cannot load is a typed
+  error, and `farol doctor --fix` repairs indexes built with another model.
+- **Faster distillation**: `farol task claim --n N` hands chapters to parallel
+  subagents with leases; the synthesis plan is locked (parallel submits used to
+  lose accepted chapters); `farol task plan --task-tokens T` and chapters that
+  follow the author's own (Pro Git: 11 real chapters at T=24000).
+- **`farol-distill` skill** installed by `farol connect`, and **one router per
+  project** (≈260 tokens, backend-neutral) instead of one per source.
+- **Courses**: `farol add <folder|playlist> --as course` — one package and one
+  skill, lessons in natural order, modules from sub-folders, per-video licenses;
+  `--slides` reads the text shown on lecture slides (ffmpeg + OCR, opt-in).
+- **Composite skills**: `farol skill compose <name> --from <id> <id>`;
+  `--no-skill` sources are indexed for evidence only.
+- **Synthesis layer**: `search_knowledge(layer="synthesis"|"both")` searches the
+  distilled statements with the blocks that support them.
+- **`farol eval`**: self-assessment of any package from its skill lineage, plus
+  optional agent-written questions (`farol task plan --questions N`).
+- **Digital PDFs with layout** (extra `layout`, `FAROL_PDF_LAYOUT=1`): headings
+  and tables kept.
+- Acceptance reports context cost, splits (en/pt/validation/broad) and library
+  mode; `scripts/reachability_report.py` maps code the journey never runs.
+
 ## 3.0.0 — 2026-09-28
 
 Farol 3.0: any source becomes skills and cited evidence for any AI agent,
