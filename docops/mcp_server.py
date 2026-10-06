@@ -17,11 +17,13 @@ from typing import Any, Callable, Mapping, TextIO
 from .backends.base import BackendError, IndexRevision, QueryRequest
 from .backends.local_fts import LocalFtsBackend
 from .package_index import ACTIVE_POINTER, INDEX_DIR, open_package_index
+from .ranking import PooledRanker, merge_by_package
 
 SERVER_NAME = "farol"
 SUPPORTED_PROTOCOL_VERSIONS = ("2025-06-18", "2025-03-26", "2024-11-05")
 _MAX_TOP_K = 20
 _MAX_CONTEXT_SPAN = 50
+_POOL_MIN = 20
 _MAX_CONTEXT_TOKENS = 8000
 _CHAPTER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.md$")
 _UNTRUSTED_NOTE = (
@@ -148,7 +150,14 @@ def _frontmatter(text: str) -> dict[str, str]:
 class KnowledgeServer:
     """Serve one package, or every package of a project (``packages`` by name)."""
 
-    def __init__(self, package_root: Path | str | None = None, *, packages: Mapping[str, Path] | None = None) -> None:
+    def __init__(
+        self,
+        package_root: Path | str | None = None,
+        *,
+        packages: Mapping[str, Path] | None = None,
+        ranker: Any | None = None,
+    ) -> None:
+        self.ranker = ranker
         if packages is None:
             root = Path(package_root or ".").resolve()
             packages = {root.name: root}
@@ -198,17 +207,21 @@ class KnowledgeServer:
         if not isinstance(query, str) or not query.strip():
             raise ToolError("invalid_query", "query must be a non-empty string")
         top_k = max(1, min(int(top_k), _MAX_TOP_K))
+        selected = self._selected(package)
+        # Several packages are ranked together, so each contributes a wider pool.
+        pool = max(_POOL_MIN, 4 * top_k) if len(selected) > 1 else top_k
         hits: list[dict[str, Any]] = []
         revisions: dict[str, str] = {}
         unavailable: list[dict[str, str]] = []
-        for name in self._selected(package):
+        embedders: list[Any] = []
+        for name in selected:
             # One damaged package must not take the others down.
             try:
                 reader = self._reader(name)
                 if reader is None:
                     continue
                 backend, index = reader
-                found = backend.query(index, QueryRequest(query=query, top_k=top_k)).hits
+                found = backend.query(index, QueryRequest(query=query, top_k=pool)).hits
             except BackendError as exc:
                 if exc.code == "embedding_profile_changed":
                     raise ToolError(exc.code, str(exc)) from exc
@@ -218,6 +231,7 @@ class KnowledgeServer:
                 unavailable.append({"package": name, "code": "index_unreadable"})
                 continue
             revisions[name] = index.index_revision
+            embedders.append(backend.embedder if index.fingerprints.get("embedding") else None)
             for hit in found:
                 hits.append(
                     {
@@ -235,6 +249,12 @@ class KnowledgeServer:
                         "score": hit["score"],
                     }
                 )
+        degraded: list[str] = []
+        if len(revisions) > 1 and hits:
+            hits, degraded = self._rank_globally(query, hits, embedders)
+        else:
+            hits.sort(key=lambda item: item["score"], reverse=True)
+        hits = hits[:top_k]
         if not revisions and not unavailable:
             raise ToolError("index_missing", "no factual index yet; run `farol build` (or `farol index <package>`)")
         hits.sort(key=lambda item: item["score"], reverse=True)
@@ -250,7 +270,32 @@ class KnowledgeServer:
             result["index_revisions"] = revisions
         if unavailable:
             result["unavailable"] = unavailable
+        if degraded:
+            result["degraded"] = degraded
         return result
+
+    def _rank_globally(
+        self, query: str, hits: list[dict[str, Any]], embedders: list[Any]
+    ) -> tuple[list[dict[str, Any]], list[str]]:
+        """Rescore pooled hits of several packages on one scale (seam S10)."""
+
+        ranker = self.ranker
+        if ranker is None:
+            shared = embedders[0] if embedders and all(item is not None for item in embedders) else None
+            profiles = {json.dumps(item.profile, sort_keys=True) for item in embedders if item is not None}
+            ranker = PooledRanker(shared if shared is not None and len(profiles) == 1 else None)
+        try:
+            scores = [float(value) for value in ranker.rank(query, hits)]
+            if len(scores) != len(hits):
+                raise ValueError("ranker returned a score per candidate")
+        except Exception:
+            hits.sort(key=lambda item: item["score"], reverse=True)
+            return hits, ["ranker_failed: falling back to per-package order"]
+        order = merge_by_package(hits, scores)
+        ranked = [hits[index] for index in order]
+        for position, hit in enumerate(ranked):
+            hit["score"] = round(1000.0 / (61 + position), 6)
+        return ranked, []
 
     def get_document(
         self, document_id: str, package: str | None = None, offset: int | None = None, limit: int | None = None

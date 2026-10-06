@@ -94,3 +94,66 @@ def test_a_broken_package_is_isolated_and_reported(tmp_path: Path) -> None:
 
     assert {hit["package"] for hit in result["hits"]} == {"beta/notes"}
     assert result["unavailable"] == [{"package": "alpha/notes", "code": "index_unreadable"}]
+
+
+# -- Farol 3.1 TK-203: one package-independent ranking across the library ----
+
+NETWORK = " ".join(
+    f"Nota {n}: o timeout do pool de conexões fecha conexões ociosas após {n * 5} segundos." for n in range(1, 7)
+)
+COOKING = (
+    "Asse o bolo por 40 minutos. O timeout do forno desliga a resistência sozinho. "
+    "Use farinha peneirada. Bata as claras em neve. Unte a forma com manteiga. Sirva frio."
+)
+
+
+def _paragraphs(text: str) -> str:
+    return "\n\n".join(sentence.strip() for sentence in text.split(". ") if sentence.strip())
+
+
+def test_library_ranks_hits_by_package_independent_score(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    network = _project(tmp_path, home, "redes", _paragraphs(NETWORK))
+    cooking = _project(tmp_path, home, "culinaria", _paragraphs(COOKING))
+    for project in (cooking, network):
+        _cli(tmp_path, home, "library", "add", str(project))
+
+    result = _search(home, tmp_path, "timeout do pool de conexões")
+
+    assert [hit["package"] for hit in result["hits"]] == ["redes/notes"] * 5
+
+
+def _server(tmp_path: Path, ranker: Any = None) -> Any:
+    from docops.mcp_server import KnowledgeServer
+
+    home = tmp_path / "home"
+    network = _project(tmp_path, home, "redes", _paragraphs(NETWORK))
+    cooking = _project(tmp_path, home, "culinaria", _paragraphs(COOKING))
+    packages = {"redes/notes": network / "packages" / "notes", "culinaria/notes": cooking / "packages" / "notes"}
+    return KnowledgeServer(packages=packages, ranker=ranker)
+
+
+def test_single_package_ordering_is_unchanged_without_a_ranker(tmp_path: Path) -> None:
+    from docops.mcp_server import KnowledgeServer
+
+    server = _server(tmp_path)
+    single = KnowledgeServer(packages={"redes/notes": server.packages["redes/notes"]})
+    backend, index = single._reader("redes/notes")
+    from docops.backends import QueryRequest
+
+    direct = [hit["block_id"] for hit in backend.query(index, QueryRequest(query="pool timeout", top_k=5)).hits]
+
+    served = [hit["block_id"] for hit in single.search_knowledge("pool timeout")["hits"]]
+
+    assert served == direct
+
+
+def test_ranker_failure_degrades_to_previous_order_and_is_reported(tmp_path: Path) -> None:
+    class Broken:
+        def rank(self, query: str, candidates: list[dict[str, Any]]) -> list[float]:
+            raise RuntimeError("model crashed")
+
+    result = _server(tmp_path, ranker=Broken()).search_knowledge("timeout do pool de conexões")
+
+    assert result["hits"]
+    assert result["degraded"] == ["ranker_failed: falling back to per-package order"]
