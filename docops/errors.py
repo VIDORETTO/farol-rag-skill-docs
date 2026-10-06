@@ -78,6 +78,7 @@ CATALOG: dict[str, ErrorInfo] = {
     "package_unknown": ErrorInfo("No package with that name", "call list_skills to see packages"),
     "document_unknown": ErrorInfo("The document is not indexed", "use a document_id returned by search_knowledge"),
     "block_unknown": ErrorInfo("The block is not indexed", "use a block_id returned by search_knowledge"),
+    "layer_invalid": ErrorInfo("Unknown search layer", "use layer evidence, synthesis or both"),
     "scope_invalid": ErrorInfo("Unknown context scope", "use scope blocks or section"),
     "skill_unknown": ErrorInfo("No skill with that name", "call list_skills"),
     "chapter_invalid": ErrorInfo("Invalid chapter name", "use a chapter file listed by list_skills"),

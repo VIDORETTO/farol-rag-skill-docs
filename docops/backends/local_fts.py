@@ -317,6 +317,24 @@ class LocalFtsBackend:
             "blocks": blocks,
         }
 
+    def get_blocks(self, index_revision: IndexRevision, block_ids: list[str]) -> dict[str, dict[str, Any]]:
+        """The indexed blocks among ``block_ids`` (missing ids are simply absent)."""
+
+        self._ensure_open()
+        wanted = list(dict.fromkeys(str(item) for item in block_ids))
+        if not wanted:
+            return {}
+        with self._connect(index_revision.index_revision) as connection:
+            rows = connection.execute(
+                "SELECT block_id, document_id, source_id, source_revision_id, path, kind, heading_path, locators, text,"
+                f" risk, 0.0 FROM blocks WHERE block_id IN ({','.join('?' * len(wanted))})",
+                wanted,
+            ).fetchall()
+        blocks = {row[0]: _hit(row) for row in rows}
+        for block in blocks.values():
+            block.pop("score", None)
+        return blocks
+
     def get_context(
         self,
         index_revision: IndexRevision,

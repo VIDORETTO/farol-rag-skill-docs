@@ -17,11 +17,14 @@ from typing import Any, Callable, Mapping, TextIO
 from .backends.base import BackendError, IndexRevision, QueryRequest
 from .backends.local_fts import LocalFtsBackend
 from .package_index import ACTIVE_POINTER, INDEX_DIR, open_package_index
-from .ranking import PooledRanker, configured_reranker, load_reranker, merge_by_package
+from .ranking import PooledRanker, configured_reranker, load_reranker, merge_by_package, pooled_bm25
 
 SERVER_NAME = "farol"
 SUPPORTED_PROTOCOL_VERSIONS = ("2025-06-18", "2025-03-26", "2024-11-05")
 _MAX_TOP_K = 20
+_SYNTHESIS_NOTE = (
+    "Synthesis statements are the distilled skill's paraphrases: cite their supports, never the statement itself."
+)
 _MAX_CONTEXT_SPAN = 50
 _POOL_MIN = 20
 _MAX_CONTEXT_TOKENS = 8000
@@ -44,6 +47,15 @@ TOOLS: list[dict[str, Any]] = [
                 "query": {"type": "string", "description": "What to look for, in natural words."},
                 "top_k": {"type": "integer", "minimum": 1, "maximum": _MAX_TOP_K, "default": 5},
                 "package": {"type": "string", "description": "Limit the search to one package (see list_skills)."},
+                "layer": {
+                    "type": "string",
+                    "enum": ["evidence", "synthesis", "both"],
+                    "default": "evidence",
+                    "description": (
+                        "evidence: source blocks (cite these). synthesis: distilled skill statements for broad "
+                        "questions, each with the source blocks that support it. both: the two lists."
+                    ),
+                },
             },
             "required": ["query"],
             "additionalProperties": False,
@@ -160,6 +172,7 @@ class KnowledgeServer:
         self.ranker = ranker
         self._reranker_loaded = ranker is not None
         self._reranker_problem: str | None = None
+        self._lineages: dict[str, tuple[int, list[dict[str, Any]]]] = {}
         if packages is None:
             root = Path(package_root or ".").resolve()
             packages = {root.name: root}
@@ -205,9 +218,15 @@ class KnowledgeServer:
         return skills
 
     # -- tools ------------------------------------------------------------
-    def search_knowledge(self, query: str, top_k: int = 5, package: str | None = None) -> dict[str, Any]:
+    def search_knowledge(
+        self, query: str, top_k: int = 5, package: str | None = None, layer: str = "evidence"
+    ) -> dict[str, Any]:
         if not isinstance(query, str) or not query.strip():
             raise ToolError("invalid_query", "query must be a non-empty string")
+        if layer not in ("evidence", "synthesis", "both"):
+            raise ToolError("layer_invalid", "layer must be evidence, synthesis or both")
+        if layer == "synthesis":
+            return self._synthesis_only(query, top_k, package)
         top_k = max(1, min(int(top_k), _MAX_TOP_K))
         selected = self._selected(package)
         reranker = self._active_reranker()
@@ -281,11 +300,72 @@ class KnowledgeServer:
             result["index_revisions"] = revisions
         if unavailable:
             result["unavailable"] = unavailable
+        if layer == "both":
+            result["synthesis"] = self._synthesis_hits(query, max(1, min(int(top_k), _MAX_TOP_K)), package)
+            if result["synthesis"]:
+                result["outcome"] = "ok"
         if mode:
             result["retrieval_mode"] = mode
         if degraded:
             result["degraded"] = degraded
         return result
+
+    # -- synthesis layer (TK-214) ---------------------------------------
+    def _synthesis_only(self, query: str, top_k: int, package: str | None) -> dict[str, Any]:
+        claims = self._synthesis_hits(query, max(1, min(int(top_k), _MAX_TOP_K)), package)
+        return {
+            "outcome": "ok" if claims else "insufficient_evidence",
+            "note": _UNTRUSTED_NOTE + " " + _SYNTHESIS_NOTE,
+            "hits": [],
+            "synthesis": claims,
+        }
+
+    def _lineage(self, name: str) -> list[dict[str, Any]]:
+        path = self.packages[name] / ".docops" / "synthesis" / "lineage.json"
+        try:
+            stamp = path.stat().st_mtime_ns
+        except OSError:
+            return []
+        cached = self._lineages.get(name)
+        if cached is None or cached[0] != stamp:
+            claims = json.loads(path.read_text(encoding="utf-8")).get("claims", [])
+            cached = (stamp, [claim for claim in claims if isinstance(claim, Mapping) and claim.get("text")])
+            self._lineages[name] = cached
+        return cached[1]
+
+    def _synthesis_hits(self, query: str, top_k: int, package: str | None) -> list[dict[str, Any]]:
+        """Accepted skill statements ranked against the query, each with its supporting blocks."""
+
+        candidates: list[tuple[str, Mapping[str, Any]]] = [
+            (name, claim) for name in self._selected(package) for claim in self._lineage(name)
+        ]
+        if not candidates:
+            return []
+        scores = pooled_bm25(query, [f"{claim.get('chapter', '')} {claim['text']}" for _name, claim in candidates])
+        order = sorted((index for index, score in enumerate(scores) if score > 0), key=lambda index: -scores[index])
+        results: list[dict[str, Any]] = []
+        for index in order[:top_k]:
+            name, claim = candidates[index]
+            block_ids = [str(item) for item in claim.get("block_ids") or []]
+            reader = self._reader(name)
+            blocks = reader[0].get_blocks(reader[1], block_ids) if reader is not None else {}
+            supports = [
+                {"block_id": block_id, "citation": citation(blocks[block_id]), "text": blocks[block_id]["text"]}
+                for block_id in block_ids
+                if block_id in blocks and blocks[block_id]["risk"] != "high"
+            ]
+            results.append(
+                {
+                    "package": name,
+                    "kind": "synthesis",
+                    "chapter": claim.get("chapter"),
+                    "text": re.sub(r"\s+([.,;:!?])", r"\1", str(claim["text"])).strip(),
+                    "supports": supports,
+                    "stale": len(supports) < len(block_ids),
+                    "score": round(scores[index], 6),
+                }
+            )
+        return results
 
     def _active_reranker(self) -> Any | None:
         """The injected ranker if it orders globally, else the FAROL_RERANKER model (loaded once)."""
