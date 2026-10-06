@@ -121,7 +121,8 @@ source ─► extraction ─► canonical blocks with locators ─┬─► loca
 
 farol mcp (read-only)
   ├─ list_skills / get_skill            concepts and decisions
-  └─ search_knowledge / get_document    cited facts
+  ├─ search_knowledge                  cited facts
+  └─ get_context / get_document        the text around a fact
 ```
 
 - **One source, one package, one skill** — the way a book becomes one skill.

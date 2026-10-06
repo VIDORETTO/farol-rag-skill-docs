@@ -33,6 +33,7 @@ PROJECT_FILE_KEYS = [
 ]
 SEARCH_HIT_FIELDS = [
     "package",
+    "block_id",
     "citation",
     "text",
     "document_id",

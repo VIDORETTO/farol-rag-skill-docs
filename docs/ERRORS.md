@@ -9,6 +9,7 @@ Every error printed by Farol carries one of these codes and a next step.
 | `asr_unavailable` | Local speech recognition is not installed | `pip install farol-kit[media]` |
 | `backend_closed` | The backend was closed | `reopen the reader` |
 | `block_duplicate` | Duplicate block ids in the index input | `farol build` |
+| `block_unknown` | The block is not indexed | `use a block_id returned by search_knowledge` |
 | `budget_exceeded` | The answer is longer than its token budget | `shorten it and resubmit` |
 | `candidate_unknown` | The index candidate was not prepared | `farol build` |
 | `chapter_invalid` | Invalid chapter name | `use a chapter file listed by list_skills` |
@@ -51,6 +52,7 @@ Every error printed by Farol carries one of these codes and a next step.
 | `project_version_unsupported` | farol.json comes from a newer Farol | `pipx upgrade farol-kit` |
 | `revision_mismatch` | The query targets another project revision | `reopen the reader` |
 | `schedule_unknown` | Unknown scheduler | `farol sync --schedule cron` |
+| `scope_invalid` | Unknown context scope | `use scope blocks or section` |
 | `skill_unknown` | No skill with that name | `call list_skills` |
 | `source_id_taken` | Another source already uses that id | `farol add <source> --name <new-id>` |
 | `source_inside_packages` | Sources cannot live inside the project's packages folder | `add a folder outside packages/` |
