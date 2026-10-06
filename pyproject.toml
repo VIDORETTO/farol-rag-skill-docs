@@ -31,7 +31,7 @@ layout = [
 formats = ["PyYAML==6.0.3", "pypdf==6.19.0", "python-docx==1.2.0"]
 semantic = ["fastembed==0.8.1"]
 media = ["yt-dlp==2026.8.19", "faster-whisper==1.2.1"]
-dev = ["pytest==9.1.1", "ruff==0.12.7", "pip-audit==2.10.1", "setuptools==84.0.0"]
+dev = ["pytest==9.1.1", "ruff==0.16.10", "pip-audit==2.10.1", "setuptools==84.0.0"]
 
 [project.scripts]
 farol = "docops.__main__:main"
