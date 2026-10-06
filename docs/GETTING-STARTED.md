@@ -64,6 +64,12 @@ as seções em capítulos por assunto. Cada resposta é validada — seções,
 citações `[b12]`, orçamento de tokens, cópia literal e instruções maliciosas — e
 rejeições explicam o que corrigir. Acompanhe com `farol status`.
 
+Em agentes com subagentes (por exemplo Claude Code), os capítulos podem ser
+feitos em paralelo: `farol task claim --n 4` reserva quatro tarefas, cada uma
+com um lease que expira (`--ttl`, padrão 30 min); cada subagente envia a sua com
+`farol task submit <id> <pasta> --lease <lease_id>`. Nenhum outro agente recebe
+uma tarefa reservada enquanto o lease vale, e envios simultâneos não se perdem.
+
 ## 4. Conectar ao seu agente
 
 ```bash

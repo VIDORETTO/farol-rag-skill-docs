@@ -913,6 +913,11 @@ def build_parser() -> argparse.ArgumentParser:
     task_submit = task_commands.add_parser("submit", help="submit an answer directory for a task")
     task_submit.add_argument("task_id")
     task_submit.add_argument("output_dir", type=Path)
+    task_submit.add_argument("--lease", help="lease id from `farol task claim` (optional)")
+    task_claim = task_commands.add_parser("claim", help="reserve ready tasks for parallel agents (with leases)")
+    task_claim.add_argument("--n", type=int, default=1, help="how many tasks to reserve")
+    task_claim.add_argument("--ttl", type=int, default=1800, help="lease lifetime in seconds")
+    task_claim.add_argument("--agent", help="name of the claiming agent, shown in task status")
     task_commands.add_parser("status", help="show task progress")
     for sub in task_commands.choices.values():
         sub.add_argument("--package", type=Path, default=Path.cwd(), help="package, or a project directory")
@@ -1072,7 +1077,14 @@ def _journey_text(command: str, payload: dict[str, object]) -> str:
 
 
 def _task_command(args: argparse.Namespace) -> int:
-    from .agent_tasks import SynthesisTaskError, next_task, plan_synthesis, submit_task, synthesis_status
+    from .agent_tasks import (
+        SynthesisTaskError,
+        claim_tasks,
+        next_task,
+        plan_synthesis,
+        submit_task,
+        synthesis_status,
+    )
 
     display = None
     if not (args.package / "manifest.json").is_file() and (args.package / "farol.json").is_file():
@@ -1094,8 +1106,11 @@ def _task_command(args: argparse.Namespace) -> int:
         elif args.task_command == "next":
             payload = next_task(args.package) or {"status": "done", "message": "no pending task"}
             code = 0
+        elif args.task_command == "claim":
+            payload = claim_tasks(args.package, count=args.n, ttl_seconds=args.ttl, agent=args.agent)
+            code = 0
         elif args.task_command == "submit":
-            payload = submit_task(args.package, args.task_id, args.output_dir)
+            payload = submit_task(args.package, args.task_id, args.output_dir, lease_id=args.lease)
             code = 0 if payload["status"] == "accepted" else 1
         else:
             payload = synthesis_status(args.package)
@@ -1113,6 +1128,8 @@ def _task_command(args: argparse.Namespace) -> int:
         payload["package"] = display
     if "instructions" in payload:
         payload["instructions"] = payload["instructions"].replace("<package>", display or str(args.package))
+    for claimed in payload.get("tasks", []) if args.task_command == "claim" else []:
+        claimed["instructions"] = claimed["instructions"].replace("<package>", display or str(args.package))
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
     elif args.task_command == "next" and "instructions" in payload:

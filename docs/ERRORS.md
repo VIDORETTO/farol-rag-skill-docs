@@ -35,6 +35,7 @@ Every error printed by Farol carries one of these codes and a next step.
 | `index_unreadable` | The index file is damaged | `farol doctor --fix` |
 | `install_invalid` | The installed skill failed package validation | `farol doctor --fix` |
 | `invalid_query` | The search query is empty | `ask with words describing the fact you need` |
+| `lease_unknown` | The lease does not hold this task | `farol task claim` |
 | `library_unknown` | No such project in the library | `farol library list` |
 | `mapping_empty` | The source produced no indexable text | `check the source content, then farol build` |
 | `media_unreadable` | The audio or video could not be decoded | `convert it to mp3/wav and add it again` |
@@ -48,6 +49,7 @@ Every error printed by Farol carries one of these codes and a next step.
 | `output_invalid` | The answer directory is unsafe or too large | `submit a regular folder with the files` |
 | `package_invalid` | Not a Farol package | `run the command inside a project or pass --package` |
 | `package_unknown` | No package with that name | `call list_skills to see packages` |
+| `plan_busy` | Another agent is updating the synthesis plan | `retry the same command` |
 | `plan_missing` | No synthesis plan yet | `farol task plan` |
 | `project_missing` | No Farol project here | `farol add <source>` |
 | `project_version_unsupported` | farol.json comes from a newer Farol | `pipx upgrade farol-kit` |
