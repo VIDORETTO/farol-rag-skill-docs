@@ -84,6 +84,9 @@ CATALOG: dict[str, ErrorInfo] = {
     "index_unreadable": ErrorInfo("The index file is damaged", "farol doctor --fix"),
     "revision_mismatch": ErrorInfo("The query targets another project revision", "reopen the reader"),
     "embedding_profile_changed": ErrorInfo("The index was built with another embedding model", "farol build"),
+    "embedding_model_unavailable": ErrorInfo(
+        "The embedding model could not be loaded", "check the network, or set FAROL_SEMANTIC=0 for BM25"
+    ),
     "backend_closed": ErrorInfo("The backend was closed", "reopen the reader"),
     "candidate_unknown": ErrorInfo("The index candidate was not prepared", "farol build"),
     "documents_invalid": ErrorInfo("Index input is malformed", "farol build"),
