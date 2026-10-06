@@ -408,7 +408,71 @@ def _pdf_markdown(reader: Any) -> str:
     return "\n\n".join(parts) if any(pages) else ""
 
 
+_LAYOUT_SKIPPED = frozenset({"page_header", "page_footer", "picture", "formula"})
+
+
+def _layout_converter() -> Any:
+    """Docling converter for digital PDFs: layout and tables, no OCR (extra ``layout``; seam S12)."""
+
+    from docling.datamodel.base_models import InputFormat  # type: ignore[import-not-found]
+    from docling.datamodel.pipeline_options import PdfPipelineOptions  # type: ignore[import-not-found]
+    from docling.document_converter import DocumentConverter, PdfFormatOption  # type: ignore[import-not-found]
+
+    options = PdfPipelineOptions(do_ocr=False, do_table_structure=True)
+    return DocumentConverter(format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=options)})
+
+
+def _layout_pdf_markdown(path: Path) -> str:
+    """Pages as ``## Page N`` with Docling headings as ``###`` and tables kept as Markdown tables."""
+
+    result = _layout_converter().convert(path)
+    document = result.document
+    pages: dict[int, list[str]] = {}
+    for item, _level in document.iterate_items():
+        label = str(getattr(getattr(item, "label", ""), "value", getattr(item, "label", "")) or "")
+        provenance = list(getattr(item, "prov", []) or [])
+        page = int(getattr(provenance[0], "page_no", 0) or 0) if provenance else 0
+        if label in _LAYOUT_SKIPPED or page <= 0:
+            continue
+        if label == "table":
+            table = item.export_to_markdown(document).strip()
+            if table:
+                pages.setdefault(page, []).append(table)
+            continue
+        text = " ".join(str(getattr(item, "text", "") or "").split())
+        if not text:
+            continue
+        if label in {"title", "section_header"}:
+            pages.setdefault(page, []).append(f"### {text}")
+        else:
+            pages.setdefault(page, []).append(_pdf_page_markdown(text))
+    if not pages:
+        return ""
+    parts = [f"## Page {page}\n\n" + "\n\n".join(blocks) for page, blocks in sorted(pages.items())]
+    parts.append(f"## Metadata\n\n- Pages: {max(pages)}\n- Extraction: layout (docling)")
+    return "\n\n".join(parts)
+
+
+def _layout_enabled() -> bool:
+    import os
+
+    return os.environ.get("FAROL_PDF_LAYOUT", "0") == "1"
+
+
 def _extract_pdf(path: Path) -> str:
+    """Digital PDF text: Docling layout when enabled and installed, else pypdf (``text-fallback``)."""
+
+    if _layout_enabled():
+        try:
+            markdown = _layout_pdf_markdown(path)
+        except Exception:  # extra missing or conversion failure: the text path still works
+            markdown = ""
+        if markdown:
+            return markdown
+    return _extract_pdf_text(path)
+
+
+def _extract_pdf_text(path: Path) -> str:
     text_parts: list[str] = []
     try:
         from pypdf import PdfReader  # type: ignore[import-not-found]

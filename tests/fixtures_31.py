@@ -126,3 +126,45 @@ def course_folder(tmp_path: Path) -> Path:
         "# Slides\n\n## Capa\n\nMaterial de apoio com os exercícios do curso.\n", encoding="utf-8"
     )
     return folder
+
+
+class _Prov:
+    def __init__(self, page: int) -> None:
+        self.page_no = page
+
+
+class _Item:
+    def __init__(self, label: str, text: str, page: int, *, level: int = 1, table: str | None = None) -> None:
+        self.label, self.text, self.level, self.prov, self._table = label, text, level, [_Prov(page)], table
+
+    def export_to_markdown(self, doc: object = None) -> str:
+        return self._table or ""
+
+
+class FakeLayoutConverter:
+    """F8: Docling-like items — headings, paragraphs and a 3x3 table, with page numbers."""
+
+    def convert(self, path: object) -> object:
+        items = [
+            _Item("title", "Retry Handbook", 1),
+            _Item("page_header", "Retry Handbook — draft", 1),
+            _Item("section_header", "Budgets", 1, level=1),
+            _Item("text", "A retry budget caps the extra load created by retries.", 1),
+            _Item("section_header", "Defaults by client", 2, level=1),
+            _Item(
+                "table",
+                "",
+                2,
+                table="| Client | Attempts | Backoff |\n|---|---|---|\n| httpx | 0 | none |\n| urllib3 | 3 | 0.5 s |",
+            ),
+            _Item("text", "Clients differ in their defaults.", 2),
+        ]
+
+        class Document:
+            def iterate_items(self):
+                return [(item, 1) for item in items]
+
+        class Result:
+            document = Document()
+
+        return Result()

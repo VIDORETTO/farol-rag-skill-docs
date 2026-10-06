@@ -5,6 +5,8 @@ do Python. Os perfis opcionais declarados em `pyproject.toml` são:
 
 - `formats`: `PyYAML==6.0.3`, `pypdf==6.16.2` e `python-docx==1.2.0`;
 - `ragflow`: `ragflow-sdk==0.27.2`, somente no interpretador Python 3.13;
+- `layout`: os mesmos pins de `docling` e `onnxruntime` do extra `ocr`, sem OCR,
+  para PDFs digitais com layout e tabelas (opt-in por `FAROL_PDF_LAYOUT=1`).
 - `ocr`: `docling==2.129.0` e `onnxruntime==1.30.0`, também no perfil Python
   3.13, com RapidOCR fornecido pelo fluxo Docling;
 - `dev`: `pytest==9.1.1`, `ruff==0.12.7`, `pip-audit==2.10.1` e

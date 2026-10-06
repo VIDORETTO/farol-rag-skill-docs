@@ -29,6 +29,7 @@ farol doctor
 | `semantic` (recomendado) | busca híbrida multilíngue, perguntas em PT sobre fontes em EN | ~220 MB de modelo, baixado no primeiro uso |
 | `media` | YouTube e reconhecimento de fala local (áudio/vídeo) | modelos de fala baixados no primeiro uso |
 | `ocr` | PDFs escaneados (Python 3.13) | grande |
+| `layout` | PDFs digitais com títulos e tabelas preservados (Python 3.13); ative com `FAROL_PDF_LAYOUT=1` | grande |
 | `ragflow` | usar um servidor RAGFlow externo como backend (Python 3.13) | serviço próprio |
 
 Combine extras separando por vírgula: `farol-kit[semantic,media]`.

@@ -253,6 +253,7 @@ def run_doctor(
         "formats": all(find_spec(name) is not None for name in ("yaml", "pypdf", "docx")),
         "semantic": all(find_spec(name) is not None for name in ("fastembed", "numpy")),
         "media": all(find_spec(name) is not None for name in ("yt_dlp", "faster_whisper")),
+        "layout": find_spec("docling") is not None,
     }
     from .ranking import RERANKER_LICENSES, configured_reranker
 
