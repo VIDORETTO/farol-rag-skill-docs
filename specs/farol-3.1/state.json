@@ -59,7 +59,7 @@
       "TK-213"
     ]
   },
-  "next_action": "Onda A entregue (evidências em specs/farol-3.1/evidence/). Próximo: TK-203 (ranking global; biblioteca com 40% de hits do pacote errado); confirmar D-301/D-302 para TK-204/TK-205.",
-  "wave": "B",
+  "next_action": "TK-201–TK-216 implementados (evidências em specs/farol-3.1/evidence/). Gate da 3.1 verde; aguardam o mantenedor: D-308 (tag/release 3.1.0) e D-307 (contração 4.0, TK-217). Medições not_run exigem rede/modelos/agente.",
+  "wave": "F",
   "decisions": "specs/farol-3.1/decisions.md"
 }
