@@ -4,7 +4,7 @@ Este conjunto mede a camada RAG e orienta a validação da skill roteadora. O
 corpus ativo é o snapshot local da documentação oficial FastAPI em
 `documents/fastapi-docs/`.
 
-- Perguntas conceituais: respondidas pela skill `skills/fastapi/`.
+- Perguntas conceituais: respondidas pela skill `docs/archive/1.x/skills/fastapi/`.
 - Perguntas factuais/literais: respondidas pelo RAG e acompanhadas de citação
   `source#secao`.
 - Casos executáveis: `golden-set/test-cases-fastapi.json` (14 casos).
@@ -47,7 +47,7 @@ Resultado da execução de 2026-08-28:
 | MRR@5 | ≥ 0,70 | **0,8595** | ✅ |
 | Recall@5 | ≥ 0,85 | **1,0000** (14/14) | ✅ |
 | Precision@5 | — | não exposta pelo retorno desta versão do servidor | n/a |
-| Core `skills/fastapi/SKILL.md` | ≤ 4.000 tokens | **1.280** (`cl100k_base`) | ✅ |
+| Core `docs/archive/1.x/skills/fastapi/SKILL.md` | ≤ 4.000 tokens | **1.280** (`cl100k_base`) | ✅ |
 
 ## 2. Validação conceitual/manual da skill e do router
 

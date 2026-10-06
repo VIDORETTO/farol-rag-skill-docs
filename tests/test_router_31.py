@@ -68,7 +68,9 @@ def test_connect_installs_one_project_router_instead_of_one_per_source(tmp_path:
     stale = target / ".claude" / "skills" / "alpha-docs-router" / "SKILL.md"
     stale.parent.mkdir(parents=True)
     stale.write_text("old per-source router installed by Farol 3.0\n", encoding="utf-8")
-    record = {f"claude-code:{target.resolve()}": {"configs": {}, "files": [".claude/skills/alpha-docs-router/SKILL.md"]}}
+    record = {
+        f"claude-code:{target.resolve()}": {"configs": {}, "files": [".claude/skills/alpha-docs-router/SKILL.md"]}
+    }
     (project / ".farol" / "connect.json").write_text(json.dumps(record), encoding="utf-8")
 
     code, result = _cli(project, "connect", "claude-code", "--target", str(target), "--json")
