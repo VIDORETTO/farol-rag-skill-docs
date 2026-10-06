@@ -361,3 +361,128 @@ def test_heuristic_outline_remains_available_as_declared_fallback(tmp_path: Path
 
     assert plan["outline"] == "heuristic"
     assert next_task(package)["kind"] == "chapter"
+
+
+# -- Farol 3.1 TK-206: claims with leases and a locked plan -----------------
+
+
+def _many_chapters(tmp_path: Path, count: int = 16) -> Path:
+    source = tmp_path / "many"
+    source.mkdir()
+    sections = "\n\n".join(
+        f"## Topic {number}\n\nTopic {number} explains how retry budget {number} limits calls to the Acme API "
+        f"under load, with backoff of {number} seconds between attempts and a ceiling of {number * 3} tries."
+        for number in range(1, count + 1)
+    )
+    (source / "guide.md").write_text(f"# Guide\n\n{sections}\n", encoding="utf-8")
+    package = tmp_path / "package"
+    assert docops.apply(
+        docops.plan(
+            docops.OperationRequest(
+                source,
+                docops.OperationOptions(output_dir=package, source_root=source.parent, slug="acme", license="MIT"),
+            )
+        )
+    ).ok
+    plan_synthesis(package, language="en", outline="heuristic", task_source_tokens=40)
+    return package
+
+
+def _task_cli(package: Path, *args: str) -> Any:
+    import os
+    import subprocess
+    import sys
+
+    root = Path(__file__).resolve().parents[1]
+    return subprocess.Popen(
+        [sys.executable, "-m", "docops", "task", *args, "--package", str(package), "--json"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        cwd=root,
+        env={**os.environ, "PYTHONPATH": str(root)},
+    )
+
+
+def test_concurrent_submits_keep_every_accepted_task_in_the_plan(tmp_path: Path) -> None:
+    from docops.agent_tasks import _load_task
+
+    package = _many_chapters(tmp_path)
+    chapters = [item["task_id"] for item in synthesis_status(package)["tasks"] if item["kind"] == "chapter"]
+    assert len(chapters) >= 8
+    answers = {
+        task_id: _write(tmp_path / f"answer-{task_id}", {"chapter.md": _chapter(_load_task(package, task_id))})
+        for task_id in chapters
+    }
+
+    processes = [_task_cli(package, "submit", task_id, str(answer)) for task_id, answer in answers.items()]
+    outputs = [json.loads(process.communicate(timeout=120)[0]) for process in processes]
+
+    assert all(output["status"] == "accepted" for output in outputs), outputs
+    counts = synthesis_status(package)["counts"]
+    assert counts.get("accepted") == len(chapters)
+
+
+def test_claim_returns_up_to_n_independent_tasks_with_leases(tmp_path: Path) -> None:
+    from docops.agent_tasks import claim_tasks
+
+    package = _many_chapters(tmp_path)
+
+    claimed = claim_tasks(package, count=3, agent="sub-1")
+
+    assert [task["kind"] for task in claimed["tasks"]] == ["chapter"] * 3
+    assert all(task["lease"]["lease_id"] and task["lease"]["expires_at"] for task in claimed["tasks"])
+    assert all(task["instructions"] for task in claimed["tasks"])
+
+
+def test_two_claimers_never_receive_the_same_task_while_the_lease_is_valid(tmp_path: Path) -> None:
+    package = _many_chapters(tmp_path)
+
+    processes = [_task_cli(package, "claim", "--n", "3", "--agent", f"sub-{n}") for n in range(2)]
+    outputs = [json.loads(process.communicate(timeout=120)[0]) for process in processes]
+    first, second = ({task["task_id"] for task in output["tasks"]} for output in outputs)
+
+    assert len(first) == 3 and len(second) == 3 and not first & second
+    assert next_task(package)["task_id"] not in first | second
+
+
+def test_expired_lease_returns_the_task_to_the_pool(tmp_path: Path) -> None:
+    import time
+
+    from docops.agent_tasks import claim_tasks
+
+    package = _many_chapters(tmp_path)
+    everything = claim_tasks(package, count=100, ttl_seconds=1)
+    chapters = {task["task_id"] for task in everything["tasks"]}
+    assert claim_tasks(package, count=100)["tasks"] == []
+
+    time.sleep(1.2)
+
+    again = {task["task_id"] for task in claim_tasks(package, count=100)["tasks"]}
+    assert again == chapters
+
+
+def test_submit_with_a_foreign_lease_is_refused_and_acceptance_releases_the_claim(tmp_path: Path) -> None:
+    from docops.agent_tasks import claim_tasks
+
+    package = _many_chapters(tmp_path)
+    task = claim_tasks(package, count=1)["tasks"][0]
+    answer = _write(tmp_path / "answer", {"chapter.md": _chapter(task)})
+
+    foreign = submit_task(package, task["task_id"], answer, lease_id="not-my-lease")
+    accepted = submit_task(package, task["task_id"], answer, lease_id=task["lease"]["lease_id"])
+
+    assert foreign["status"] == "rejected" and foreign["reasons"][0]["code"] == "lease_unknown"
+    assert accepted["status"] == "accepted"
+    assert task["task_id"] not in synthesis_status(package)["claimed"]
+
+
+def test_core_task_is_not_claimable_until_chapters_are_accepted(tmp_path: Path) -> None:
+    from docops.agent_tasks import claim_tasks
+
+    package = _many_chapters(tmp_path)
+
+    claimed = claim_tasks(package, count=100)
+
+    assert "core" not in {task["task_id"] for task in claimed["tasks"]}

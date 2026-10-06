@@ -55,6 +55,8 @@ CATALOG: dict[str, ErrorInfo] = {
     "install_invalid": ErrorInfo("The installed skill failed package validation", "farol doctor --fix"),
     "already_accepted": ErrorInfo("The task was already accepted with other content", "farol task next"),
     "dependencies_pending": ErrorInfo("Earlier tasks must be accepted first", "farol task next"),
+    "plan_busy": ErrorInfo("Another agent is updating the synthesis plan", "retry the same command"),
+    "lease_unknown": ErrorInfo("The lease does not hold this task", "farol task claim"),
     "missing_file": ErrorInfo("An expected answer file is missing", "add the file listed in the task and resubmit"),
     "missing_section": ErrorInfo("A required section is missing", "add the section named in the message"),
     "missing_citations": ErrorInfo("Factual statements lack block references", "cite blocks like [b12] and resubmit"),

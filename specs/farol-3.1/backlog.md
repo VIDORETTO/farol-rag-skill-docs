@@ -28,7 +28,7 @@
 | [TK-203](tickets/TK-203.md) | Ranking global na biblioteca | TK-202 | implemented |
 | [TK-204](tickets/TK-204.md) | Reranker local opcional | TK-201, TK-203, D-301 | implemented |
 | [TK-205](tickets/TK-205.md) | Embedding com prefixos e troca medida | TK-201, D-302 | implemented |
-| [TK-206](tickets/TK-206.md) | Claim/lease e lock do plano | — | ready |
+| [TK-206](tickets/TK-206.md) | Claim/lease e lock do plano | — | implemented |
 | [TK-207](tickets/TK-207.md) | Orçamento e sumário nativo | TK-206 | ready |
 | [TK-208](tickets/TK-208.md) | Skill `farol-distill` | TK-206, D-303 | blocked (D-303) |
 | [TK-210](tickets/TK-210.md) | Curso (pasta e playlist) | TK-207 | ready |

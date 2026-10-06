@@ -17,8 +17,11 @@ import os
 import re
 import shutil
 import tempfile
+import time
+import uuid
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Iterator, Mapping
 
 from .mcp_server import citation
 from .package_index import package_documents
@@ -50,6 +53,10 @@ _CORE_SECTIONS: dict[str, tuple[str, ...]] = {
     "Chapters": ("chapters", "capítulos", "capitulos"),
 }
 _CORE_FILES = ("SKILL.md", "glossary.md", "patterns.md", "cheatsheet.md")
+CLAIMS_FILE = "claims.json"
+DEFAULT_LEASE_SECONDS = 1800
+_LOCK_WAIT_SECONDS = 60.0
+_LOCK_STALE_SECONDS = 120.0
 
 
 class SynthesisTaskError(ValueError):
@@ -87,6 +94,54 @@ def _template(name: str) -> str:
 
 def _manifest(root: Path) -> dict[str, Any]:
     return _read(root / "manifest.json")
+
+
+@contextmanager
+def _plan_lock(root: Path) -> Iterator[None]:
+    """Serialize every read-modify-write of the plan, its tasks and claims.
+
+    Parallel agents (subagents claiming chapters) submit at the same time; the
+    plan is rewritten on each acceptance, so without this lock updates are
+    lost. ``mkdir`` is atomic on every platform; a lock left by a crashed
+    process is reclaimed after ``_LOCK_STALE_SECONDS``.
+    """
+
+    directory = _dir(root)
+    directory.mkdir(parents=True, exist_ok=True)
+    lock = directory / ".plan.lock"
+    deadline = time.monotonic() + _LOCK_WAIT_SECONDS
+    while True:
+        try:
+            lock.mkdir()
+            break
+        except FileExistsError:
+            try:
+                if time.time() - lock.stat().st_mtime > _LOCK_STALE_SECONDS:
+                    lock.rmdir()
+                    continue
+            except OSError:
+                continue
+            if time.monotonic() > deadline:
+                raise SynthesisTaskError("plan_busy", "another agent is updating the synthesis plan; retry")
+            time.sleep(0.02)
+    try:
+        yield
+    finally:
+        try:
+            lock.rmdir()
+        except OSError:
+            pass
+
+
+def _active_claims(root: Path) -> dict[str, dict[str, Any]]:
+    path = _dir(root) / CLAIMS_FILE
+    claims = _read(path).get("claims", {}) if path.is_file() else {}
+    now = time.time()
+    return {task_id: claim for task_id, claim in claims.items() if float(claim.get("expires_at_epoch", 0)) > now}
+
+
+def _save_claims(root: Path, claims: Mapping[str, Any]) -> None:
+    write_json_atomic(_dir(root) / CLAIMS_FILE, {"schema_version": 1, "claims": dict(claims)})
 
 
 def _slices(documents: list[dict[str, Any]], budget: int) -> list[list[dict[str, Any]]]:
@@ -197,6 +252,23 @@ def _title(blocks: list[dict[str, Any]]) -> str:
 
 
 def plan_synthesis(
+    package: Path | str,
+    *,
+    language: str | None = None,
+    task_source_tokens: int = DEFAULT_TASK_SOURCE_TOKENS,
+    outline: str | None = None,
+    refresh: bool = False,
+) -> dict[str, Any]:
+    """Create (or keep) the task plan; see ``_plan_synthesis_locked``."""
+
+    root = _root(package)
+    with _plan_lock(root):
+        return _plan_synthesis_locked(
+            root, language=language, task_source_tokens=task_source_tokens, outline=outline, refresh=refresh
+        )
+
+
+def _plan_synthesis_locked(
     package: Path | str,
     *,
     language: str | None = None,
@@ -344,10 +416,19 @@ def synthesis_status(package: Path | str) -> dict[str, Any]:
         "counts": counts,
         "tasks": plan["tasks"],
         "stale_chapters": list(plan.get("stale_chapters", [])),
+        "claimed": {
+            task_id: {key: claim[key] for key in ("agent", "expires_at")}
+            for task_id, claim in _active_claims(root).items()
+        },
     }
 
 
 def mark_stale(package: Path | str, removed_block_ids: set[str]) -> list[str]:
+    with _plan_lock(_root(package)):
+        return _mark_stale_locked(package, removed_block_ids)
+
+
+def _mark_stale_locked(package: Path | str, removed_block_ids: set[str]) -> list[str]:
     """Record chapters whose cited blocks disappeared from the corpus."""
 
     root = _root(package)
@@ -515,13 +596,62 @@ def next_task(package: Path | str) -> dict[str, Any] | None:
 
     root = _root(package)
     plan = _load_plan(root)
-    accepted = {task["task_id"] for task in plan["tasks"] if task["status"] == "accepted"}
-    for summary in plan["tasks"]:
-        if summary["status"] == "accepted":
-            continue
-        if all(requirement in accepted for requirement in summary["requires"]):
+    claimed = _active_claims(root)
+    for summary in _ready(plan):
+        if summary["task_id"] not in claimed:
             return _render(root, _load_task(root, summary["task_id"]), plan)
     return None
+
+
+def _ready(plan: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    accepted = {task["task_id"] for task in plan["tasks"] if task["status"] == "accepted"}
+    return [
+        summary
+        for summary in plan["tasks"]
+        if summary["status"] != "accepted" and all(requirement in accepted for requirement in summary["requires"])
+    ]
+
+
+def claim_tasks(
+    package: Path | str,
+    *,
+    count: int = 1,
+    ttl_seconds: int = DEFAULT_LEASE_SECONDS,
+    agent: str | None = None,
+) -> dict[str, Any]:
+    """Reserve up to ``count`` ready tasks for one agent, each with an expiring lease.
+
+    While a lease is valid no other claimer (and no ``next``) receives that
+    task, so several subagents can distil chapters in parallel. An expired
+    lease returns the task to the pool.
+    """
+
+    root = _root(package)
+    count = max(1, min(int(count), 64))
+    ttl_seconds = max(1, int(ttl_seconds))
+    with _plan_lock(root):
+        plan = _load_plan(root)
+        claims = _active_claims(root)
+        chosen = [summary["task_id"] for summary in _ready(plan) if summary["task_id"] not in claims][:count]
+        expires = time.time() + ttl_seconds
+        for task_id in chosen:
+            claims[task_id] = {
+                "lease_id": uuid.uuid4().hex,
+                "agent": str(agent or "agent")[:64],
+                "expires_at_epoch": expires,
+                "expires_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(expires)),
+            }
+        _save_claims(root, claims)
+    tasks = []
+    for task_id in chosen:
+        rendered = _render(root, _load_task(root, task_id), plan)
+        claim = claims[task_id]
+        rendered["lease"] = {key: claim[key] for key in ("lease_id", "agent", "expires_at")}
+        rendered["instructions"] = rendered["instructions"].replace(
+            f"farol task submit {task_id} ", f"farol task submit {task_id} --lease {claim['lease_id']} "
+        )
+        tasks.append(rendered)
+    return {"status": "claimed" if tasks else "none_ready", "tasks": tasks}
 
 
 def _headings(text: str) -> set[str]:
@@ -664,10 +794,34 @@ def _read_outputs(directory: Path, names: Iterable[str]) -> dict[str, str]:
     return files
 
 
-def submit_task(package: Path | str, task_id: str, output_dir: Path | str) -> dict[str, Any]:
-    """Validate an agent's answer for one task; accept it or explain the rejection."""
+def submit_task(
+    package: Path | str, task_id: str, output_dir: Path | str, *, lease_id: str | None = None
+) -> dict[str, Any]:
+    """Validate an agent's answer for one task; accept it or explain the rejection.
+
+    ``lease_id`` (from ``claim_tasks``) is optional; when given it must be the
+    task's current lease. Acceptance releases the claim.
+    """
 
     root = _root(package)
+    with _plan_lock(root):
+        if lease_id is not None:
+            claim = _active_claims(root).get(task_id)
+            if claim is None or claim["lease_id"] != lease_id:
+                return {
+                    "status": "rejected",
+                    "task_id": task_id,
+                    "reasons": [_reason("lease_unknown", "this lease does not hold the task; claim it again")],
+                }
+        result = _submit_locked(root, task_id, output_dir)
+        if result["status"] == "accepted":
+            claims = _active_claims(root)
+            if claims.pop(task_id, None) is not None:
+                _save_claims(root, claims)
+        return result
+
+
+def _submit_locked(root: Path, task_id: str, output_dir: Path | str) -> dict[str, Any]:
     plan = _load_plan(root)
     task = _load_task(root, task_id)
     files = _read_outputs(Path(output_dir), task["output"]["files"])
