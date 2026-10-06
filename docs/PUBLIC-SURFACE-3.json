@@ -633,13 +633,22 @@
       "work --worker-id"
     ],
     "mcp_tools": [
+      "get_context",
       "get_document",
       "get_skill",
       "list_skills",
       "search_knowledge"
     ],
     "mcp_tool_params": [
+      "get_context.after",
+      "get_context.before",
+      "get_context.block_id",
+      "get_context.max_tokens",
+      "get_context.package",
+      "get_context.scope",
       "get_document.document_id",
+      "get_document.limit",
+      "get_document.offset",
       "get_document.package",
       "get_skill.chapter",
       "get_skill.name",
@@ -648,6 +657,7 @@
       "search_knowledge.top_k"
     ],
     "mcp_search_hit_fields": [
+      "block_id",
       "citation",
       "document_id",
       "heading_path",

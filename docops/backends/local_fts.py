@@ -111,7 +111,7 @@ class LocalFtsBackend:
             BACKEND_NAME,
             "healthy",
             version=BACKEND_VERSION,
-            capabilities=("ingest", "retrieval", "get_document", "snapshot", "discard"),
+            capabilities=("ingest", "retrieval", "get_document", "context", "snapshot", "discard"),
             health={"ok": True, "sqlite": sqlite3.sqlite_version},
         )
 
@@ -315,6 +315,57 @@ class LocalFtsBackend:
             "source_id": blocks[0]["source_id"],
             "path": blocks[0]["path"],
             "blocks": blocks,
+        }
+
+    def get_context(
+        self,
+        index_revision: IndexRevision,
+        block_id: str,
+        *,
+        before: int = 2,
+        after: int = 2,
+        scope: str = "blocks",
+        max_tokens: int = 1500,
+    ) -> dict[str, Any]:
+        """Neighbouring blocks of one block (or its whole section), in document order.
+
+        High-risk blocks are never returned. When ``max_tokens`` cannot hold the
+        selection, blocks are kept outward from the target and ``truncated`` is set.
+        """
+
+        self._ensure_open()
+        if scope not in ("blocks", "section"):
+            raise BackendError("scope_invalid", "scope must be 'blocks' or 'section'")
+        columns = (
+            "block_id, document_id, source_id, source_revision_id, path, kind, heading_path, locators, text, risk, 0.0"
+        )
+        with self._connect(index_revision.index_revision) as connection:
+            target = connection.execute(
+                "SELECT document_id, heading_path FROM blocks WHERE block_id = ? AND risk != 'high'", (block_id,)
+            ).fetchone()
+            if target is None:
+                raise BackendError("block_unknown", "block is not part of this index revision")
+            rows = connection.execute(
+                f"SELECT {columns} FROM blocks WHERE document_id = ? AND risk != 'high'"
+                + (" AND heading_path = ?" if scope == "section" else "")
+                + " ORDER BY rowid",
+                (target[0], target[1]) if scope == "section" else (target[0],),
+            ).fetchall()
+        blocks = [_hit(row) for row in rows]
+        for block in blocks:
+            block.pop("score", None)
+        position = next(index for index, block in enumerate(blocks) if block["block_id"] == block_id)
+        if scope == "blocks":
+            start, end = max(0, position - max(0, before)), position + max(0, after) + 1
+        else:
+            start, end = 0, len(blocks)
+        selected, truncated = _within_budget(blocks, position, start, min(end, len(blocks)), max_tokens)
+        return {
+            "document_id": target[0],
+            "block_id": block_id,
+            "scope": scope,
+            "blocks": selected,
+            "truncated": truncated,
         }
 
     def snapshot(self, index_revision: IndexRevision) -> SnapshotIdentity:
@@ -538,6 +589,33 @@ def _write_vectors(connection: sqlite3.Connection, embedder: Any) -> None:
                 connection.execute("INSERT INTO vectors VALUES (?, ?, ?)", (owner, blob, key))
                 cache.execute("INSERT OR REPLACE INTO vectors VALUES (?, ?)", (key, blob))
         cache.commit()
+
+
+def _block_tokens(block: Mapping[str, Any]) -> int:
+    return len(str(block.get("text") or "")) // 4
+
+
+def _within_budget(
+    blocks: list[dict[str, Any]], position: int, start: int, end: int, max_tokens: int
+) -> tuple[list[dict[str, Any]], bool]:
+    """Grow outward from ``position`` inside ``[start, end)`` while the token budget allows."""
+
+    low, high = position, position + 1
+    used = _block_tokens(blocks[position])
+    grown = True
+    while grown:
+        grown = False
+        for side in ("before", "after"):
+            index = low - 1 if side == "before" else high
+            if not start <= index < end:
+                continue
+            cost = _block_tokens(blocks[index])
+            if used + cost > max_tokens:
+                continue
+            used += cost
+            low, high = (index, high) if side == "before" else (low, index + 1)
+            grown = True
+    return blocks[low:high], (low, high) != (start, end)
 
 
 def _hit(row: tuple[Any, ...]) -> dict[str, Any]:

@@ -74,6 +74,8 @@ CATALOG: dict[str, ErrorInfo] = {
     "index_missing": ErrorInfo("No factual index yet", "farol build"),
     "package_unknown": ErrorInfo("No package with that name", "call list_skills to see packages"),
     "document_unknown": ErrorInfo("The document is not indexed", "use a document_id returned by search_knowledge"),
+    "block_unknown": ErrorInfo("The block is not indexed", "use a block_id returned by search_knowledge"),
+    "scope_invalid": ErrorInfo("Unknown context scope", "use scope blocks or section"),
     "skill_unknown": ErrorInfo("No skill with that name", "call list_skills"),
     "chapter_invalid": ErrorInfo("Invalid chapter name", "use a chapter file listed by list_skills"),
     "chapter_unknown": ErrorInfo("Chapter not found", "use a chapter file listed by list_skills"),

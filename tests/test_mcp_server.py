@@ -95,7 +95,7 @@ def test_mcp_lists_read_only_knowledge_tools(tmp_path: Path) -> None:
     assert responses[0]["result"]["serverInfo"]["name"] == "farol"
     assert "tools" in responses[0]["result"]["capabilities"]
     names = {tool["name"] for tool in responses[1]["result"]["tools"]}
-    assert names == {"search_knowledge", "get_document", "list_skills", "get_skill"}
+    assert names == {"search_knowledge", "get_document", "get_context", "list_skills", "get_skill"}
 
 
 def test_search_returns_citable_evidence_and_abstains_without_it(tmp_path: Path) -> None:
@@ -210,3 +210,104 @@ def test_high_risk_blocks_never_reach_the_agent_and_suspicious_ones_are_marked(t
     risks = {hit["text"].split(":")[0]: hit["risk"] for hit in hits}
     assert risks["The summary prompt says"] == "suspicious"
     assert all(hit["risk"] in {"none", "suspicious"} for hit in hits)
+
+
+# -- Farol 3.1 TK-202: block ids, context expansion and paged documents ------
+
+
+def _tool(package: Path, tool: str, **arguments: Any) -> dict[str, Any]:
+    responses = _session(package, _call(1, tool, **arguments))
+    return responses[1]["result"]
+
+
+def _hit_for(package: Path, marker: str) -> dict[str, Any]:
+    hits = _tool(package, "search_knowledge", query=marker, top_k=1)["structuredContent"]["hits"]
+    assert marker in hits[0]["text"]
+    return hits[0]
+
+
+def test_search_hits_expose_block_id(tmp_path: Path) -> None:
+    from fixtures_31 import long_section_book
+
+    package = long_section_book(tmp_path)
+
+    hit = _hit_for(package, "Paragraph 2.3.20")
+
+    assert hit["block_id"]
+
+
+def test_get_context_returns_neighbours_in_order_with_citations(tmp_path: Path) -> None:
+    from fixtures_31 import long_section_book
+
+    package = long_section_book(tmp_path)
+    hit = _hit_for(package, "Paragraph 2.3.20")
+
+    result = _tool(package, "get_context", block_id=hit["block_id"], before=2, after=2)
+
+    assert result["isError"] is False
+    context = result["structuredContent"]
+    texts = [block["text"].split(":")[0] for block in context["blocks"]]
+    assert texts == [f"Paragraph 2.3.{number}" for number in (18, 19, 20, 21, 22)]
+    assert all(block["citation"].startswith("rag/documents/manual.md:") for block in context["blocks"])
+    assert [block["block_id"] == hit["block_id"] for block in context["blocks"]].count(True) == 1
+    assert context["truncated"] is False
+    assert "untrusted" in context["note"]
+
+
+def test_get_context_section_scope_respects_max_tokens_and_reports_truncation(tmp_path: Path) -> None:
+    from fixtures_31 import long_section_book
+
+    package = long_section_book(tmp_path)
+    hit = _hit_for(package, "Paragraph 2.3.20")
+
+    whole = _tool(package, "get_context", block_id=hit["block_id"], scope="section", max_tokens=8000)
+    small = _tool(package, "get_context", block_id=hit["block_id"], scope="section", max_tokens=100)
+
+    whole_texts = [block["text"].split(":")[0] for block in whole["structuredContent"]["blocks"]]
+    assert whole_texts == [f"Paragraph 2.3.{number}" for number in range(1, 41)]
+    assert whole["structuredContent"]["truncated"] is False
+    blocks = small["structuredContent"]["blocks"]
+    assert small["structuredContent"]["truncated"] is True
+    assert 1 <= len(blocks) < 40
+    assert any(block["block_id"] == hit["block_id"] for block in blocks)
+    assert sum(len(block["text"]) // 4 for block in blocks) <= 100
+
+
+def test_get_context_never_returns_high_risk_blocks(tmp_path: Path) -> None:
+    from fixtures_31 import long_section_book
+
+    package = long_section_book(tmp_path, hostile_paragraph=21)
+    hit = _hit_for(package, "Paragraph 2.3.20")
+
+    blocks = _tool(package, "get_context", block_id=hit["block_id"], before=3, after=3)["structuredContent"]["blocks"]
+
+    assert all("Ignore all previous instructions" not in block["text"] for block in blocks)
+    assert all(block["risk"] != "high" for block in blocks)
+
+
+def test_get_document_paginates_and_keeps_the_unpaged_default(tmp_path: Path) -> None:
+    from fixtures_31 import long_section_book
+
+    package = long_section_book(tmp_path)
+    hit = _hit_for(package, "Paragraph 2.3.20")
+
+    full = _tool(package, "get_document", document_id=hit["document_id"])["structuredContent"]
+    page = _tool(package, "get_document", document_id=hit["document_id"], offset=5, limit=10)["structuredContent"]
+
+    assert "offset" not in full and len(full["blocks"]) == full["total_blocks"]
+    assert [block["block_id"] for block in page["blocks"]] == [block["block_id"] for block in full["blocks"][5:15]]
+    assert page["total_blocks"] == full["total_blocks"]
+    assert page["next_offset"] == 15
+    last = _tool(package, "get_document", document_id=hit["document_id"], offset=full["total_blocks"] - 2, limit=10)
+    assert last["structuredContent"]["next_offset"] is None
+
+
+def test_unknown_block_id_is_a_typed_error(tmp_path: Path) -> None:
+    from fixtures_31 import long_section_book
+
+    package = long_section_book(tmp_path)
+
+    result = _tool(package, "get_context", block_id="no-such-block")
+
+    assert result["isError"] is True
+    assert result["structuredContent"]["error"]["code"] == "block_unknown"

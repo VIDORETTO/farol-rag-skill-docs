@@ -30,8 +30,9 @@ byte a byte ao original; nos demais, só a entrada `farol` é removida.
 |---|---|
 | `list_skills` | skills disponíveis (uma por fonte, mais routers) e capítulos |
 | `get_skill` | `SKILL.md` ou um capítulo, para conceitos e decisões |
-| `search_knowledge` | fatos literais com `citation` (`path:linha`, página ou `(at HH:MM:SS)`) e `risk` |
-| `get_document` | todos os blocos de um documento, em ordem |
+| `search_knowledge` | fatos literais com `citation` (`path:linha`, página ou `(at HH:MM:SS)`), `block_id` e `risk` |
+| `get_context` | blocos vizinhos de um hit (`block_id`, `before`/`after`) ou a seção inteira (`scope: section`), limitado por `max_tokens` |
+| `get_document` | blocos de um documento, em ordem; `offset`/`limit` paginam documentos longos (um livro inteiro) |
 
 Sem evidência, `search_knowledge` retorna `insufficient_evidence`; o agente deve
 abster-se em vez de adivinhar. Todo texto retornado vem marcado como conteúdo
