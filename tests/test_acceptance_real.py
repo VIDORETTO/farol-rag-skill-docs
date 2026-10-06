@@ -136,3 +136,149 @@ def test_a_source_blocked_by_the_pipeline_is_reported_not_crashed(tmp_path: Path
         "code": "no_accepted_documents",
         "quarantined": [{"file": "guide.md", "reason": "untrusted_content"}],
     }
+
+
+# -- Farol 3.1 TK-201: the ruler for context cost, library ranking and splits --
+
+LENS = (
+    "# Lens Manual\n\n## Care\n\nClean the Fresnel lens every 12 hours with a soft cloth.\n\n"
+    "Never use ammonia on the lens.\n\n## Lamp\n\nThe lamp burns paraffin and is trimmed at dusk.\n"
+)
+
+
+def _two_sources(tmp_path: Path, *, extra_sources: list[dict[str, Any]] | None = None) -> tuple[Path, Path, Path]:
+    manifest, cases = _fixture(tmp_path)
+    lens = tmp_path / "lens.md"
+    lens.write_text(LENS, encoding="utf-8")
+    data = json.loads(manifest.read_text(encoding="utf-8"))
+    data["sources"].append(
+        {
+            **data["sources"][0],
+            "id": "lens-manual",
+            "files": [
+                {"name": "lens.md", "url": lens.as_uri(), "sha256": hashlib.sha256(lens.read_bytes()).hexdigest()}
+            ],
+        }
+    )
+    data["sources"].extend(extra_sources or [])
+    manifest.write_text(json.dumps(data), encoding="utf-8")
+    listed = json.loads(cases.read_text(encoding="utf-8"))
+    listed["cases"] += [
+        {
+            "id": "lens-clean",
+            "source": "lens-manual",
+            "kind": "factual",
+            "question": "how often do I clean the Fresnel lens",
+            "expected_text": "every 12 hours",
+        },
+        {
+            "id": "lens-pt",
+            "source": "lens-manual",
+            "kind": "factual",
+            "language": "pt",
+            "question": "lens ammonia",
+            "expected_text": "never use ammonia",
+        },
+        {
+            "id": "lens-broad",
+            "source": "lens-manual",
+            "kind": "broad",
+            "question": "how do I look after the lens",
+            "expected_any": ["every 12 hours", "never use ammonia"],
+        },
+    ]
+    cases.write_text(json.dumps(listed), encoding="utf-8")
+    validation = tmp_path / "validation.json"
+    validation.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "cases": [
+                    {
+                        "id": "lens-lamp",
+                        "source": "lens-manual",
+                        "kind": "factual",
+                        "question": "what fuel does the lamp burn",
+                        "expected_text": "burns paraffin",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return manifest, cases, validation
+
+
+def _run_with_validation(manifest: Path, cases: Path, validation: Path, tmp_path: Path) -> tuple[int, dict[str, Any]]:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/acceptance_real.py",
+            "--manifest",
+            str(manifest),
+            "--cases",
+            str(cases),
+            "--validation-cases",
+            str(validation),
+            "--work-dir",
+            str(tmp_path / "work"),
+            "--json",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=ROOT,
+        env={**os.environ, "PYTHONPATH": str(ROOT), "FAROL_SEMANTIC": "0"},
+        timeout=180,
+    )
+    return completed.returncode, json.loads(completed.stdout)
+
+
+def test_report_includes_mrr_context_tokens_and_library_metrics(tmp_path: Path) -> None:
+    manifest, cases, validation = _two_sources(tmp_path)
+
+    _code, report = _run_with_validation(manifest, cases, validation, tmp_path)
+
+    lens = report["sources"]["lens-manual"]
+    assert lens["retrieval"]["mrr_at_5"] == 1.0
+    context = lens["context"]
+    assert context["cases_found"] == 2
+    assert 0 < context["hit_tokens_mean"]
+    assert 0 < context["context_tokens_mean"] <= context["document_tokens_mean"]
+    assert 0.0 <= context["context_reduction"] < 1.0
+    library = report["library"]
+    assert library["sources"] == ["acme-docs", "lens-manual"]
+    assert library["cases"] == 4
+    assert library["recall_at_5"] == 0.75  # the acme "absent" case has no answer anywhere
+    assert 0.0 <= library["foreign_hit_share"] <= 1.0
+
+
+def test_validation_split_and_portuguese_cases_are_reported_separately(tmp_path: Path) -> None:
+    manifest, cases, validation = _two_sources(tmp_path)
+
+    _code, report = _run_with_validation(manifest, cases, validation, tmp_path)
+
+    splits = report["sources"]["lens-manual"]["splits"]
+    assert splits["en"]["cases"] == 1 and splits["pt"]["cases"] == 1
+    assert splits["validation"] == {"cases": 1, "recall_at_5": 1.0, "mrr_at_5": 1.0}
+    assert splits["broad"]["cases"] == 1 and splits["broad"]["recall_at_5"] == 1.0
+    assert "pt" not in report["sources"]["acme-docs"]["splits"]
+
+
+def test_missing_course_source_is_not_run_not_success(tmp_path: Path) -> None:
+    course = {
+        "id": "course-cc",
+        "kind": "lecture-series",
+        "status": "pending_source",
+        "not_run_code": "course_license_review_pending",
+        "license": "CC-BY-4.0",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+        "purpose": "local-acceptance",
+        "redistribution": "forbidden",
+    }
+    manifest, cases, validation = _two_sources(tmp_path, extra_sources=[course])
+
+    code, report = _run_with_validation(manifest, cases, validation, tmp_path)
+
+    assert report["sources"]["course-cc"] == {"status": "not_run", "code": "course_license_review_pending"}
+    assert report["passed"] is False and code == 1

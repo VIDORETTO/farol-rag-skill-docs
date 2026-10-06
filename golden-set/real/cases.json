@@ -3,7 +3,7 @@
   "review": {
     "status": "pending_human_review",
     "authored_by": "agent",
-    "note": "expected_text copied verbatim from the pinned source; questions paraphrased"
+    "note": "expected_text copied verbatim from the pinned source; questions paraphrased; broad cases (TK-201): expected_any passages copied verbatim and checked against the pinned index"
   },
   "cases": [
     {
@@ -372,6 +372,64 @@
       "kind": "factual",
       "question": "What products are made there?",
       "expected_text": "agricultural machinery"
+    },
+    {
+      "id": "httpx-broad-client",
+      "source": "httpx-docs",
+      "kind": "broad",
+      "question": "Why is a Client better than the top-level request functions?",
+      "expected_any": [
+        "will reuse the underlying tcp connection",
+        "if you do anything more than experimentation, one-off scripts, or prototypes, then you should use a client instance"
+      ]
+    },
+    {
+      "id": "httpx-broad-http2",
+      "source": "httpx-docs",
+      "kind": "broad",
+      "question": "What does HTTP/2 change compared to HTTP/1.1?",
+      "expected_any": [
+        "http/2 is a binary format",
+        "allows a single tcp stream to handle multiple concurrent requests"
+      ]
+    },
+    {
+      "id": "httpx-broad-async",
+      "source": "httpx-docs",
+      "kind": "broad",
+      "question": "When is the async client worth using?",
+      "expected_any": [
+        "async is a concurrency model that is far more efficient than multi-threading",
+        "async web framework then you'll also want to use an async client"
+      ]
+    },
+    {
+      "id": "progit-broad-states",
+      "source": "progit-book",
+      "kind": "broad",
+      "question": "What states can a file be in, and what does each mean?",
+      "expected_any": [
+        "modified means that you have changed the file but have not committed it",
+        "staged means that you have marked a modified file in its current version"
+      ]
+    },
+    {
+      "id": "progit-broad-branch",
+      "source": "progit-book",
+      "kind": "broad",
+      "question": "What is a branch in Git, conceptually?",
+      "expected_any": [
+        "a branch in git is simply a lightweight movable pointer to one of these commits"
+      ]
+    },
+    {
+      "id": "progit-broad-fetch",
+      "source": "progit-book",
+      "kind": "broad",
+      "question": "Does fetching change the work I am doing?",
+      "expected_any": [
+        "the git fetch command only downloads the data to your local repository"
+      ]
     }
   ]
 }
