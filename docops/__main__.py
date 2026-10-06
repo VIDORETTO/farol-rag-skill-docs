@@ -95,6 +95,7 @@ CLI_COMPATIBILITY_MAP = {
     "add": "add",
     "build": "build",
     "status": "status",
+    "eval": "eval",
     "advanced": "advanced",
     "connect": "connect",
     "sync": "sync",
@@ -207,7 +208,7 @@ kept out of structured output. Remove an alias only after all callers have
 migrated and the alias-usage gate is zero for one complete release window.
 """
 
-_JOURNEY_COMMANDS = ("add", "build", "sync", "status", "task", "connect", "mcp", "doctor", "advanced")
+_JOURNEY_COMMANDS = ("add", "build", "sync", "status", "task", "connect", "mcp", "eval", "doctor", "advanced")
 _JOURNEY_HELP = """Typical use:
 
   farol add ./docs --license MIT     register a source (folder, file, URL, Git repo)
@@ -887,6 +888,10 @@ def build_parser() -> argparse.ArgumentParser:
     sync_parser.add_argument("--project", type=Path, default=Path.cwd())
     sync_parser.add_argument("--schedule", choices=("cron", "systemd", "windows"), help="print a daily schedule")
     sync_parser.add_argument("--json", action="store_true")
+    eval_parser = commands.add_parser("eval", help="measure how well search finds what your skills cite")
+    eval_parser.add_argument("--project", type=Path, default=Path.cwd())
+    eval_parser.add_argument("--package", type=Path, help="evaluate one package instead of the project")
+    eval_parser.add_argument("--json", action="store_true")
     status_parser = commands.add_parser("status", help="show each source's state and the next step")
     status_parser.add_argument("--project", type=Path, default=Path.cwd())
     status_parser.add_argument("--json", action="store_true")
@@ -909,6 +914,9 @@ def build_parser() -> argparse.ArgumentParser:
     task_plan.add_argument("--language")
     task_plan.add_argument("--outline", choices=("agent", "heuristic"), help="who plans the chapters (default: auto)")
     task_plan.add_argument("--refresh", action="store_true", help="reopen only chapters made stale by source changes")
+    task_plan.add_argument(
+        "--questions", type=int, metavar="N", help="also ask the agent for N evaluation questions per chapter"
+    )
     task_plan.add_argument(
         "--task-tokens",
         type=_task_tokens,
@@ -1094,6 +1102,7 @@ def _task_command(args: argparse.Namespace) -> int:
         SynthesisTaskError,
         claim_tasks,
         next_task,
+        plan_questions,
         plan_synthesis,
         submit_task,
         synthesis_status,
@@ -1121,6 +1130,8 @@ def _task_command(args: argparse.Namespace) -> int:
                 refresh=args.refresh,
                 task_source_tokens=args.task_tokens,
             )
+            if args.questions:
+                payload = plan_questions(args.package, args.questions)
             code = 0
         elif args.task_command == "next":
             payload = next_task(args.package) or {"status": "done", "message": "no pending task"}
@@ -1694,6 +1705,12 @@ def _dispatch(args: argparse.Namespace) -> int:
         return serve(packages=packages)
     if args.command == "task":
         return _task_command(args)
+    if args.command == "eval":
+        from .self_eval import evaluate
+
+        report = evaluate(args.package or args.project)
+        print(json.dumps(report, indent=2, ensure_ascii=False, sort_keys=True))
+        return 0 if report["status"] == "measured" else 1
     if args.command == "sync" and args.schedule:
         from .journey import schedule_lines
 

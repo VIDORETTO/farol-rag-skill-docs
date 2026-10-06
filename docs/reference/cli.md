@@ -57,6 +57,7 @@ show each source's state and the next step
 | `--language` | language of the generated skills, e.g. en or pt-BR |
 | `--outline` | who plans the chapters (default: auto) (one of: agent, heuristic) |
 | `--refresh` | reopen only chapters made stale by source changes |
+| `--questions` | also ask the agent for N evaluation questions per chapter |
 | `--task-tokens` | source tokens per chapter task (2000-48000; raise it for long-context models) |
 | `--package` | package, or a project directory |
 | `--source` | inside a project: the source id to work on |
@@ -123,6 +124,16 @@ serve your knowledge to an AI agent over MCP (stdio, read-only)
 | `--package` | serve a single package |
 | `--project` | serve every package of a project (default: current dir) |
 | `--library` | serve every project in your library |
+
+## farol eval
+
+measure how well search finds what your skills cite
+
+| Argument | Description |
+|---|---|
+| `--project` | project directory (default: current directory) |
+| `--package` | evaluate one package instead of the project |
+| `--json` | print machine-readable JSON |
 
 ## farol doctor
 

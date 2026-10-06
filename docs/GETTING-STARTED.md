@@ -72,6 +72,13 @@ com um lease que expira (`--ttl`, padrão 30 min); cada subagente envia a sua co
 `farol task submit <id> <pasta> --lease <lease_id>`. Nenhum outro agente recebe
 uma tarefa reservada enquanto o lease vale, e envios simultâneos não se perdem.
 
+### Medir a qualidade do seu pacote
+
+`farol eval` pesquisa cada afirmação da skill destilada e confere se os blocos
+que ela cita voltam no top 5 (recall@5 e MRR@5, pior capítulo primeiro). É uma
+autoavaliação otimista; para algo mais próximo do uso real, peça perguntas ao
+agente com `farol task plan --questions 3` e rode `farol eval` de novo.
+
 ## 4. Conectar ao seu agente
 
 ```bash
