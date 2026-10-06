@@ -136,3 +136,19 @@ def test_course_outline_task_lists_modules_in_order(tmp_path: Path) -> None:
     native = [item["title"] for item in next_task(package)["inputs"]["native_chapters"]]
 
     assert native == ["Aula 1 - Introdução", "Aula 2 - Variáveis", "Aula 10 - Projeto final", "material"]
+
+
+def test_a_windows_drive_path_is_never_mistaken_for_a_playlist(monkeypatch) -> None:
+    called: list[str] = []
+    monkeypatch.setattr(journey, "_acquire_playlist", lambda project, source: called.append("playlist") or "")
+    source = {"id": "curso", "kind": "course", "input": r"C:\Users\aluno\curso", "license": "MIT"}
+
+    class Project:
+        root = Path("unused")
+
+        def package(self, _id: str) -> Path:
+            return Path("unused")
+
+    with pytest.raises(Exception):
+        journey._build_one(Project(), source)  # the folder does not exist here; only routing matters
+    assert called == []
