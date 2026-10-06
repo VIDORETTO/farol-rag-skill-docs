@@ -4,13 +4,16 @@
 
 Farol transforma qualquer fonte (documentação, livros, papers, vídeos,
 repositórios) em skills, índice factual com citações, roteador e servidor MCP
-para agentes. A evolução vigente (Farol 3.0) é governada por `specs/farol-3/`;
+para agentes. A release vigente (Farol 3.0) é governada por `specs/farol-3/`;
+a próxima evolução (Farol 3.1, proposta) por `specs/farol-3.1/`;
 `specs/farol-2/` é histórico normativo.
 
 ## Fontes de verdade
 
-- Use os tickets em `specs/farol-3/tickets/` como unidade canônica de trabalho.
-- Use `specs/farol-3/state.json`, `backlog.md` e `decisions.md` para o estado agregado.
+- Use os tickets em `specs/farol-3.1/tickets/` (3.1) e `specs/farol-3/tickets/`
+  (beta 3.0) como unidade canônica de trabalho.
+- Use `state.json`, `backlog.md` e `decisions.md` do esforço correspondente para o
+  estado agregado; no 3.1, siga também `specs/farol-3.1/tdd.md`.
 - Mantenha `tasks/todo.md` como checkpoint curto de retomada, não como diário.
 - Preserve mudanças preexistentes do usuário e não altere arquivos fora do
   escopo necessário.
