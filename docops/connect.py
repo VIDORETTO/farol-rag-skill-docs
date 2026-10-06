@@ -144,6 +144,26 @@ def _description(skill_file: Path) -> str:
     return ""
 
 
+def _owned_skill_file(target: Path, layout: Layout, relative: Any) -> bool:
+    """Only a regular file inside the harness's skills folder may be removed on reconnect.
+
+    ``.farol/connect.json`` travels with a project; a tampered record must never
+    make ``farol connect`` delete anything outside the folder Farol manages.
+    """
+
+    if layout.skills is None or not isinstance(relative, str) or not relative.startswith(f"{layout.skills}/"):
+        return False
+    parts = Path(relative).parts
+    if Path(relative).is_absolute() or ".." in parts:
+        return False
+    path = target / relative
+    try:
+        path.resolve().relative_to((target / layout.skills).resolve())
+    except ValueError:
+        return False
+    return path.is_file() and not path.is_symlink()
+
+
 def _file_change(target: Path, relative: str, after: bytes | None) -> dict[str, Any]:
     existing = target / relative
     before = existing.read_bytes() if existing.is_file() else None
@@ -197,7 +217,7 @@ def _planned_changes(
         # Files an earlier connect installed that are no longer wanted (Farol 3.0 per-source routers).
         planned = {change["path"] for change in changes}
         for relative in record.get("files", []):
-            if relative not in planned and (target / relative).is_file():
+            if relative not in planned and _owned_skill_file(target, layout, relative):
                 changes.append(_file_change(target, relative, None))
     if remove:
         managed = set(record.get("files", []))

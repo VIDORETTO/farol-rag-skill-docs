@@ -110,3 +110,22 @@ def test_build_upgrades_a_3_0_router_and_keeps_revisions_consistent(tmp_path: Pa
     assert code == 0, built
     assert "get_context" in text and not _STALE_TERMS.search(text)
     assert code_validate == 0, validated
+
+
+def test_a_tampered_connect_record_never_deletes_outside_the_skills_folder(tmp_path: Path) -> None:
+    project = _project(tmp_path)
+    target = tmp_path / "repo"
+    target.mkdir()
+    victim = tmp_path / "victim.txt"
+    victim.write_text("keep me", encoding="utf-8")
+    inside = target / "README.md"
+    inside.write_text("keep me too", encoding="utf-8")
+    record = {f"claude-code:{target.resolve()}": {"configs": {}, "files": ["../victim.txt", "README.md"]}}
+    (project / ".farol" / "connect.json").write_text(json.dumps(record), encoding="utf-8")
+
+    code, result = _cli(project, "connect", "claude-code", "--target", str(target), "--json")
+    _cli(project, "connect", "claude-code", "--target", str(target), "--remove", "--json")
+
+    assert code == 0, result
+    assert victim.read_text(encoding="utf-8") == "keep me"
+    assert inside.read_text(encoding="utf-8") == "keep me too"

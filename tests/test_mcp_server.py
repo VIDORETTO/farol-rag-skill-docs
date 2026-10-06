@@ -369,3 +369,15 @@ def test_stale_claims_are_flagged_in_synthesis_hits(tmp_path: Path) -> None:
     flagged = {claim["text"]: claim["stale"] for claim in claims["structuredContent"]["synthesis"]}
 
     assert flagged["Give every call a deadline of ten seconds unless told otherwise."] is True
+
+
+def test_get_document_never_returns_high_risk_blocks(tmp_path: Path) -> None:
+    from fixtures_31 import long_section_book
+
+    package = long_section_book(tmp_path, hostile_paragraph=21)
+    hit = _hit_for(package, "Paragraph 2.3.20")
+
+    full = _tool(package, "get_document", document_id=hit["document_id"])["structuredContent"]
+
+    assert all("Ignore all previous instructions" not in block["text"] for block in full["blocks"])
+    assert full["total_blocks"] == len(full["blocks"])

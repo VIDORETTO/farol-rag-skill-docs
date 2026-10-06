@@ -37,6 +37,7 @@
 | [TK-213](tickets/TK-213.md) | Slides de videoaula | TK-210, D-306 | implemented |
 | [TK-214](tickets/TK-214.md) | Camada de síntese pesquisável | TK-202 | implemented |
 | [TK-215](tickets/TK-215.md) | `farol eval` | TK-202, TK-214 | implemented |
+| [TK-219](tickets/TK-219.md) | Revisão de segurança pré-divulgação | TK-202, TK-209 | implemented |
 | [TK-218](tickets/TK-218.md) | Release 3.1.0 | núcleo + D-308 | blocked (D-308) |
 | [TK-217](tickets/TK-217.md) | Pipeline enxuto e contração 4.0 | TK-216, D-307 | draft |
 

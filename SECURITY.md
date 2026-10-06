@@ -18,12 +18,16 @@ pública não prova o estado dessas configurações.
 
 ## Escopo e versões
 
-O escopo inclui o código Python em `docops/`, scripts, workflows, configuração
-de release, templates, schemas, os perfis opcionais e a integração externa
-RAGFlow. O pacote usa o identificador técnico `consulta-documentacao`. O código
-de Farol 2.0 está em `main`, mas `v2.0.0-rc.1` ainda não tem tag ou GitHub
-Release e não deve ser tratada como contrato final. A API autenticada não
-encontrou release estável publicada neste repositório na revisão de 2026-09-24.
+| Versão | Suporte de segurança |
+|---|---|
+| 3.1.x | sim (atual) |
+| 3.0.x | sim, até 3.2.0 |
+| < 3.0 | não |
+
+O escopo inclui o código Python em `docops/` (distribuição `farol-kit`,
+comandos `farol` e `docops`), scripts, workflows, configuração de release,
+templates, schemas, os extras opcionais (`semantic`, `media`, `ocr`, `layout`,
+`ragflow`) e a integração externa RAGFlow.
 
 Corpus, índices, caches, ambientes virtuais, tokens, credenciais, artefatos de
 execução e arquivos em `config/network.yaml` são dados locais e não fazem parte
@@ -45,6 +49,11 @@ quando o impacto atravessar uma fronteira controlada pelo produto.
 | MCP local | `stdio` é o padrão; HTTP/SSE é opt-in e exige bearer token, rate limit, métricas e logging JSON | quem altera o bind para uma rede deve aplicar firewall e TLS/proxy adequados |
 | RAGFlow externo | endpoint e token fora do pacote; SDK `0.27.2`; imagem fixada por digest; HTTPS remoto e loopback explícito no desenvolvimento | o projeto não gerencia rotação de token, cofre de segredos ou identidade multiusuário |
 | Artefatos e publicação | originais privados, caches e credenciais são excluídos; candidate, wheel, supply-chain e clean clone são auditados | licença da fonte e autorização de publicação continuam decisão humana |
+| Vídeos, playlists e cursos | YouTube só por `yt-dlp` (extra `media`), apenas legendas/metadados; IDs de playlist validados por regex; licença registrada por vídeo e redistribuição forçada para `private-only` quando algum vídeo não é Creative Commons; pasta de curso local exige licença declarada | termos de plataformas e cookies (`FAROL_YTDLP_COOKIES`) são responsabilidade do usuário |
+| Slides de vídeo (`--slides`) | `ffmpeg` chamado com lista de argumentos (sem shell), saída em diretório temporário; OCR local | só texto é extraído; o vídeo é tratado como entrada não confiável pelo próprio `ffmpeg` |
+| `farol connect` | grava só nos caminhos do harness; `--remove` restaura configurações byte a byte; ao reconectar, só remove arquivos regulares dentro da pasta de skills do harness, mesmo que `.farol/connect.json` seja adulterado | configurações de terceiros editadas manualmente perdem só a entrada `farol` |
+| Síntese pelo agente | blocos `high` nunca chegam às tarefas; respostas validadas (citações, cópia, injeção); plano protegido por lock contra perda de atualização com agentes paralelos; o MCP continua somente leitura (D-303) | a qualidade da skill depende do modelo do usuário |
+| Camada de síntese e `get_context`/`get_document` | blocos `high` nunca são devolvidos; afirmações da skill vêm com os blocos de suporte e a orientação de citar só os blocos | uma afirmação parafraseada pode simplificar a fonte; o agente deve conferir os `supports` |
 | Processos locais | limpeza atinge somente o PID exato criado pelo projeto; nenhum comando global encerra Python | leitores de filesystem podem observar janelas específicas de troca de diretório |
 
 ## Conteúdo hostil e prompt injection

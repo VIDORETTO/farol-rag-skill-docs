@@ -302,7 +302,7 @@ class LocalFtsBackend:
         with self._connect(index_revision.index_revision) as connection:
             rows = connection.execute(
                 "SELECT block_id, document_id, source_id, source_revision_id, path, kind, heading_path, locators, text,"
-                " risk, 0.0 FROM blocks WHERE document_id = ? ORDER BY rowid",
+                " risk, 0.0 FROM blocks WHERE document_id = ? AND risk != 'high' ORDER BY rowid",
                 (document_id,),
             ).fetchall()
         if not rows:
