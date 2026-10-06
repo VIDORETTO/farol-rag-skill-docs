@@ -250,7 +250,12 @@ def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
             "errors": [{"code": error.get("code"), "message": error.get("message")} for error in result.errors],
         }
     _refresh_router(package, source["id"])
-    index = build_package_index(package)
+    from .backends.base import BackendError
+
+    try:
+        index = build_package_index(package)
+    except BackendError as exc:
+        return {"ok": False, "errors": [{"code": exc.code, "message": str(exc)}]}
     synthesis = synthesis_status(package)
     # Never discard accepted agent work: replan only when nothing was accepted yet.
     if synthesis["state"] == "not_planned" or (
@@ -410,7 +415,7 @@ def project_health(root: Path | str, *, fix: bool = False) -> dict[str, Any]:
             backend, index = open_package_index(package)
             backend.query(index, QueryRequest(query="health check", top_k=1))
         except BackendError as exc:
-            problem = "index_missing" if exc.code == "index_missing" else "index_unreadable"
+            problem = exc.code if exc.code in ("index_missing", "embedding_profile_changed") else "index_unreadable"
         except Exception:  # a damaged SQLite file surfaces as a database error
             problem = "index_unreadable"
         if problem is None:

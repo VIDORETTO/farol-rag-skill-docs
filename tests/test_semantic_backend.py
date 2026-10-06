@@ -147,3 +147,96 @@ def test_package_index_uses_the_configured_embedder_end_to_end(tmp_path: Path) -
 
     assert report["retrieval_mode"] == "hybrid"
     assert "cherry-pick" in result.hits[0]["text"]
+
+
+# -- Farol 3.1 TK-205: prefixes recorded in the profile; stale profiles repaired --
+
+
+class _FakeTextEmbedding:
+    seen: list[str] = []
+
+    def __init__(self, model: str, cache_dir: str | None = None, threads: int | None = None) -> None:
+        self.model = model
+
+    def embed(self, texts: list[str], batch_size: int = 32) -> Any:
+        _FakeTextEmbedding.seen.extend(texts)
+        return iter([np.ones(4, dtype=np.float32) for _ in texts])
+
+    def query_embed(self, texts: list[str]) -> Any:
+        _FakeTextEmbedding.seen.extend(texts)
+        return iter([np.ones(4, dtype=np.float32) for _ in texts])
+
+
+def _fake_fastembed(monkeypatch) -> None:
+    import sys
+    import types
+
+    module = types.ModuleType("fastembed")
+    module.TextEmbedding = _FakeTextEmbedding
+    monkeypatch.setitem(sys.modules, "fastembed", module)
+    monkeypatch.setitem(sys.modules, "onnxruntime", types.SimpleNamespace(set_default_logger_severity=lambda _: None))
+    _FakeTextEmbedding.seen = []
+
+
+def test_embedding_profile_records_query_and_passage_prefixes(monkeypatch) -> None:
+    from docops.backends.semantic import DEFAULT_MODEL, FastEmbedEmbedder
+
+    _fake_fastembed(monkeypatch)
+    e5 = FastEmbedEmbedder("intfloat/multilingual-e5-large")
+    _FakeTextEmbedding.seen = []
+    e5.embed_documents(["Branches are cheap."])
+    e5.embed_query("what is a branch")
+
+    assert e5.profile["passage_prefix"] == "passage: " and e5.profile["query_prefix"] == "query: "
+    assert _FakeTextEmbedding.seen == ["passage: Branches are cheap.", "query: what is a branch"]
+    # The 3.0 default keeps its exact profile, so existing indexes stay valid.
+    assert set(FastEmbedEmbedder(DEFAULT_MODEL).profile) == {"model", "dim", "window", "stride"}
+
+
+def test_build_rebuilds_the_index_when_the_embedding_model_changes(tmp_path: Path) -> None:
+    import docops
+    from docops.package_index import build_package_index, open_package_index
+
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "git.md").write_text("# Git\n\n## Moving work\n\nRun git cherry-pick e43a6.\n", encoding="utf-8")
+    package = tmp_path / "package"
+    docops.apply(
+        docops.plan(
+            docops.OperationRequest(
+                source,
+                docops.OperationOptions(output_dir=package, source_root=source.parent, slug="git", license="MIT"),
+            )
+        )
+    )
+    build_package_index(package, embedder=ConceptEmbedder("concepts-v1"))
+
+    build_package_index(package, embedder=ConceptEmbedder("concepts-v2"))
+    backend, index = open_package_index(package, embedder=ConceptEmbedder("concepts-v2"))
+
+    assert (
+        backend.query(index, QueryRequest(query="transplant a commit", top_k=1)).metadata["retrieval_mode"] == "hybrid"
+    )
+
+
+def test_doctor_fix_rebuilds_an_index_with_a_stale_embedding_profile(tmp_path: Path, monkeypatch) -> None:
+    from docops import journey, package_index
+
+    source = tmp_path / "notes"
+    source.mkdir()
+    (source / "git.md").write_text("# Git\n\n## Moving work\n\nRun git cherry-pick e43a6.\n", encoding="utf-8")
+    project = tmp_path / "project"
+    journey.add_source(project, str(source), license="MIT")
+    monkeypatch.setattr(package_index, "_EMBEDDER_CACHE", {"default": ConceptEmbedder("concepts-v1")})
+    assert journey.build(project)["ok"]
+    monkeypatch.setattr(package_index, "_EMBEDDER_CACHE", {"default": ConceptEmbedder("concepts-v2")})
+
+    before = journey.project_health(project)
+    repaired = journey.project_health(project, fix=True)
+    after = journey.project_health(project)
+
+    assert before["issues"] == [
+        {"source": "notes", "code": "embedding_profile_changed", "next_action": "farol doctor --fix"}
+    ]
+    assert repaired["fixed"] == [{"source": "notes", "action": "rebuilt_index"}]
+    assert after["ok"] is True

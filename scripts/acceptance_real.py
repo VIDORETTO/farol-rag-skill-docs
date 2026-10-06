@@ -33,6 +33,7 @@ if str(PROJECT_ROOT) not in sys.path:
 import docops  # noqa: E402
 from docops.agent_tasks import skill_rubric  # noqa: E402
 from docops.backends import QueryRequest  # noqa: E402
+from docops.backends.base import BackendError  # noqa: E402
 from docops.package_index import build_package_index, open_package_index  # noqa: E402
 
 DEFAULT_MANIFEST = PROJECT_ROOT / "golden-set" / "real" / "manifest.json"
@@ -133,8 +134,12 @@ def _measure(
             if entry.get("status") == "quarantined"
         ]
         return {"status": "blocked", "code": codes[0], "quarantined": quarantined}
-    index_report = build_package_index(package)
-    backend, index = open_package_index(package)
+    try:
+        index_report = build_package_index(package)
+        backend, index = open_package_index(package)
+    except BackendError as exc:
+        # A model that cannot be downloaded is an environment gap, not a result.
+        return {"status": "not_run", "code": exc.code}
     factual = [case for case in cases if case.get("kind") == "factual"]
     retrieval, ranked = _retrieval(backend, index, factual)
     splits = {

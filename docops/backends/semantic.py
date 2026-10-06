@@ -14,6 +14,20 @@ from pathlib import Path
 from typing import Any, Iterator, Protocol
 
 DEFAULT_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+# Models trained with asymmetric prefixes (query vs passage). The prefixes are
+# part of the embedding profile, so changing them requires a rebuild; models
+# without prefixes keep the exact 3.0 profile and their existing indexes.
+PREFIXES: dict[str, tuple[str, str]] = {
+    "intfloat/multilingual-e5-large": ("query: ", "passage: "),
+    "Qwen/Qwen3-Embedding-0.6B": (
+        "Instruct: Given a question, retrieve passages that answer it\nQuery: ",
+        "",
+    ),
+    "Qwen/Qwen3-Embedding-0.6B-Q": (
+        "Instruct: Given a question, retrieve passages that answer it\nQuery: ",
+        "",
+    ),
+}
 WINDOW_WORDS = 80
 STRIDE_WORDS = 60
 
@@ -73,7 +87,15 @@ class FastEmbedEmbedder:
             onnxruntime.set_default_logger_severity(3)
             self._model = TextEmbedding(model, cache_dir=str(directory), threads=threads)
             dimension = self._dimension()
-        self.profile = {"model": model, "dim": dimension, "window": WINDOW_WORDS, "stride": STRIDE_WORDS}
+        self.query_prefix, self.passage_prefix = PREFIXES.get(model, ("", ""))
+        self.profile: dict[str, Any] = {
+            "model": model,
+            "dim": dimension,
+            "window": WINDOW_WORDS,
+            "stride": STRIDE_WORDS,
+        }
+        if self.query_prefix or self.passage_prefix:
+            self.profile.update(query_prefix=self.query_prefix, passage_prefix=self.passage_prefix)
 
     def _dimension(self) -> int:
         return int(len(next(iter(self._model.embed(["dimension probe"])))))
@@ -81,12 +103,13 @@ class FastEmbedEmbedder:
     def embed_documents(self, texts: list[str]) -> Any:
         import numpy as np
 
+        texts = [self.passage_prefix + text for text in texts] if self.passage_prefix else texts
         return np.array(list(self._model.embed(texts, batch_size=32)), dtype=np.float32)
 
     def embed_query(self, text: str) -> Any:
         import numpy as np
 
-        return np.array(next(iter(self._model.query_embed([text]))), dtype=np.float32)
+        return np.array(next(iter(self._model.query_embed([self.query_prefix + text]))), dtype=np.float32)
 
 
 def semantic_available() -> bool:
@@ -103,4 +126,13 @@ def load_embedder() -> Embedder | None:
 
     if not semantic_available():
         return None
-    return FastEmbedEmbedder(os.environ.get("FAROL_EMBEDDING_MODEL") or DEFAULT_MODEL)
+    model = os.environ.get("FAROL_EMBEDDING_MODEL") or DEFAULT_MODEL
+    try:
+        return FastEmbedEmbedder(model)
+    except Exception as exc:  # download blocked, unknown model, broken runtime
+        from .base import BackendError
+
+        raise BackendError(
+            "embedding_model_unavailable",
+            f"the embedding model {model} could not be loaded; check the network or set FAROL_SEMANTIC=0",
+        ) from exc

@@ -23,6 +23,7 @@ Every error printed by Farol carries one of these codes and a next step.
 | `documents_invalid` | Index input is malformed | `farol build` |
 | `download_failed` | A download failed | `check the network and retry farol build` |
 | `duplicate_sections` | A section appears in two chapters | `assign each section once` |
+| `embedding_model_unavailable` | The embedding model could not be loaded | `check the network, or set FAROL_SEMANTIC=0 for BM25` |
 | `embedding_profile_changed` | The index was built with another embedding model | `farol build` |
 | `empty_reference_file` | glossary/patterns/cheatsheet has no items | `add list items and resubmit` |
 | `extra_required` | An optional extra is not installed | `pip install farol-kit[media]` |
