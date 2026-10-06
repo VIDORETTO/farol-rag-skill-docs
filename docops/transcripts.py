@@ -123,9 +123,13 @@ def transcript_markdown(
             flush()
             chapter_index += 1
             parts.append(f"## {marks[chapter_index][1]}")
-        # A pause or a long paragraph starts a new one, so each fact cites a precise moment.
+        # Slide text stands alone; a pause or a long paragraph starts a new one, so
+        # each fact cites a precise moment.
+        slide = segment.text.startswith("Slide: ")
         if paragraph and (
-            segment.start - paragraph[0].start >= _PARAGRAPH_SECONDS
+            slide
+            or paragraph[-1].text.startswith("Slide: ")
+            or segment.start - paragraph[0].start >= _PARAGRAPH_SECONDS
             or segment.start - paragraph[-1].end >= _PAUSE_SECONDS
         ):
             flush()

@@ -16,6 +16,7 @@ add a source: folder, file, URL or Git repository
 | `--as` | treat a folder of lessons or a YouTube playlist as one course (one package, one skill) (one of: course) |
 | `--max-items` | playlist courses: at most this many videos (default 200) |
 | `--no-skill` | index for evidence only; distil it inside a composite skill |
+| `--slides` | videos: also read the text shown on slides (ffmpeg + OCR) |
 | `--project` | project directory (default: current directory) |
 | `--json` | print machine-readable JSON |
 

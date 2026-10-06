@@ -499,6 +499,9 @@ def _extract_pdf_text(path: Path) -> str:
     return "\n\n".join(part.strip() for part in text_parts if part and part.strip()).strip()
 
 
+_VIDEO_SUFFIXES = {".mp4", ".webm", ".mkv", ".mov"}
+
+
 def _normalize_media(file_path: Path, origin: str, suffix: str) -> "NormalizationResult":
     """Audio/video through local speech recognition; typed error when unavailable."""
 
@@ -508,6 +511,19 @@ def _normalize_media(file_path: Path, origin: str, suffix: str) -> "Normalizatio
         segments = transcripts.transcribe_media(file_path)
     except transcripts.TranscriptError as exc:
         return NormalizationResult("error", "", origin, suffix.lstrip("."), error_code=exc.code, error=str(exc))
+    import os
+
+    if os.environ.get("FAROL_SLIDES") == "1" and suffix.lower() in _VIDEO_SUFFIXES:
+        from . import slides
+
+        try:
+            shown = slides.slide_texts(file_path)
+        except transcripts.TranscriptError as exc:
+            return NormalizationResult("error", "", origin, suffix.lstrip("."), error_code=exc.code, error=str(exc))
+        segments = sorted(
+            [*segments, *(transcripts.Segment(second, second, f"Slide: {text}") for second, text in shown)],
+            key=lambda segment: segment.start,
+        )
     if not segments:
         return NormalizationResult(
             "error", "", origin, suffix.lstrip("."), error_code="transcript_empty", error="no speech was recognized"
