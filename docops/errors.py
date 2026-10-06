@@ -56,6 +56,8 @@ CATALOG: dict[str, ErrorInfo] = {
     "already_accepted": ErrorInfo("The task was already accepted with other content", "farol task next"),
     "dependencies_pending": ErrorInfo("Earlier tasks must be accepted first", "farol task next"),
     "plan_busy": ErrorInfo("Another agent is updating the synthesis plan", "retry the same command"),
+    "questions_invalid": ErrorInfo("questions.json is malformed", "follow the format in the task and resubmit"),
+    "skill_not_distilled": ErrorInfo("No distilled skill to evaluate yet", "farol task next"),
     "task_tokens_invalid": ErrorInfo("Task size out of range", "farol task plan --task-tokens 6000"),
     "lease_unknown": ErrorInfo("The lease does not hold this task", "farol task claim"),
     "missing_file": ErrorInfo("An expected answer file is missing", "add the file listed in the task and resubmit"),

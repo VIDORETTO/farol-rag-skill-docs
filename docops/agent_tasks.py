@@ -463,6 +463,51 @@ def _plan_synthesis_locked(
     return plan
 
 
+def plan_questions(package: Path | str, per_chapter: int) -> dict[str, Any]:
+    """Add the optional ``questions`` task: the agent writes evaluation questions per chapter.
+
+    Each question cites the ``[bN]`` blocks that answer it, as chapters do;
+    ``farol eval`` then measures whether search finds those blocks.
+    """
+
+    root = _root(package)
+    per_chapter = max(1, min(int(per_chapter), 20))
+    with _plan_lock(root):
+        plan = _load_plan(root)
+        chapters = [_load_task(root, item["task_id"]) for item in plan["tasks"] if item["kind"] == "chapter"]
+        if not chapters:
+            raise SynthesisTaskError("plan_missing", "plan the chapters first (farol task next for the outline)")
+        task = {
+            "schema_version": 1,
+            "task_id": "questions",
+            "kind": "questions",
+            "status": "pending",
+            "requires": [chapter["task_id"] for chapter in chapters],
+            "language": plan["language"],
+            "budget": {"per_chapter": per_chapter},
+            "inputs": {
+                "title": "Evaluation questions",
+                "chapters": [
+                    {
+                        "task_id": chapter["task_id"],
+                        "file": chapter["inputs"]["file"],
+                        "refs": [item["ref"] for item in chapter["inputs"]["blocks"]],
+                        "blocks": {item["ref"]: item["block_id"] for item in chapter["inputs"]["blocks"]},
+                    }
+                    for chapter in chapters
+                ],
+            },
+            "output": {"files": ["questions.json"]},
+        }
+        task["request_hash"] = content_hash({key: value for key, value in task.items() if key != "status"})
+        existing = _dir(root) / "tasks" / "questions.json"
+        if not existing.is_file() or _read(existing).get("request_hash") != task["request_hash"]:
+            write_json_atomic(existing, task)
+            plan["tasks"] = [item for item in plan["tasks"] if item["task_id"] != "questions"] + [_summary(task)]
+            write_json_atomic(_dir(root) / "plan.json", plan)
+        return _load_plan(root)
+
+
 def _summary(task: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "task_id": task["task_id"],
@@ -481,7 +526,7 @@ def _load_plan(root: Path) -> dict[str, Any]:
 
 
 def _load_task(root: Path, task_id: str) -> dict[str, Any]:
-    if not re.fullmatch(r"(?:chapter-\d{2,4}|core|outline)", task_id):
+    if not re.fullmatch(r"(?:chapter-\d{2,4}|core|outline|questions)", task_id):
         raise SynthesisTaskError("task_unknown", "unknown task id")
     path = _dir(root) / "tasks" / f"{task_id}.json"
     if not path.is_file():
@@ -654,6 +699,22 @@ def _render(root: Path, task: dict[str, Any], plan: Mapping[str, Any]) -> dict[s
             + "\n"
         )
         rendered["instructions"] = instructions.replace("{{LANGUAGE}}", task["language"])
+        return rendered
+    if task["kind"] == "questions":
+        sections = []
+        for chapter in task["inputs"]["chapters"]:
+            accepted = _dir(root) / "accepted" / chapter["task_id"] / "chapter.md"
+            text = accepted.read_text(encoding="utf-8") if accepted.is_file() else ""
+            sections.append(f"### {chapter['file']}\n\n{text}")
+        instructions = (
+            _template("synthesis-questions.md").replace("{{PER_CHAPTER}}", str(task["budget"]["per_chapter"]))
+            + "\n"
+            + "\n\n".join(sections)
+            + "\n"
+        )
+        rendered["instructions"] = instructions.replace("{{TASK_ID}}", task["task_id"]).replace(
+            "{{LANGUAGE}}", task["language"]
+        )
         return rendered
     if task["kind"] == "chapter":
         body = _template("synthesis-chapter.md")
@@ -945,6 +1006,8 @@ def _submit_locked(root: Path, task_id: str, output_dir: Path | str) -> dict[str
         }
     if task["kind"] == "outline":
         reasons, chapters = _validate_outline(task, files.get("outline.json"))
+    elif task["kind"] == "questions":
+        reasons = _validate_questions(task, files.get("questions.json"))
     elif task["kind"] == "chapter":
         if "chapter.md" not in files:
             reasons = [_reason("missing_file", "provide chapter.md", file="chapter.md")]
@@ -976,6 +1039,26 @@ def _submit_locked(root: Path, task_id: str, output_dir: Path | str) -> dict[str
         _install(root, _load_plan(root))
         installed = True
     return {"status": "accepted", "task_id": task_id, "installed": installed}
+
+
+def _validate_questions(task: Mapping[str, Any], raw: str | None) -> list[dict[str, Any]]:
+    if raw is None:
+        return [_reason("missing_file", "provide questions.json", file="questions.json")]
+    try:
+        value = json.loads(raw)
+    except ValueError:
+        return [_reason("questions_invalid", "questions.json must be valid JSON")]
+    items = value.get("questions") if isinstance(value, dict) else None
+    if not isinstance(items, list) or not items:
+        return [_reason("questions_invalid", 'use {"questions": [{"question": "...", "refs": ["b1"]}]}')]
+    known = {ref for chapter in task["inputs"]["chapters"] for ref in chapter["refs"]}
+    for item in items:
+        if not isinstance(item, dict) or not str(item.get("question") or "").strip() or not item.get("refs"):
+            return [_reason("questions_invalid", "every question needs text and at least one [bN] reference")]
+        unknown = sorted(set(map(str, item["refs"])) - known)
+        if unknown:
+            return [_reason("unknown_reference", "cite only references listed in the chapters", references=unknown)]
+    return []
 
 
 def _validate_outline(task: Mapping[str, Any], raw: str | None) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:

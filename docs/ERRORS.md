@@ -54,9 +54,11 @@ Every error printed by Farol carries one of these codes and a next step.
 | `plan_missing` | No synthesis plan yet | `farol task plan` |
 | `project_missing` | No Farol project here | `farol add <source>` |
 | `project_version_unsupported` | farol.json comes from a newer Farol | `pipx upgrade farol-kit` |
+| `questions_invalid` | questions.json is malformed | `follow the format in the task and resubmit` |
 | `revision_mismatch` | The query targets another project revision | `reopen the reader` |
 | `schedule_unknown` | Unknown scheduler | `farol sync --schedule cron` |
 | `scope_invalid` | Unknown context scope | `use scope blocks or section` |
+| `skill_not_distilled` | No distilled skill to evaluate yet | `farol task next` |
 | `skill_unknown` | No skill with that name | `call list_skills` |
 | `source_id_taken` | Another source already uses that id | `farol add <source> --name <new-id>` |
 | `source_inside_packages` | Sources cannot live inside the project's packages folder | `add a folder outside packages/` |
