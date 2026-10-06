@@ -114,3 +114,37 @@ def test_cursor_opencode_and_generic_targets(tmp_path: Path) -> None:
     assert opencode["mcp"]["farol"]["type"] == "local" and opencode["mcp"]["farol"]["command"][1:3] == ["-m", "docops"]
     assert (target / ".opencode" / "skills" / "acme-docs" / "SKILL.md").is_file()
     assert code == 0 and generic["mcpServers"]["farol"]["command"]
+
+
+# -- Farol 3.1 TK-208: the distillation loop ships as a skill ----------------
+
+
+def test_connect_installs_the_distill_skill_idempotently_and_removes_it(tmp_path: Path) -> None:
+    project = _project(tmp_path)
+    expected = {
+        "claude-code": ".claude/skills/farol-distill/SKILL.md",
+        "codex": ".agents/skills/farol-distill/SKILL.md",
+        "opencode": ".opencode/skills/farol-distill/SKILL.md",
+    }
+    for harness, relative in expected.items():
+        target = tmp_path / f"repo-{harness}"
+        target.mkdir()
+
+        _, plan = _cli(project, "connect", harness, "--target", str(target), "--dry-run", "--json")
+        _cli(project, "connect", harness, "--target", str(target), "--json")
+        _, again = _cli(project, "connect", harness, "--target", str(target), "--json")
+
+        assert relative in {change["path"] for change in plan["changes"]}
+        assert (target / relative).read_text(encoding="utf-8").startswith("---\nname: farol-distill\n")
+        assert again["status"] == "unchanged"
+        _cli(project, "connect", harness, "--target", str(target), "--remove", "--json")
+        assert not (target / relative).exists()
+
+
+def test_distill_skill_mentions_only_existing_commands(tmp_path: Path) -> None:
+    sys.path.insert(0, str(ROOT))
+    from scripts.check_documentation import _check_documented_commands
+
+    skill = ROOT / "docops" / "templates" / "farol-distill.md"
+
+    assert _check_documented_commands(skill, skill.read_text(encoding="utf-8"), ROOT) == []

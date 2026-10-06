@@ -2,7 +2,8 @@
 
 O Farol entrega a cada agente de IA (harness) duas coisas: **Agent Skills**
 (`SKILL.md` + capítulos, uma por fonte, mais **um** router do projeto,
-`<projeto>-router`, que lista as skills) e o servidor **MCP**
+`<projeto>-router`, que lista as skills, e a skill `farol-distill`, que conduz a
+escrita das skills pelo agente) e o servidor **MCP**
 `farol` (stdio, somente leitura). O harness escolhe o modelo e escreve a
 resposta final; o Farol nunca chama modelo.
 

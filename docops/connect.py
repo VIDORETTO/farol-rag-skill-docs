@@ -184,6 +184,8 @@ def _planned_changes(
         name = f"{project.config['name']}-router"
         router = project_router(project.config["name"], skills).encode("utf-8")
         changes.append(_file_change(target, f"{layout.skills}/{name}/SKILL.md", None if remove else router))
+        distill = (Path(__file__).with_name("templates") / "farol-distill.md").read_bytes()
+        changes.append(_file_change(target, f"{layout.skills}/farol-distill/SKILL.md", None if remove else distill))
     if layout.rules:
         rule = target / layout.rules
         before = rule.read_bytes() if rule.is_file() else None
