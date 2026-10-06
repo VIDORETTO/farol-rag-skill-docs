@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "effort": "farol-3.1",
+  "phase": "planning",
+  "status": "proposed",
+  "baseline": {
+    "kind": "git_sha",
+    "value": "6ee4ffe",
+    "branch": "main"
+  },
+  "inputs": {
+    "spec": {"path": "specs/farol-3.1/spec.md", "revision": 1},
+    "plan": {"path": "specs/farol-3.1/plan.md", "revision": 1},
+    "tdd": {"path": "specs/farol-3.1/tdd.md", "revision": 1},
+    "context": {"path": "CONTEXT.md", "revision": 1}
+  },
+  "open_decisions": ["D-301", "D-302", "D-303", "D-304", "D-305", "D-306", "D-307", "D-308"],
+  "tickets": {
+    "ready": ["TK-201", "TK-202", "TK-203", "TK-206", "TK-207", "TK-209", "TK-210", "TK-214", "TK-215", "TK-216"],
+    "blocked": ["TK-204", "TK-205", "TK-208", "TK-211", "TK-212", "TK-218"],
+    "draft": ["TK-213", "TK-217"],
+    "in_progress": [],
+    "verified": [],
+    "implemented": []
+  },
+  "next_action": "Mantenedor confirma D-301–D-308; executar a Onda A começando pelo RED do TK-201.",
+  "wave": "A",
+  "decisions": "specs/farol-3.1/decisions.md"
+}
