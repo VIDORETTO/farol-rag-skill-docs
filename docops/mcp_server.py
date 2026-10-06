@@ -168,8 +168,13 @@ class KnowledgeServer:
         *,
         packages: Mapping[str, Path] | None = None,
         ranker: Any | None = None,
+        composites: Mapping[str, tuple[Path, list[str]]] | None = None,
     ) -> None:
         self.ranker = ranker
+        # ``@name`` -> (folder, member package names): skills distilled from several packages.
+        self.composites = {
+            name: (Path(folder), list(members)) for name, (folder, members) in (composites or {}).items()
+        }
         self._reranker_loaded = ranker is not None
         self._reranker_problem: str | None = None
         self._lineages: dict[str, tuple[int, list[dict[str, Any]]]] = {}
@@ -202,6 +207,8 @@ class KnowledgeServer:
     def _selected(self, package: str | None) -> list[str]:
         if package is None:
             return list(self.packages)
+        if package in self.composites:
+            return [member for member in self.composites[package][1] if member in self.packages]
         if package not in self.packages:
             raise ToolError("package_unknown", "no package with that name; see list_skills")
         return [package]
@@ -215,6 +222,11 @@ class KnowledgeServer:
                 if path.is_file() and not path.is_symlink():
                     name = _frontmatter(path.read_text(encoding="utf-8")).get("name") or f"{package}-{folder}"
                     skills[name] = (package, path.parent)
+        for package, (folder, _members) in self.composites.items():
+            path = folder / "skill" / "SKILL.md"
+            if path.is_file() and not path.is_symlink():
+                name = _frontmatter(path.read_text(encoding="utf-8")).get("name") or package.lstrip("@")
+                skills[name] = (package, path.parent)
         return skills
 
     # -- tools ------------------------------------------------------------
@@ -591,8 +603,9 @@ def serve(
     stdout: TextIO | None = None,
     *,
     packages: Mapping[str, Path] | None = None,
+    composites: Mapping[str, tuple[Path, list[str]]] | None = None,
 ) -> int:
-    server = KnowledgeServer(package_root, packages=packages)
+    server = KnowledgeServer(package_root, packages=packages, composites=composites)
     source = stdin or sys.stdin
     sink = stdout or sys.stdout
     for line in source:

@@ -32,7 +32,6 @@
   ],
   "tickets": {
     "ready": [
-      "TK-211",
       "TK-212",
       "TK-213"
     ],
@@ -57,7 +56,8 @@
       "TK-208",
       "TK-214",
       "TK-215",
-      "TK-210"
+      "TK-210",
+      "TK-211"
     ]
   },
   "next_action": "Onda A entregue (evidências em specs/farol-3.1/evidence/). Próximo: TK-203 (ranking global; biblioteca com 40% de hits do pacote errado); confirmar D-301/D-302 para TK-204/TK-205.",

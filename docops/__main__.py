@@ -250,6 +250,12 @@ def build_parser() -> argparse.ArgumentParser:
     skill_path = skill_commands.add_parser("path", help="show the bundled docops-agent skill path")
     skill_path.add_argument("--skill-root", type=Path)
     skill_path.add_argument("--json", action="store_true")
+    skill_compose = skill_commands.add_parser("compose", help="one thematic skill distilled from several sources")
+    skill_compose.add_argument("name")
+    skill_compose.add_argument("--from", dest="members", nargs="+", required=True, help="source ids")
+    skill_compose.add_argument("--language")
+    skill_compose.add_argument("--project", type=Path, default=Path.cwd())
+    skill_compose.add_argument("--json", action="store_true")
     agents_bootstrap = commands.add_parser("agents-bootstrap", help="install the DOCOPS rule in AGENTS.md")
     agents_bootstrap.add_argument("--root", type=Path, default=Path.cwd())
     agents_bootstrap.add_argument("--check", action="store_true", help="do not write; fail if the rule is absent")
@@ -884,6 +890,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="treat a folder of lessons or a YouTube playlist as one course (one package, one skill)",
     )
     add.add_argument("--max-items", type=int, help="playlist courses: at most this many videos (default 200)")
+    add.add_argument(
+        "--no-skill", action="store_true", help="index for evidence only; distil it inside a composite skill"
+    )
     add.add_argument("--project", type=Path, default=Path.cwd())
     add.add_argument("--json", action="store_true")
     build = commands.add_parser("build", help="build or refresh every source: facts, index and synthesis tasks")
@@ -1062,6 +1071,7 @@ def _journey_command(args: argparse.Namespace) -> int:
                 redistribution=args.redistribution,
                 as_kind=args.as_kind,
                 max_items=args.max_items,
+                skill=not args.no_skill,
             )
         elif args.command == "build":
             payload = build(args.project, source_ids=args.sources or None)
@@ -1184,6 +1194,18 @@ def _task_command(args: argparse.Namespace) -> int:
 
 def _dispatch(args: argparse.Namespace) -> int:
     if args.command == "skill":
+        if args.skill_command == "compose":
+            from .composite import compose_skill
+            from .journey import JourneyError
+
+            try:
+                payload = compose_skill(args.project, args.name, args.members, language=args.language)
+            except JourneyError as exc:
+                payload = {"status": "error", "error": {"code": exc.code, "message": str(exc)}}
+                print(json.dumps(payload, indent=2, ensure_ascii=False))
+                return 2
+            print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
+            return 0
         if args.skill_command != "path":
             return 2
         result = {"ok": True, **skill_metadata(args.skill_root)}
@@ -1708,14 +1730,15 @@ def _dispatch(args: argparse.Namespace) -> int:
             from .library import library_packages
 
             return serve(packages=library_packages())
-        from .journey import JourneyError, project_packages
+        from .journey import JourneyError, project_composites, project_packages
 
         try:
             packages = project_packages(args.project or Path.cwd())
+            composites = project_composites(args.project or Path.cwd())
         except JourneyError as exc:
             print(json.dumps({"status": "error", "error": {"code": exc.code, "message": str(exc)}}), file=sys.stderr)
             return 2
-        return serve(packages=packages)
+        return serve(packages=packages, composites=composites)
     if args.command == "task":
         return _task_command(args)
     if args.command == "eval":

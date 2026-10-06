@@ -147,6 +147,14 @@ def _save_claims(root: Path, claims: Mapping[str, Any]) -> None:
     write_json_atomic(_dir(root) / CLAIMS_FILE, {"schema_version": 1, "claims": dict(claims)})
 
 
+def _documents(root: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """A package's evidence blocks; a composite skill reads its members' blocks."""
+
+    from .composite import is_composite, member_documents
+
+    return member_documents(root) if is_composite(root) else package_documents(root)
+
+
 def _slices(documents: list[dict[str, Any]], budget: int) -> list[list[dict[str, Any]]]:
     """Group evidence blocks into chapter-sized slices along section boundaries."""
 
@@ -297,6 +305,7 @@ def _chapter_task(
             {
                 "ref": f"b{counter}",
                 "block_id": block["block_id"],
+                **({"package": block["package"]} if block.get("package") else {}),
                 "citation": citation(block),
                 "heading_path": block.get("heading_path") or [],
                 "text": block["text"],
@@ -376,7 +385,7 @@ def _plan_synthesis_locked(
     manifest = _manifest(root)
     slug = str((manifest.get("source") or {}).get("slug") or root.name)
     language = language or str((manifest.get("source") or {}).get("language") or "en")
-    documents, _skipped = package_documents(root)
+    documents, _skipped = _documents(root)
     corpus = content_hash([document["document_id"] for document in documents])
     if not 1 <= int(task_source_tokens) <= MAX_TASK_SOURCE_TOKENS:
         raise SynthesisTaskError(
@@ -595,7 +604,7 @@ def _refresh(root: Path) -> dict[str, Any]:
     stale = list(plan.get("stale_chapters", []))
     if not stale:
         return plan
-    documents, _skipped = package_documents(root)
+    documents, _skipped = _documents(root)
     current = {
         block["block_id"]: {**block, "path": document["path"], "document_id": document["document_id"]}
         for document in documents
@@ -1102,7 +1111,7 @@ def _validate_outline(task: Mapping[str, Any], raw: str | None) -> tuple[list[di
 
 
 def _expand_outline(root: Path, outline: Mapping[str, Any], chapters: list[dict[str, Any]]) -> None:
-    documents, _skipped = package_documents(root)
+    documents, _skipped = _documents(root)
     blocks = {
         block["block_id"]: {**block, "path": document["path"], "document_id": document["document_id"]}
         for document in documents
@@ -1151,6 +1160,16 @@ def _claims(text: str, refs: Mapping[str, Mapping[str, Any]], chapter: str) -> l
                     "chapter": chapter,
                     "text": _REF.sub("", piece).strip(" -*"),
                     "block_ids": sorted({refs[ref]["block_id"] for ref in found}),
+                    **(
+                        {
+                            "sources": sorted(
+                                ({"package": refs[ref]["package"], "block_id": refs[ref]["block_id"]} for ref in found),
+                                key=lambda item: (item["package"], item["block_id"]),
+                            )
+                        }
+                        if all(refs[ref].get("package") for ref in found)
+                        else {}
+                    ),
                 }
             )
     return claims
@@ -1201,16 +1220,29 @@ def _install(root: Path, plan: Mapping[str, Any]) -> None:
             shutil.copyfile(core / name, staging / name)
         previous = root / SYNTHESIS_DIR / "previous-skill"
         shutil.rmtree(previous, ignore_errors=True)
-        os.replace(root / "skill", previous)
+        had_skill = (root / "skill").exists()  # a composite skill has none before its first install
+        if had_skill:
+            os.replace(root / "skill", previous)
         try:
             os.replace(staging, root / "skill")
             _record_installation(root, plan, lineage)
         except BaseException:
             shutil.rmtree(root / "skill", ignore_errors=True)
-            os.replace(previous, root / "skill")
+            if had_skill:
+                os.replace(previous, root / "skill")
             raise
     finally:
         shutil.rmtree(staging_parent, ignore_errors=True)
+
+
+def _mark_installed(root: Path) -> None:
+    from .readiness import skill_fingerprint
+
+    plan_path = root / SYNTHESIS_DIR / "plan.json"
+    stored = _read(plan_path)
+    stored["state"] = "installed"
+    stored["skill_hash"] = skill_fingerprint(root)
+    write_json_atomic(plan_path, stored)
 
 
 def _record_installation(root: Path, plan: Mapping[str, Any], lineage: list[dict[str, Any]]) -> None:
@@ -1235,6 +1267,10 @@ def _record_installation(root: Path, plan: Mapping[str, Any], lineage: list[dict
         },
     )
     manifest = _manifest(root)
+    if manifest.get("kind") == "composite":
+        # No corpus, index or harness of its own: the members carry the evidence.
+        _mark_installed(root)
+        return
     declared = manifest.get("revisions") if isinstance(manifest.get("revisions"), dict) else {}
     golden = declared.get("golden_revision")
     manifest["revisions"] = {
@@ -1252,11 +1288,7 @@ def _record_installation(root: Path, plan: Mapping[str, Any], lineage: list[dict
     if not result.ok:
         codes = ", ".join(sorted({error["code"] for error in result.errors}))
         raise SynthesisTaskError("install_invalid", f"installed skill failed package validation: {codes}")
-    plan_path = root / SYNTHESIS_DIR / "plan.json"
-    stored = _read(plan_path)
-    stored["state"] = "installed"
-    stored["skill_hash"] = skill_fingerprint(root)
-    write_json_atomic(plan_path, stored)
+    _mark_installed(root)
 
 
 def skill_rubric(package: Path | str) -> dict[str, Any]:

@@ -60,6 +60,14 @@ módulos e a ordem é a natural: “Aula 2” antes de “Aula 10”) ou
 cada vídeo na ordem da playlist, licença conferida por vídeo; `--max-items`
 limita a quantidade). As citações nomeiam a aula e o momento `(at HH:MM:SS)`.
 
+### Uma skill sobre várias fontes
+
+Vários livros, cursos ou sites sobre o mesmo assunto podem formar **uma** skill
+temática: `farol skill compose python --from livro-python curso-python`. As
+tarefas citam blocos de todas as fontes, a busca continua em cada uma e o
+`farol sync` de qualquer fonte reabre só os capítulos afetados. Adicione as
+fontes com `--no-skill` para não escrever também uma skill por fonte.
+
 ## 3. Deixar a sua IA escrever as skills
 
 `farol build` deixa as fontes consultáveis e prepara tarefas de síntese. Depois
