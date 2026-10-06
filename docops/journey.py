@@ -346,7 +346,7 @@ def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
             input_value = _acquire_arxiv(project, source)
         elif source.get("kind") == "youtube":
             input_value = _acquire_youtube(project, source)
-        elif source.get("kind") == "course" and urlsplit(input_value).scheme:
+        elif source.get("kind") == "course" and urlsplit(input_value).scheme in {"http", "https"}:
             input_value = _acquire_playlist(project, source)
     except TranscriptError as exc:
         return {"ok": False, "errors": [{"code": exc.code, "message": str(exc)}]}
