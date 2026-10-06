@@ -33,6 +33,9 @@ SYNTHESIS_DIR = Path(".docops") / "synthesis"
 GENERATOR = "farol-synthesis"
 GENERATOR_VERSION = "1"
 DEFAULT_TASK_SOURCE_TOKENS = 6_000
+MIN_TASK_SOURCE_TOKENS = 2_000
+MAX_TASK_SOURCE_TOKENS = 48_000
+MAX_CHAPTER_OUTPUT_TOKENS = 6_000
 CHAPTER_OUTPUT_TOKENS = 2_500
 CORE_OUTPUT_TOKENS = 4_000
 MAX_OUTPUT_BYTES = 256 * 1024
@@ -172,6 +175,90 @@ def _slices(documents: list[dict[str, Any]], budget: int) -> list[list[dict[str,
     return slices
 
 
+def _topical(block: Mapping[str, Any]) -> tuple[str, ...]:
+    """Heading path without PDF page headings, which are locators, not subjects."""
+
+    return tuple(part for part in block.get("heading_path") or [] if not _PAGE_HEADING.fullmatch(part))
+
+
+def _native_units(documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The author's own chapters: contiguous blocks sharing their top heading, per document."""
+
+    units: list[dict[str, Any]] = []
+    for document in documents:
+        current: dict[str, Any] | None = None
+        for block in document["blocks"]:
+            if block.get("kind") in _CONTEXT_KINDS or not (block.get("text") or "").strip():
+                continue
+            if block.get("risk") == "high":
+                continue
+            topical = _topical(block)
+            key = topical[0] if topical else Path(document["path"]).stem
+            if current is None or current["title"] != key:
+                current = {"title": key, "path": document["path"], "document_id": document["document_id"], "blocks": []}
+                units.append(current)
+            current["blocks"].append(block)
+    for unit in units:
+        unit["tokens"] = sum(_tokens(block["text"]) for block in unit["blocks"])
+    return units
+
+
+def _native_slices(documents: list[dict[str, Any]], budget: int) -> list[list[dict[str, Any]]]:
+    """Chapter slices that follow the author's chapters when they fit.
+
+    A native chapter between half and three times the budget becomes one
+    slice; a larger one is split along its sections; smaller ones are grouped
+    with their neighbours until the group reaches half the budget.
+    """
+
+    slices: list[list[dict[str, Any]]] = []
+    group: list[dict[str, Any]] = []
+    size = 0
+
+    def flush() -> None:
+        nonlocal group, size
+        if group:
+            slices.append(group)
+        group, size = [], 0
+
+    for unit in _native_units(documents):
+        located = [{**block, "path": unit["path"], "document_id": unit["document_id"]} for block in unit["blocks"]]
+        if unit["tokens"] > 3 * budget:
+            flush()
+            document = {"path": unit["path"], "document_id": unit["document_id"], "blocks": unit["blocks"]}
+            slices.extend(_slices([document], budget))
+            continue
+        if group and size + unit["tokens"] > 3 * budget:
+            flush()
+        group.extend(located)
+        size += unit["tokens"]
+        if size >= budget // 2:
+            flush()
+    flush()
+    return slices
+
+
+def _native_chapters(sections: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Sections grouped by the author's top-level chapters, in source order."""
+
+    chapters: list[dict[str, Any]] = []
+    for section in sections:
+        title = section["title"].split(" › ")[0]
+        if not chapters or chapters[-1]["title"] != title or chapters[-1]["path"] != section["path"]:
+            chapters.append({"title": title, "path": section["path"], "sections": [], "tokens": 0})
+        chapters[-1]["sections"].append(section["id"])
+        chapters[-1]["tokens"] += section["tokens"]
+    return chapters
+
+
+def _chapter_output_tokens(blocks: list[dict[str, Any]]) -> int:
+    """Longer chapters may say more, up to a ceiling."""
+
+    source = sum(_tokens(block["text"]) for block in blocks)
+    extra = max(0, source - DEFAULT_TASK_SOURCE_TOKENS) // 8
+    return min(CHAPTER_OUTPUT_TOKENS + extra, MAX_CHAPTER_OUTPUT_TOKENS)
+
+
 def _sections(documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Evidence grouped by document and second-level heading, in source order."""
 
@@ -223,7 +310,7 @@ def _chapter_task(
         "status": "pending",
         "requires": [],
         "language": language,
-        "budget": {"output_tokens": CHAPTER_OUTPUT_TOKENS},
+        "budget": {"output_tokens": _chapter_output_tokens(blocks)},
         "inputs": {"title": title, "file": f"{index:02d}-{_slugify(title)}.md", "blocks": items},
         "output": {"files": ["chapter.md"]},
     }
@@ -235,14 +322,14 @@ def _title(blocks: list[dict[str, Any]]) -> str:
 
     tops: list[str] = []
     for block in blocks:
-        path = block.get("heading_path") or []
+        path = _topical(block)
         name = path[0] if path else Path(block["path"]).stem.replace("-", " ").title()
         if name not in tops:
             tops.append(name)
     if len(tops) == 1:
         seconds = []
         for block in blocks:
-            path = block.get("heading_path") or []
+            path = _topical(block)
             if len(path) > 1 and path[1] not in seconds:
                 seconds.append(path[1])
         if 0 < len(seconds) <= 3 and len(blocks) > 3:
@@ -291,7 +378,11 @@ def _plan_synthesis_locked(
     language = language or str((manifest.get("source") or {}).get("language") or "en")
     documents, _skipped = package_documents(root)
     corpus = content_hash([document["document_id"] for document in documents])
-    slices = _slices(documents, task_source_tokens)
+    if not 1 <= int(task_source_tokens) <= MAX_TASK_SOURCE_TOKENS:
+        raise SynthesisTaskError(
+            "task_tokens_invalid", f"task tokens must be between {MIN_TASK_SOURCE_TOKENS} and {MAX_TASK_SOURCE_TOKENS}"
+        )
+    slices = _native_slices(documents, task_source_tokens)
     if outline not in (None, "agent", "heuristic"):
         raise SynthesisTaskError("outline_invalid", "outline must be 'agent' or 'heuristic'")
     mode = outline or ("agent" if len(slices) >= 3 else "heuristic")
@@ -322,6 +413,10 @@ def _plan_synthesis_locked(
                 "budget": {"chapter_source_tokens": task_source_tokens},
                 "inputs": {
                     "title": "Skill outline",
+                    "native_chapters": [
+                        {key: chapter[key] for key in ("title", "sections", "tokens")}
+                        for chapter in _native_chapters(sections)
+                    ],
                     "sections": [
                         {key: section[key] for key in ("id", "title", "path", "tokens", "first_sentence")}
                         | {"block_ids": [block["block_id"] for block in section["blocks"]]}
@@ -544,6 +639,12 @@ def _render(root: Path, task: dict[str, Any], plan: Mapping[str, Any]) -> dict[s
             f"- {item['id']} ({item['tokens']} tokens) {item['title']} — {item['first_sentence']}"
             for item in task["inputs"]["sections"]
         )
+        native = task["inputs"].get("native_chapters") or []
+        if native:
+            contents = "\n".join(
+                f"- {item['title']} ({item['tokens']} tokens): {', '.join(item['sections'])}" for item in native
+            )
+            listing = f"### The author's chapters\n\n{contents}\n\n### Sections\n\n{listing}"
         instructions = (
             _template("synthesis-outline.md")
             .replace("{{SLUG}}", plan["slug"])

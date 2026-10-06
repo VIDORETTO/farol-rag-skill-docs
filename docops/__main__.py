@@ -909,6 +909,12 @@ def build_parser() -> argparse.ArgumentParser:
     task_plan.add_argument("--language")
     task_plan.add_argument("--outline", choices=("agent", "heuristic"), help="who plans the chapters (default: auto)")
     task_plan.add_argument("--refresh", action="store_true", help="reopen only chapters made stale by source changes")
+    task_plan.add_argument(
+        "--task-tokens",
+        type=_task_tokens,
+        default=6000,
+        help="source tokens per chapter task (2000-48000; raise it for long-context models)",
+    )
     task_commands.add_parser("next", help="show the next task with full instructions")
     task_submit = task_commands.add_parser("submit", help="submit an answer directory for a task")
     task_submit.add_argument("task_id")
@@ -924,6 +930,13 @@ def build_parser() -> argparse.ArgumentParser:
         sub.add_argument("--source", help="inside a project: the source id to work on")
         sub.add_argument("--json", action="store_true")
     return parser
+
+
+def _task_tokens(value: str) -> int:
+    number = int(value)
+    if not 2000 <= number <= 48000:
+        raise argparse.ArgumentTypeError("task tokens must be between 2000 and 48000")
+    return number
 
 
 def _layers_from_args(args: argparse.Namespace) -> tuple[str, ...]:
@@ -1101,7 +1114,13 @@ def _task_command(args: argparse.Namespace) -> int:
         args.package = args.package / display
     try:
         if args.task_command == "plan":
-            payload = plan_synthesis(args.package, language=args.language, outline=args.outline, refresh=args.refresh)
+            payload = plan_synthesis(
+                args.package,
+                language=args.language,
+                outline=args.outline,
+                refresh=args.refresh,
+                task_source_tokens=args.task_tokens,
+            )
             code = 0
         elif args.task_command == "next":
             payload = next_task(args.package) or {"status": "done", "message": "no pending task"}

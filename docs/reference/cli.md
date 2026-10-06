@@ -57,6 +57,7 @@ show each source's state and the next step
 | `--language` | language of the generated skills, e.g. en or pt-BR |
 | `--outline` | who plans the chapters (default: auto) (one of: agent, heuristic) |
 | `--refresh` | reopen only chapters made stale by source changes |
+| `--task-tokens` | source tokens per chapter task (2000-48000; raise it for long-context models) |
 | `--package` | package, or a project directory |
 | `--source` | inside a project: the source id to work on |
 | `--json` | print machine-readable JSON |

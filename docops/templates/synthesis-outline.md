@@ -9,6 +9,9 @@ Rules:
 - Every section id must appear in exactly one chapter (no orphans, no duplicates).
 - Aim for chapters of roughly {{CHAPTER_TOKENS}} source tokens; a single large
   section may form its own chapter.
+- When the source has its own chapters (listed under “The author's chapters”),
+  keep each one as a skill chapter if it is between half and three times the
+  target size; split larger ones by subject and merge only small neighbours.
 - Order chapters from foundations to advanced topics; give each a descriptive title.
 
 Write `outline.json`:
