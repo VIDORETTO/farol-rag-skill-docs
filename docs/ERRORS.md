@@ -16,6 +16,7 @@ Every error printed by Farol carries one of these codes and a next step.
 | `chapter_links_missing` | SKILL.md does not link every chapter | `link each chapter under ## Chapters` |
 | `chapter_too_large` | A chapter covers too much source | `split it into smaller chapters` |
 | `chapter_unknown` | Chapter not found | `use a chapter file listed by list_skills` |
+| `composite_member_unknown` | A composite skill needs two or more added sources | `farol skill compose <name> --from <id> <id>` |
 | `dependencies_pending` | Earlier tasks must be accepted first | `farol task next` |
 | `document_invalid` | An index document is malformed | `farol build` |
 | `document_missing` | A corpus document listed in the package is missing | `farol build` |
@@ -59,6 +60,7 @@ Every error printed by Farol carries one of these codes and a next step.
 | `revision_mismatch` | The query targets another project revision | `reopen the reader` |
 | `schedule_unknown` | Unknown scheduler | `farol sync --schedule cron` |
 | `scope_invalid` | Unknown context scope | `use scope blocks or section` |
+| `skill_name_invalid` | The skill name has no letters or digits | `farol skill compose <name> --from <id> <id>` |
 | `skill_not_distilled` | No distilled skill to evaluate yet | `farol task next` |
 | `skill_unknown` | No skill with that name | `call list_skills` |
 | `source_id_taken` | Another source already uses that id | `farol add <source> --name <new-id>` |

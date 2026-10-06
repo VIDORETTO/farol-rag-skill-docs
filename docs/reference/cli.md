@@ -15,6 +15,7 @@ add a source: folder, file, URL or Git repository
 | `--redistribution` | how derived content may be shared (one of: private-only, internal, public) |
 | `--as` | treat a folder of lessons or a YouTube playlist as one course (one package, one skill) (one of: course) |
 | `--max-items` | playlist courses: at most this many videos (default 200) |
+| `--no-skill` | index for evidence only; distil it inside a composite skill |
 | `--project` | project directory (default: current directory) |
 | `--json` | print machine-readable JSON |
 

@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from .journey import load_project, project_packages
+from .journey import load_project, project_composites, project_packages
 from .storage import write_json_atomic
 
 HARNESSES = ("claude-code", "codex", "cursor", "opencode", "generic")
@@ -170,7 +170,9 @@ def _planned_changes(
             desired = base64.b64decode(original) if original is not None else None
     changes.append({"kind": "config", "path": layout.config, "before": current, "after": desired})
     skills: list[tuple[str, str]] = []
-    for source_id, package in project_packages(project.root).items():
+    folders = {source_id: package for source_id, package in project_packages(project.root).items()}
+    folders.update({name.lstrip("@"): folder for name, (folder, _members) in project_composites(project.root).items()})
+    for source_id, package in folders.items():
         origin = package / "skill"
         if not (origin / "SKILL.md").is_file():
             continue

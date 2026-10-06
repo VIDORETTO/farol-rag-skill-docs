@@ -106,6 +106,7 @@ def add_source(
     redistribution: str | None = None,
     as_kind: str | None = None,
     max_items: int | None = None,
+    skill: bool = True,
 ) -> dict[str, Any]:
     from .transcripts import youtube_id
 
@@ -175,6 +176,8 @@ def add_source(
         "redistribution": redistribution or "private-only",
         "added_at": _now(),
     }
+    if not skill:
+        source["skill"] = False  # indexed for evidence; distilled only inside composite skills
     if playlist and max_items:
         source["max_items"] = max(1, min(int(max_items), MAX_COURSE_ITEMS))
     project.config["sources"].append(source)
@@ -357,7 +360,9 @@ def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
         return {"ok": False, "errors": [{"code": exc.code, "message": str(exc)}]}
     synthesis = synthesis_status(package)
     # Never discard accepted agent work: replan only when nothing was accepted yet.
-    if synthesis["state"] == "not_planned" or (
+    if source.get("skill") is False:
+        pass
+    elif synthesis["state"] == "not_planned" or (
         synthesis["state"] == "awaiting_agent" and not synthesis.get("counts", {}).get("accepted")
     ):
         plan_synthesis(package, language=project.config.get("language"))
@@ -417,10 +422,72 @@ def build(root: Path | str, *, source_ids: list[str] | None = None) -> dict[str,
         state["sources"][source["id"]] = {"last_build": _now(), **outcome}
         results[source["id"]] = outcome
     write_json_atomic(project.root / STATE_FILE, state)
+    _plan_composites(project)
     report = status(project.root)
     report["built"] = results
     report["ok"] = all(outcome["ok"] for outcome in results.values())
     return report
+
+
+def _plan_composites(project: Project) -> None:
+    """Plan each composite skill once all of its members are indexed (accepted work is never discarded)."""
+
+    from .agent_tasks import plan_synthesis, synthesis_status
+    from .composite import composite_dir
+
+    for skill in project.config.get("skills", []):
+        package = composite_dir(project.root, skill["name"])
+        members_ready = all(
+            (project.package(member) / "rag" / "local-index" / "ACTIVE.json").is_file() for member in skill["sources"]
+        )
+        if not members_ready or not (package / "manifest.json").is_file():
+            continue
+        synthesis = synthesis_status(package)
+        if synthesis["state"] == "not_planned" or (
+            synthesis["state"] == "awaiting_agent" and not synthesis.get("counts", {}).get("accepted")
+        ):
+            plan_synthesis(package, language=skill.get("language"))
+
+
+def project_composites(root: Path | str) -> dict[str, tuple[Path, list[str]]]:
+    """Composite skills of a project: ``@name`` -> (folder, member source ids)."""
+
+    from .composite import composite_dir
+
+    project = load_project(root)
+    return {
+        f"@{skill['name']}": (composite_dir(project.root, skill["name"]), list(skill["sources"]))
+        for skill in project.config.get("skills", [])
+        if (composite_dir(project.root, skill["name"]) / "manifest.json").is_file()
+    }
+
+
+def _skill_status(project: Project, skill: dict[str, Any]) -> dict[str, Any]:
+    from .agent_tasks import synthesis_status
+    from .composite import composite_dir
+
+    package = composite_dir(project.root, skill["name"])
+    relative = package.relative_to(project.root).as_posix()
+    entry: dict[str, Any] = {"name": skill["name"], "sources": skill["sources"]}
+    synthesis = synthesis_status(package) if (package / "manifest.json").is_file() else {"state": "not_planned"}
+    if synthesis["state"] == "installed" and synthesis.get("stale_chapters"):
+        entry.update(
+            state="stale",
+            stale_chapters=synthesis["stale_chapters"],
+            next_action=f"farol task plan --refresh --package {relative}",
+        )
+    elif synthesis["state"] == "installed":
+        entry.update(state="ready", next_action=None)
+    elif synthesis["state"] == "not_planned":
+        entry.update(state="added", next_action="farol build")
+    else:
+        counts = synthesis.get("counts", {})
+        entry.update(
+            state="awaiting_agent",
+            tasks={"accepted": counts.get("accepted", 0), "total": sum(counts.values())},
+            next_action=f"farol task next --package {relative}",
+        )
+    return entry
 
 
 def _source_status(project: Project, source: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
@@ -441,6 +508,9 @@ def _source_status(project: Project, source: dict[str, Any], state: dict[str, An
         return entry
     if not (package / "rag" / "local-index" / "ACTIVE.json").is_file():
         entry.update(state="added", next_action="farol build")
+        return entry
+    if source.get("skill") is False:
+        entry.update(state="indexed", next_action=None)
         return entry
     synthesis = synthesis_status(package)
     relative = package.relative_to(project.root).as_posix()
@@ -466,23 +536,30 @@ def status(root: Path | str) -> dict[str, Any]:
     project = load_project(root)
     state = _state(project)
     sources = [_source_status(project, source, state) for source in project.config["sources"]]
+    skills = [_skill_status(project, skill) for skill in project.config.get("skills", [])]
+    items = sources + skills
     order = ("failed", "added", "awaiting_agent", "stale", "ready")
-    overall = next((name for name in order if any(item["state"] == name for item in sources)), "empty")
+    overall = next((name for name in order if any(item["state"] == name for item in items)), "empty")
+    if overall == "empty" and sources:
+        overall = "ready"  # every source is indexed-only
     if not sources:
         next_action = "farol add <source>"
     elif overall in {"failed", "added"}:
         next_action = "farol build"
     elif overall in {"awaiting_agent", "stale"}:
-        next_action = next(item["next_action"] for item in sources if item["state"] == overall)
+        next_action = next(item["next_action"] for item in items if item["state"] == overall)
     else:
         next_action = "farol mcp --project ."
-    return {
+    report = {
         "schema_version": 1,
         "project": project.config["name"],
         "state": overall,
         "sources": sources,
         "next_action": next_action,
     }
+    if skills:
+        report["skills"] = skills
+    return report
 
 
 def project_packages(root: Path | str) -> dict[str, Path]:
@@ -565,6 +642,13 @@ def sync(root: Path | str, *, source_ids: list[str] | None = None) -> dict[str, 
         changes[source_id] = {"state": state, "added": len(added), "removed": len(removed)}
         if removed:
             mark_stale(package, removed)
+            for skill in project.config.get("skills", []):
+                if source_id in skill["sources"]:
+                    from .composite import composite_dir
+
+                    composite = composite_dir(project.root, skill["name"])
+                    if (composite / ".docops" / "synthesis" / "plan.json").is_file():
+                        mark_stale(composite, removed)
     refreshed = status(root)
     for entry in refreshed["sources"]:
         if entry["id"] in changes:
