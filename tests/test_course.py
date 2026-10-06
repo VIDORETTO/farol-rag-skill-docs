@@ -141,7 +141,7 @@ def test_course_outline_task_lists_modules_in_order(tmp_path: Path) -> None:
 def test_a_windows_drive_path_is_never_mistaken_for_a_playlist(monkeypatch) -> None:
     called: list[str] = []
     monkeypatch.setattr(journey, "_acquire_playlist", lambda project, source: called.append("playlist") or "")
-    source = {"id": "curso", "kind": "course", "input": r"C:\Users\aluno\curso", "license": "MIT"}
+    source = {"id": "curso", "kind": "course", "input": r"D:\cursos\python", "license": "MIT"}
 
     class Project:
         root = Path("unused")
