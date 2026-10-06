@@ -68,7 +68,8 @@ def test_connect_is_idempotent_preserves_other_servers_and_removes_cleanly(tmp_p
     server = config["mcpServers"]["farol"]
     assert server["type"] == "stdio" and server["args"][-2:] == ["--project", str(project.resolve())]
     assert (target / ".claude" / "skills" / "acme-docs" / "SKILL.md").is_file()
-    assert (target / ".claude" / "skills" / "acme-docs-router" / "SKILL.md").is_file()
+    assert (target / ".claude" / "skills" / "project-router" / "SKILL.md").is_file()
+    assert not (target / ".claude" / "skills" / "acme-docs-router").exists()
 
     code, removed = _cli(project, "connect", "claude-code", "--target", str(target), "--remove", "--json")
 
