@@ -25,7 +25,7 @@ def test_bootstrap_installs_the_project_and_optional_formats_profile(tmp_path: P
     assert "pip-audit==2.10.1" in command
     assert "setuptools==84.0.0" in command
     assert "PyYAML==6.0.3" in command
-    assert "pypdf==6.16.2" in command
+    assert "pypdf==6.19.0" in command
 
 
 def test_bootstrap_pins_a_known_safe_pip_before_installing_packages() -> None:

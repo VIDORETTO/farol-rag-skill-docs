@@ -4,7 +4,8 @@
 
 Additions only; nothing public was removed or renamed.
 
-- **Security**: `get_document` no longer returns prompt-injection blocks;
+- **Security**: `pypdf` 6.16.2 → 6.19.0 (PYSEC-2026-4153 to 4160);
+  `get_document` no longer returns prompt-injection blocks;
   `farol connect` only removes files inside the harness's skills folder.
 
 - **Read around a fact**: hits carry `block_id`; new MCP tool `get_context`
