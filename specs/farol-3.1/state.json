@@ -56,7 +56,8 @@
       "TK-210",
       "TK-211",
       "TK-212",
-      "TK-213"
+      "TK-213",
+      "TK-219"
     ]
   },
   "next_action": "TK-201–TK-216 implementados (evidências em specs/farol-3.1/evidence/). Gate da 3.1 verde; aguardam o mantenedor: D-308 (tag/release 3.1.0) e D-307 (contração 4.0, TK-217). Medições not_run exigem rede/modelos/agente.",
