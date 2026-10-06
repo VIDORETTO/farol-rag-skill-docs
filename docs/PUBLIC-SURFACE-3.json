@@ -98,8 +98,10 @@
       "work"
     ],
     "cli_options": [
+      "add --as",
       "add --json",
       "add --license",
+      "add --max-items",
       "add --name",
       "add --project",
       "add --redistribution",

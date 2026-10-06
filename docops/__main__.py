@@ -208,7 +208,7 @@ kept out of structured output. Remove an alias only after all callers have
 migrated and the alias-usage gate is zero for one complete release window.
 """
 
-_JOURNEY_COMMANDS = ("add", "build", "sync", "status", "task", "connect", "mcp", "eval", "doctor", "advanced")
+_JOURNEY_COMMANDS = ("add", "build", "sync", "status", "task", "connect", "mcp", "doctor", "advanced")
 _JOURNEY_HELP = """Typical use:
 
   farol add ./docs --license MIT     register a source (folder, file, URL, Git repo)
@@ -877,6 +877,13 @@ def build_parser() -> argparse.ArgumentParser:
     add.add_argument("--license", help="license of the source, e.g. MIT or CC-BY-4.0")
     add.add_argument("--name", help="short id for the source (default: derived from the source)")
     add.add_argument("--redistribution", choices=("private-only", "internal", "public"))
+    add.add_argument(
+        "--as",
+        dest="as_kind",
+        choices=("course",),
+        help="treat a folder of lessons or a YouTube playlist as one course (one package, one skill)",
+    )
+    add.add_argument("--max-items", type=int, help="playlist courses: at most this many videos (default 200)")
     add.add_argument("--project", type=Path, default=Path.cwd())
     add.add_argument("--json", action="store_true")
     build = commands.add_parser("build", help="build or refresh every source: facts, index and synthesis tasks")
@@ -1048,7 +1055,13 @@ def _journey_command(args: argparse.Namespace) -> int:
             payload = init_project(args.project, language=args.language)
         elif args.command == "add":
             payload = add_source(
-                args.project, args.source, license=args.license, name=args.name, redistribution=args.redistribution
+                args.project,
+                args.source,
+                license=args.license,
+                name=args.name,
+                redistribution=args.redistribution,
+                as_kind=args.as_kind,
+                max_items=args.max_items,
             )
         elif args.command == "build":
             payload = build(args.project, source_ids=args.sources or None)

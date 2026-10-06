@@ -202,6 +202,36 @@ def fetch_youtube(url: str, *, languages: list[str]) -> dict[str, Any]:
     }
 
 
+def fetch_playlist(url: str, *, max_items: int) -> list[dict[str, Any]]:
+    """The videos of a YouTube playlist, in playlist order (flat listing; requires yt-dlp)."""
+
+    try:
+        import yt_dlp  # type: ignore[import-not-found]
+    except ImportError as exc:
+        raise TranscriptError("extra_required", f"YouTube playlists need yt-dlp; {_INSTALL_MEDIA}") from exc
+    import os
+
+    options: dict[str, Any] = {
+        "skip_download": True,
+        "quiet": True,
+        "no_warnings": True,
+        "extract_flat": "in_playlist",
+        "playlistend": max_items,
+    }
+    if cookies := os.environ.get("FAROL_YTDLP_COOKIES"):
+        options["cookiefile"] = cookies
+    with yt_dlp.YoutubeDL(options) as client:
+        try:
+            info = client.extract_info(url, download=False)
+        except Exception as exc:
+            raise TranscriptError("youtube_unavailable", f"the playlist could not be read: {str(exc)[:200]}") from exc
+    entries = [entry for entry in info.get("entries") or [] if entry and entry.get("id")]
+    return [
+        {"id": entry["id"], "title": entry.get("title") or entry["id"], "playlist_index": position}
+        for position, entry in enumerate(entries[:max_items], 1)
+    ]
+
+
 def youtube_markdown(url: str, video: dict[str, Any]) -> str:
     captions = video["captions"]
     metadata = [

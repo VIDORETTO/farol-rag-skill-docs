@@ -51,6 +51,15 @@ Informe a licença real de cada fonte. Sem licença, o Farol trata o pacote como
 de uso local e privado e avisa em `farol status`. Para arXiv e YouTube, a licença
 declarada na página é detectada automaticamente.
 
+### Cursos
+
+Um curso é **uma** fonte: `farol add ./curso --as course --license <licença>`
+(pasta de aulas em vídeo, áudio, legendas, PDF ou Markdown; subpastas viram
+módulos e a ordem é a natural: “Aula 2” antes de “Aula 10”) ou
+`farol add "https://www.youtube.com/playlist?list=…" --as course` (legendas de
+cada vídeo na ordem da playlist, licença conferida por vídeo; `--max-items`
+limita a quantidade). As citações nomeiam a aula e o momento `(at HH:MM:SS)`.
+
 ## 3. Deixar a sua IA escrever as skills
 
 `farol build` deixa as fontes consultáveis e prepara tarefas de síntese. Depois

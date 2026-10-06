@@ -100,3 +100,29 @@ def distilled_package(tmp_path: Path, *, install: bool = True) -> Path:
             (folder / name).write_text(content, encoding="utf-8")
         assert submit_task(package, "core", folder)["status"] == "accepted"
     return package
+
+
+def _vtt(lines: list[tuple[str, str]]) -> str:
+    cues = "\n\n".join(f"{start}.000 --> {start[:-2]}{int(start[-2:]) + 4:02d}.000\n{text}" for start, text in lines)
+    return f"WEBVTT\n\n{cues}\n"
+
+
+def course_folder(tmp_path: Path) -> Path:
+    """F4: lessons named for people (natural order 1, 2, 10) plus a material module."""
+
+    folder = tmp_path / "curso-python"
+    (folder / "material").mkdir(parents=True)
+    lessons = {
+        "Aula 1 - Introdução.vtt": [("00:00:01", "Nesta aula um apresentamos o interpretador.")],
+        "Aula 2 - Variáveis.vtt": [("00:00:01", "Na aula dois criamos variáveis com nomes claros.")],
+        "Aula 10 - Projeto final.vtt": [
+            ("00:00:01", "Na aula dez revisamos o curso."),
+            ("00:02:30", "Na aula dez construímos o projeto final com testes automatizados."),
+        ],
+    }
+    for name, cues in lessons.items():
+        (folder / name).write_text(_vtt(cues), encoding="utf-8")
+    (folder / "material" / "slides.md").write_text(
+        "# Slides\n\n## Capa\n\nMaterial de apoio com os exercícios do curso.\n", encoding="utf-8"
+    )
+    return folder

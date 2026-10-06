@@ -31,7 +31,7 @@
 | [TK-206](tickets/TK-206.md) | Claim/lease e lock do plano | — | implemented |
 | [TK-207](tickets/TK-207.md) | Orçamento e sumário nativo | TK-206 | implemented |
 | [TK-208](tickets/TK-208.md) | Skill `farol-distill` | TK-206, D-303 | implemented |
-| [TK-210](tickets/TK-210.md) | Curso (pasta e playlist) | TK-207 | ready |
+| [TK-210](tickets/TK-210.md) | Curso (pasta e playlist) | TK-207 | implemented |
 | [TK-211](tickets/TK-211.md) | Skill composta multi-fonte | TK-206, TK-207, D-304 | blocked (D-304) |
 | [TK-212](tickets/TK-212.md) | PDF com layout | TK-201, D-305 | blocked (D-305) |
 | [TK-213](tickets/TK-213.md) | Slides de videoaula | TK-210, D-306 | draft |

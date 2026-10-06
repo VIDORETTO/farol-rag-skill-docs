@@ -25,6 +25,9 @@ PACKAGES_DIR = "packages"
 DOWNLOADS_DIR = Path(".farol") / "downloads"
 ARXIV_BASE = "https://arxiv.org"
 _ARXIV = re.compile(r"^(?:arxiv:\s*|https?://(?:www\.)?arxiv\.org/(?:abs|pdf)/)(\d{4}\.\d{4,5}(?:v\d+)?)", re.I)
+_PLAYLIST = re.compile(r"[?&]list=([A-Za-z0-9_-]+)")
+COURSE_FILE = Path(".docops") / "course.json"
+MAX_COURSE_ITEMS = 200
 _CC_LICENSE = re.compile(r"creativecommons\.org/(licenses|publicdomain)/([a-z-]+)/(\d\.\d)", re.I)
 
 
@@ -101,14 +104,33 @@ def add_source(
     license: str | None = None,
     name: str | None = None,
     redistribution: str | None = None,
+    as_kind: str | None = None,
+    max_items: int | None = None,
 ) -> dict[str, Any]:
-    project = load_project(root, create=True)
     from .transcripts import youtube_id
 
-    arxiv = _ARXIV.match(value.strip())
-    video = youtube_id(value)
+    if as_kind not in (None, "course"):
+        raise JourneyError("source_kind_invalid", "--as accepts: course")
     parsed = urlsplit(value)
-    if arxiv:
+    playlist = _PLAYLIST.search(value) if as_kind == "course" and parsed.scheme in {"http", "https"} else None
+    if as_kind == "course" and parsed.scheme not in {"http", "https"}:
+        folder = Path(value).expanduser()
+        if not folder.is_dir():
+            raise JourneyError("source_not_found", f"{value} is not a folder of lessons")
+        if not license:
+            raise JourneyError(
+                "license_required",
+                "declare the course's license (courses are often paid content)",
+                next_action="farol add <folder> --as course --license <license>",
+            )
+    elif as_kind == "course" and playlist is None:
+        raise JourneyError("source_kind_invalid", "a course URL must be a YouTube playlist (list=...)")
+    project = load_project(root, create=True)
+    arxiv = None if as_kind else _ARXIV.match(value.strip())
+    video = None if as_kind else youtube_id(value)
+    if playlist:
+        value = f"https://www.youtube.com/playlist?list={playlist.group(1)}"
+    elif arxiv:
         value = f"arXiv:{arxiv.group(1)}"
     elif video:
         value = f"https://www.youtube.com/watch?v={video}"
@@ -127,6 +149,8 @@ def add_source(
     taken = {source["id"] for source in project.config["sources"]}
     if name:
         source_id = _slug(name)
+    elif playlist:
+        source_id = _slug(f"playlist-{playlist.group(1)}")
     elif arxiv:
         source_id = _slug(f"arxiv-{arxiv.group(1)}")
     elif video:
@@ -137,12 +161,22 @@ def add_source(
         raise JourneyError("source_id_taken", f"a source named {source_id!r} already exists")
     source = {
         "id": source_id,
-        "kind": "arxiv" if arxiv else "youtube" if video else "url" if parsed.scheme in {"http", "https"} else "path",
+        "kind": "course"
+        if as_kind
+        else "arxiv"
+        if arxiv
+        else "youtube"
+        if video
+        else "url"
+        if parsed.scheme in {"http", "https"}
+        else "path",
         "input": value,
         "license": license,
         "redistribution": redistribution or "private-only",
         "added_at": _now(),
     }
+    if playlist and max_items:
+        source["max_items"] = max(1, min(int(max_items), MAX_COURSE_ITEMS))
     project.config["sources"].append(source)
     write_json_atomic(project.root / PROJECT_FILE, project.config)
     return {"status": "added", "source": source}
@@ -210,6 +244,67 @@ def _acquire_youtube(project: Project, source: dict[str, Any]) -> str:
     return str(folder)
 
 
+def _acquire_playlist(project: Project, source: dict[str, Any]) -> str:
+    """Captions of every video of a playlist, in order, one lesson file each; licenses per video."""
+
+    from . import transcripts
+
+    folder = project.root / DOWNLOADS_DIR / source["id"]
+    if (folder / ".complete").is_file():
+        return str(folder)
+    languages = list(dict.fromkeys([str(project.config.get("language") or "en").split("-")[0], "en"]))
+    entries = transcripts.fetch_playlist(source["input"], max_items=int(source.get("max_items") or MAX_COURSE_ITEMS))
+    if not entries:
+        raise transcripts.TranscriptError("youtube_unavailable", "the playlist has no readable videos")
+    folder.mkdir(parents=True, exist_ok=True)
+    members = []
+    for order, entry in enumerate(entries, 1):
+        url = f"https://www.youtube.com/watch?v={entry['id']}"
+        video = transcripts.fetch_youtube(url, languages=languages)
+        (folder / f"{order:03d}.md").write_text(transcripts.youtube_markdown(url, video), encoding="utf-8")
+        members.append(
+            {
+                "id": entry["id"],
+                "title": video.get("title") or entry.get("title"),
+                "license": transcripts.youtube_license(video.get("license")),
+                "order": order,
+            }
+        )
+    licenses = {member["license"] for member in members}
+    source["members"] = members
+    if not source.get("license"):
+        source["license"] = next(iter(licenses)) if len(licenses) == 1 else "mixed"
+    if any(not str(license or "").upper().startswith("CC") for license in licenses):
+        # One video without a reuse (Creative Commons) license makes the whole course private.
+        source["redistribution"] = "private-only"
+    (folder / ".complete").write_text("", encoding="utf-8")
+    write_json_atomic(project.root / PROJECT_FILE, project.config)
+    return str(folder)
+
+
+def _natural_key(value: str) -> list[Any]:
+    return [int(part) if part.isdigit() else part.casefold() for part in re.split(r"(\d+)", value)]
+
+
+def _write_course_map(package: Path) -> None:
+    """Lesson order (natural: 2 before 10), modules (sub-folders) and lesson titles for the course."""
+
+    sources = json.loads((package / "rag" / "sources.json").read_text(encoding="utf-8")).get("sources", [])
+    destinations = sorted(
+        (str(entry.get("destination") or "") for entry in sources if entry.get("destination")),
+        key=lambda item: [_natural_key(part) for part in Path(item).parts],
+    )
+    write_json_atomic(
+        package / COURSE_FILE,
+        {
+            "schema_version": 1,
+            "order": destinations,
+            "modules": {item: Path(item).parts[0] for item in destinations if len(Path(item).parts) > 1},
+            "titles": {item: Path(item).stem for item in destinations},
+        },
+    )
+
+
 def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
     import docops
 
@@ -225,6 +320,8 @@ def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
             input_value = _acquire_arxiv(project, source)
         elif source.get("kind") == "youtube":
             input_value = _acquire_youtube(project, source)
+        elif source.get("kind") == "course" and urlsplit(input_value).scheme:
+            input_value = _acquire_playlist(project, source)
     except TranscriptError as exc:
         return {"ok": False, "errors": [{"code": exc.code, "message": str(exc)}]}
     except OSError as exc:
@@ -249,6 +346,8 @@ def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
             "ok": False,
             "errors": [{"code": error.get("code"), "message": error.get("message")} for error in result.errors],
         }
+    if source.get("kind") == "course":
+        _write_course_map(package)
     _refresh_router(package, source["id"])
     from .backends.base import BackendError
 

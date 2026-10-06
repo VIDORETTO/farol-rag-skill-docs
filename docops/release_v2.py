@@ -24,7 +24,9 @@ EDITORIAL_TERMS = re.compile(
     r"|\bcommercial_authorization\b"
     r"|\b_is_valid_price\b"
     r"|\bdeliverables\b[^\n]{0,40}[\"'](?:course|page|offer)[\"']"
-    r"|[\"'](?:course|offer)[\"']",
+    # A bare quoted "course" is the Farol 3.1 source kind (TK-210); the 1.x
+    # course contract stays covered by course_id/course.schema.json above.
+    r"|[\"']offer[\"']",
     re.IGNORECASE,
 )
 LEGACY_TERMS = re.compile(r"knowledge-rag|chromadb|\bchroma\b", re.IGNORECASE)

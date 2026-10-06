@@ -118,7 +118,35 @@ def package_documents(root: Path) -> tuple[list[dict[str, Any]], list[dict[str, 
                 ],
             }
         )
-    return documents, skipped
+    return _as_course(root, documents), skipped
+
+
+def _as_course(root: Path, documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Order a course's lessons and name its modules (``.docops/course.json``, written by the journey)."""
+
+    path = root / ".docops" / "course.json"
+    if not path.is_file():
+        return documents
+    course = _read_json(path)
+    order = {f"rag/documents/{item}": position for position, item in enumerate(course.get("order") or [])}
+    modules = {f"rag/documents/{key}": value for key, value in (course.get("modules") or {}).items()}
+    titles = {f"rag/documents/{key}": value for key, value in (course.get("titles") or {}).items()}
+    for document in documents:
+        title = titles.get(document["path"])
+        module = modules.get(document["path"])
+        for block in document["blocks"]:
+            heading = list(block.get("heading_path") or [])
+            # Titles derived from file names lose their dashes ("Aula 1 - Intro" -> "Aula 1   Intro").
+            if title and heading and _loose(heading[0]) == _loose(title):
+                heading[0] = title
+            if module:
+                heading = [module, *heading]
+            block["heading_path"] = heading
+    return sorted(documents, key=lambda document: order.get(document["path"], len(order)))
+
+
+def _loose(value: str) -> str:
+    return " ".join(value.replace("-", " ").replace("_", " ").split())
 
 
 _AUTO = "auto"
