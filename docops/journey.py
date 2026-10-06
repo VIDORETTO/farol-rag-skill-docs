@@ -293,21 +293,50 @@ def _natural_key(value: str) -> list[Any]:
     return [int(part) if part.isdigit() else part.casefold() for part in re.split(r"(\d+)", value)]
 
 
-def _write_course_map(package: Path) -> None:
-    """Lesson order (natural: 2 before 10), modules (sub-folders) and lesson titles for the course."""
+def _write_course_map(package: Path, folder: Path | None = None) -> None:
+    """Lesson order (natural: 2 before 10), modules (sub-folders) and lesson titles for the course.
+
+    A ``course.json`` in a local course folder may fix the order and titles:
+    ``{"lessons": [{"file": "Aula 10.mp4", "title": "Projeto final"}, ...]}``.
+    Listed lessons come first, in that order; the others follow naturally.
+    Entries that match no lesson are ignored, and the file is never a lesson.
+    """
 
     sources = json.loads((package / "rag" / "sources.json").read_text(encoding="utf-8")).get("sources", [])
     destinations = sorted(
         (str(entry.get("destination") or "") for entry in sources if entry.get("destination")),
         key=lambda item: [_natural_key(part) for part in Path(item).parts],
     )
+    excluded = [item for item in destinations if Path(item).with_suffix("").as_posix() == "course"]
+    destinations = [item for item in destinations if item not in excluded]
+    overrides: dict[str, str] = {}
+    listed: list[str] = []
+    manifest = folder / "course.json" if folder is not None else None
+    if manifest is not None and manifest.is_file():
+        try:
+            lessons = json.loads(manifest.read_text(encoding="utf-8")).get("lessons", [])
+        except (OSError, ValueError, AttributeError):
+            lessons = []
+        by_stem = {Path(item).with_suffix("").as_posix(): item for item in destinations}
+        for lesson in lessons if isinstance(lessons, list) else []:
+            if not isinstance(lesson, dict) or not isinstance(lesson.get("file"), str):
+                continue
+            destination = by_stem.get(Path(lesson["file"]).with_suffix("").as_posix())
+            if destination is None or destination in listed:
+                continue
+            listed.append(destination)
+            if isinstance(lesson.get("title"), str) and lesson["title"].strip():
+                overrides[destination] = " ".join(lesson["title"].split())[:200]
+    order = listed + [item for item in destinations if item not in listed]
     write_json_atomic(
         package / COURSE_FILE,
         {
             "schema_version": 1,
-            "order": destinations,
-            "modules": {item: Path(item).parts[0] for item in destinations if len(Path(item).parts) > 1},
-            "titles": {item: Path(item).stem for item in destinations},
+            "order": order,
+            "modules": {item: Path(item).parts[0] for item in order if len(Path(item).parts) > 1},
+            "titles": {item: Path(item).stem for item in order},
+            "title_overrides": overrides,
+            "excluded": excluded,
         },
     )
 
@@ -374,7 +403,8 @@ def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
             "errors": [{"code": error.get("code"), "message": error.get("message")} for error in result.errors],
         }
     if source.get("kind") == "course":
-        _write_course_map(package)
+        local = Path(input_value) if urlsplit(input_value).scheme not in {"http", "https"} else None
+        _write_course_map(package, local)
     _refresh_router(package, source["id"])
     from .backends.base import BackendError
 

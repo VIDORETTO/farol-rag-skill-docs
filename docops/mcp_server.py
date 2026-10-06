@@ -333,7 +333,10 @@ class KnowledgeServer:
         }
 
     def _lineage(self, name: str) -> list[dict[str, Any]]:
-        path = self.packages[name] / ".docops" / "synthesis" / "lineage.json"
+        """Accepted statements of a package or of a composite skill (``@name``), cached by mtime."""
+
+        folder = self.composites[name][0] if name in self.composites else self.packages[name]
+        path = folder / ".docops" / "synthesis" / "lineage.json"
         try:
             stamp = path.stat().st_mtime_ns
         except OSError:
@@ -345,11 +348,44 @@ class KnowledgeServer:
             self._lineages[name] = cached
         return cached[1]
 
+    def _synthesis_owners(self, package: str | None) -> list[str]:
+        if package is None:
+            return [*self.packages, *self.composites]
+        if package in self.composites:
+            return [package]
+        return self._selected(package)
+
+    def _supports(self, owner: str, claim: Mapping[str, Any]) -> tuple[list[dict[str, Any]], int]:
+        """Supporting blocks of a statement, resolved in the package that holds each block."""
+
+        if claim.get("sources"):
+            wanted = [(str(item["package"]), str(item["block_id"])) for item in claim["sources"]]
+        else:
+            wanted = [(owner, str(block_id)) for block_id in claim.get("block_ids") or []]
+        supports: list[dict[str, Any]] = []
+        by_package: dict[str, list[str]] = {}
+        for package, block_id in wanted:
+            by_package.setdefault(package, []).append(block_id)
+        for package, block_ids in by_package.items():
+            reader = self._reader(package) if package in self.packages else None
+            blocks = reader[0].get_blocks(reader[1], block_ids) if reader is not None else {}
+            supports.extend(
+                {
+                    "package": package,
+                    "block_id": block_id,
+                    "citation": citation(blocks[block_id]),
+                    "text": blocks[block_id]["text"],
+                }
+                for block_id in block_ids
+                if block_id in blocks and blocks[block_id]["risk"] != "high"
+            )
+        return supports, len(wanted)
+
     def _synthesis_hits(self, query: str, top_k: int, package: str | None) -> list[dict[str, Any]]:
         """Accepted skill statements ranked against the query, each with its supporting blocks."""
 
         candidates: list[tuple[str, Mapping[str, Any]]] = [
-            (name, claim) for name in self._selected(package) for claim in self._lineage(name)
+            (name, claim) for name in self._synthesis_owners(package) for claim in self._lineage(name)
         ]
         if not candidates:
             return []
@@ -358,14 +394,7 @@ class KnowledgeServer:
         results: list[dict[str, Any]] = []
         for index in order[:top_k]:
             name, claim = candidates[index]
-            block_ids = [str(item) for item in claim.get("block_ids") or []]
-            reader = self._reader(name)
-            blocks = reader[0].get_blocks(reader[1], block_ids) if reader is not None else {}
-            supports = [
-                {"block_id": block_id, "citation": citation(blocks[block_id]), "text": blocks[block_id]["text"]}
-                for block_id in block_ids
-                if block_id in blocks and blocks[block_id]["risk"] != "high"
-            ]
+            supports, expected = self._supports(name, claim)
             results.append(
                 {
                     "package": name,
@@ -373,7 +402,7 @@ class KnowledgeServer:
                     "chapter": claim.get("chapter"),
                     "text": re.sub(r"\s+([.,;:!?])", r"\1", str(claim["text"])).strip(),
                     "supports": supports,
-                    "stale": len(supports) < len(block_ids),
+                    "stale": len(supports) < expected,
                     "score": round(scores[index], 6),
                 }
             )

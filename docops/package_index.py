@@ -131,14 +131,18 @@ def _as_course(root: Path, documents: list[dict[str, Any]]) -> list[dict[str, An
     order = {f"rag/documents/{item}": position for position, item in enumerate(course.get("order") or [])}
     modules = {f"rag/documents/{key}": value for key, value in (course.get("modules") or {}).items()}
     titles = {f"rag/documents/{key}": value for key, value in (course.get("titles") or {}).items()}
+    overrides = {f"rag/documents/{key}": value for key, value in (course.get("title_overrides") or {}).items()}
+    excluded = {f"rag/documents/{key}" for key in course.get("excluded") or []}
+    documents = [document for document in documents if document["path"] not in excluded]
     for document in documents:
         title = titles.get(document["path"])
+        override = overrides.get(document["path"])
         module = modules.get(document["path"])
         for block in document["blocks"]:
             heading = list(block.get("heading_path") or [])
             # Titles derived from file names lose their dashes ("Aula 1 - Intro" -> "Aula 1   Intro").
-            if title and heading and _loose(heading[0]) == _loose(title):
-                heading[0] = title
+            if title and heading and (override or _loose(heading[0]) == _loose(title)):
+                heading[0] = override or title
             if module:
                 heading = [module, *heading]
             block["heading_path"] = heading

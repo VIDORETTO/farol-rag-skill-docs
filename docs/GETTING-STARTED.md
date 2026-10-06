@@ -60,6 +60,9 @@ módulos e a ordem é a natural: “Aula 2” antes de “Aula 10”) ou
 `farol add "https://www.youtube.com/playlist?list=…" --as course` (legendas de
 cada vídeo na ordem da playlist, licença conferida por vídeo; `--max-items`
 limita a quantidade). As citações nomeiam a aula e o momento `(at HH:MM:SS)`.
+Para fixar ordem ou títulos, coloque na pasta um `course.json`:
+`{"lessons": [{"file": "Aula 10.mp4", "title": "Projeto final"}]}` (as aulas
+listadas vêm primeiro; as demais seguem a ordem natural).
 Em videoaulas locais, `--slides` também lê o texto mostrado nos slides
 (requer `ffmpeg` e o extra `ocr`); imagens e diagramas não são interpretados.
 

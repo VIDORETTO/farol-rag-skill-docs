@@ -483,38 +483,51 @@ def plan_questions(package: Path | str, per_chapter: int) -> dict[str, Any]:
     per_chapter = max(1, min(int(per_chapter), 20))
     with _plan_lock(root):
         plan = _load_plan(root)
-        chapters = [_load_task(root, item["task_id"]) for item in plan["tasks"] if item["kind"] == "chapter"]
+        chapters = [item for item in plan["tasks"] if item["kind"] == "chapter"]
+        if not chapters and any(item["kind"] == "outline" for item in plan["tasks"]):
+            # The outline decides the chapters; the questions task is created when it is accepted.
+            plan["pending_questions"] = per_chapter
+            write_json_atomic(_dir(root) / "plan.json", plan)
+            return plan
         if not chapters:
             raise SynthesisTaskError("plan_missing", "plan the chapters first (farol task next for the outline)")
-        task = {
-            "schema_version": 1,
-            "task_id": "questions",
-            "kind": "questions",
-            "status": "pending",
-            "requires": [chapter["task_id"] for chapter in chapters],
-            "language": plan["language"],
-            "budget": {"per_chapter": per_chapter},
-            "inputs": {
-                "title": "Evaluation questions",
-                "chapters": [
-                    {
-                        "task_id": chapter["task_id"],
-                        "file": chapter["inputs"]["file"],
-                        "refs": [item["ref"] for item in chapter["inputs"]["blocks"]],
-                        "blocks": {item["ref"]: item["block_id"] for item in chapter["inputs"]["blocks"]},
-                    }
-                    for chapter in chapters
-                ],
-            },
-            "output": {"files": ["questions.json"]},
-        }
-        task["request_hash"] = content_hash({key: value for key, value in task.items() if key != "status"})
-        existing = _dir(root) / "tasks" / "questions.json"
-        if not existing.is_file() or _read(existing).get("request_hash") != task["request_hash"]:
-            write_json_atomic(existing, task)
-            plan["tasks"] = [item for item in plan["tasks"] if item["task_id"] != "questions"] + [_summary(task)]
-            write_json_atomic(_dir(root) / "plan.json", plan)
-        return _load_plan(root)
+        return _create_questions_task(root, per_chapter)
+
+
+def _create_questions_task(root: Path, per_chapter: int) -> dict[str, Any]:
+    """Write (or keep) the ``questions`` task over the current chapters; the caller holds the plan lock."""
+
+    plan = _load_plan(root)
+    chapters = [_load_task(root, item["task_id"]) for item in plan["tasks"] if item["kind"] == "chapter"]
+    task = {
+        "schema_version": 1,
+        "task_id": "questions",
+        "kind": "questions",
+        "status": "pending",
+        "requires": [chapter["task_id"] for chapter in chapters],
+        "language": plan["language"],
+        "budget": {"per_chapter": per_chapter},
+        "inputs": {
+            "title": "Evaluation questions",
+            "chapters": [
+                {
+                    "task_id": chapter["task_id"],
+                    "file": chapter["inputs"]["file"],
+                    "refs": [item["ref"] for item in chapter["inputs"]["blocks"]],
+                    "blocks": {item["ref"]: item["block_id"] for item in chapter["inputs"]["blocks"]},
+                }
+                for chapter in chapters
+            ],
+        },
+        "output": {"files": ["questions.json"]},
+    }
+    task["request_hash"] = content_hash({key: value for key, value in task.items() if key != "status"})
+    existing = _dir(root) / "tasks" / "questions.json"
+    if not existing.is_file() or _read(existing).get("request_hash") != task["request_hash"]:
+        write_json_atomic(existing, task)
+        plan["tasks"] = [item for item in plan["tasks"] if item["task_id"] != "questions"] + [_summary(task)]
+        write_json_atomic(_dir(root) / "plan.json", plan)
+    return _load_plan(root)
 
 
 def _summary(task: Mapping[str, Any]) -> dict[str, Any]:
@@ -1139,7 +1152,10 @@ def _expand_outline(root: Path, outline: Mapping[str, Any], chapters: list[dict[
     write_json_atomic(_dir(root) / "tasks" / "core.json", core)
     summaries = [item for item in plan["tasks"] if item["kind"] == "outline"]
     plan["tasks"] = summaries + [_summary(task) for task in created] + [_summary(core)]
+    pending_questions = plan.pop("pending_questions", None)
     write_json_atomic(_dir(root) / "plan.json", plan)
+    if pending_questions:
+        _create_questions_task(root, int(pending_questions))
 
 
 def _resolve_refs(text: str, refs: Mapping[str, Mapping[str, Any]]) -> str:
