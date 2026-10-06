@@ -47,6 +47,8 @@ CATALOG: dict[str, ErrorInfo] = {
     "asr_unavailable": ErrorInfo("Local speech recognition is not installed", "pip install farol-kit[media]"),
     "media_unreadable": ErrorInfo("The audio or video could not be decoded", "convert it to mp3/wav and add it again"),
     "transcript_empty": ErrorInfo("No speech was recognized", "check the audio or provide a .vtt/.srt file"),
+    "ffmpeg_missing": ErrorInfo("--slides needs ffmpeg", "install ffmpeg, or add the video without --slides"),
+    "ocr_unavailable": ErrorInfo("--slides needs local OCR", "pip install farol-kit[ocr]"),
     "schedule_unknown": ErrorInfo("Unknown scheduler", "farol sync --schedule cron"),
     "library_unknown": ErrorInfo("No such project in the library", "farol library list"),
     # Connect

@@ -106,6 +106,7 @@
       "add --no-skill",
       "add --project",
       "add --redistribution",
+      "add --slides",
       "agents-bootstrap --check",
       "agents-bootstrap --json",
       "agents-bootstrap --root",

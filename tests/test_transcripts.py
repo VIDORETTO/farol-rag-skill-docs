@@ -239,3 +239,44 @@ def test_a_pause_starts_a_new_paragraph_so_facts_cite_their_moment() -> None:
     markdown = transcripts.transcript_markdown(segments, title="Talk", metadata=[])
 
     assert "[00:00:42] The client retries five times." in markdown
+
+
+# -- Farol 3.1 TK-213: text shown on lecture slides (opt-in) -----------------
+
+
+def test_slide_text_becomes_timestamped_slide_blocks(tmp_path: Path, monkeypatch) -> None:
+    from docops import slides, transcripts
+    from docops.normalizer import normalize_file
+
+    monkeypatch.setenv("FAROL_SLIDES", "1")
+    monkeypatch.setattr(slides.shutil, "which", lambda name: f"/usr/bin/{name}")
+    monkeypatch.setattr(
+        transcripts, "transcribe_media", lambda path: [transcripts.Segment(1.0, 4.0, "Hoje falamos de laços.")]
+    )
+    frames = [(5.0, "Loops: for x in range(3)"), (9.0, "Loops: for x in range(3)"), (65.0, "Funções e parâmetros")]
+    monkeypatch.setattr(slides, "_frames_with_text", lambda path: frames)
+    video = tmp_path / "aula.mp4"
+    video.write_bytes(b"\x00\x00\x00\x18ftypmp42")
+
+    result = normalize_file(video)
+
+    assert result.status == "accepted", result.error
+    assert result.content.count("Slide: Loops: for x in range(3)") == 1
+    assert "[00:00:05] Slide: Loops: for x in range(3)" in result.content
+    assert "[00:01:05] Slide: Funções e parâmetros" in result.content
+    assert "[00:00:01] Hoje falamos de laços." in result.content
+
+
+def test_slides_without_ffmpeg_is_a_typed_error(tmp_path: Path, monkeypatch) -> None:
+    from docops import slides, transcripts
+    from docops.normalizer import normalize_file
+
+    monkeypatch.setenv("FAROL_SLIDES", "1")
+    monkeypatch.setattr(slides.shutil, "which", lambda name: None)
+    monkeypatch.setattr(transcripts, "transcribe_media", lambda path: [transcripts.Segment(1.0, 4.0, "Oi.")])
+    video = tmp_path / "aula.mp4"
+    video.write_bytes(b"\x00\x00\x00\x18ftypmp42")
+
+    result = normalize_file(video)
+
+    assert result.status == "error" and result.error_code == "ffmpeg_missing"

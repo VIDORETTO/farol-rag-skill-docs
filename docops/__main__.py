@@ -893,6 +893,7 @@ def build_parser() -> argparse.ArgumentParser:
     add.add_argument(
         "--no-skill", action="store_true", help="index for evidence only; distil it inside a composite skill"
     )
+    add.add_argument("--slides", action="store_true", help="videos: also read the text shown on slides (ffmpeg + OCR)")
     add.add_argument("--project", type=Path, default=Path.cwd())
     add.add_argument("--json", action="store_true")
     build = commands.add_parser("build", help="build or refresh every source: facts, index and synthesis tasks")
@@ -1072,6 +1073,7 @@ def _journey_command(args: argparse.Namespace) -> int:
                 as_kind=args.as_kind,
                 max_items=args.max_items,
                 skill=not args.no_skill,
+                slides=args.slides,
             )
         elif args.command == "build":
             payload = build(args.project, source_ids=args.sources or None)

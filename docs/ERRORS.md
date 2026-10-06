@@ -29,6 +29,7 @@ Every error printed by Farol carries one of these codes and a next step.
 | `empty_reference_file` | glossary/patterns/cheatsheet has no items | `add list items and resubmit` |
 | `extra_required` | An optional extra is not installed | `pip install farol-kit[media]` |
 | `extraction_empty` | A document produced no text blocks | `check the file, then farol build` |
+| `ffmpeg_missing` | --slides needs ffmpeg | `install ffmpeg, or add the video without --slides` |
 | `frontmatter_invalid` | SKILL.md frontmatter is incomplete | `set name and a when-to-use description` |
 | `harness_unknown` | Unknown AI agent | `farol connect claude-code` |
 | `index_missing` | No factual index yet | `farol build` |
@@ -47,6 +48,7 @@ Every error printed by Farol carries one of these codes and a next step.
 | `missing_section` | A required section is missing | `add the section named in the message` |
 | `no_sources` | The project has no sources | `farol add <source>` |
 | `nothing_to_connect` | No source has been built yet | `farol build` |
+| `ocr_unavailable` | --slides needs local OCR | `pip install farol-kit[ocr]` |
 | `orphan_sections` | Some sections are not in any chapter | `assign every section to a chapter` |
 | `outline_invalid` | The outline is not valid JSON of the expected shape | `fix outline.json and resubmit` |
 | `output_invalid` | The answer directory is unsafe or too large | `submit a regular folder with the files` |

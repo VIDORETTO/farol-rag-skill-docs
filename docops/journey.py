@@ -11,10 +11,11 @@ from __future__ import annotations
 
 import json
 import re
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 from urllib.parse import urlsplit
 
 from .storage import write_json_atomic
@@ -107,6 +108,7 @@ def add_source(
     as_kind: str | None = None,
     max_items: int | None = None,
     skill: bool = True,
+    slides: bool = False,
 ) -> dict[str, Any]:
     from .transcripts import youtube_id
 
@@ -176,6 +178,8 @@ def add_source(
         "redistribution": redistribution or "private-only",
         "added_at": _now(),
     }
+    if slides:
+        source["slides"] = True  # read the text shown on video slides (ffmpeg + local OCR)
     if not skill:
         source["skill"] = False  # indexed for evidence; distilled only inside composite skills
     if playlist and max_items:
@@ -308,6 +312,25 @@ def _write_course_map(package: Path) -> None:
     )
 
 
+@contextmanager
+def _slides_enabled(enabled: bool) -> Iterator[None]:
+    """Scope ``FAROL_SLIDES`` to one source's extraction."""
+
+    import os
+
+    previous = os.environ.get("FAROL_SLIDES")
+    if enabled:
+        os.environ["FAROL_SLIDES"] = "1"
+    try:
+        yield
+    finally:
+        if enabled:
+            if previous is None:
+                os.environ.pop("FAROL_SLIDES", None)
+            else:
+                os.environ["FAROL_SLIDES"] = previous
+
+
 def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
     import docops
 
@@ -343,7 +366,8 @@ def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
         # Factual refresh: keeps a distilled (or scaffold) skill byte for byte.
         options.update(mode="update", layers=("factual",))
     request = docops.OperationRequest(input_value, docops.OperationOptions(**options))
-    result = docops.apply(docops.plan(request))
+    with _slides_enabled(bool(source.get("slides"))):
+        result = docops.apply(docops.plan(request))
     if not result.ok:
         return {
             "ok": False,
