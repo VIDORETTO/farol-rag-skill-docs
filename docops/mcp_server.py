@@ -17,7 +17,7 @@ from typing import Any, Callable, Mapping, TextIO
 from .backends.base import BackendError, IndexRevision, QueryRequest
 from .backends.local_fts import LocalFtsBackend
 from .package_index import ACTIVE_POINTER, INDEX_DIR, open_package_index
-from .ranking import PooledRanker, merge_by_package
+from .ranking import PooledRanker, configured_reranker, load_reranker, merge_by_package
 
 SERVER_NAME = "farol"
 SUPPORTED_PROTOCOL_VERSIONS = ("2025-06-18", "2025-03-26", "2024-11-05")
@@ -158,6 +158,8 @@ class KnowledgeServer:
         ranker: Any | None = None,
     ) -> None:
         self.ranker = ranker
+        self._reranker_loaded = ranker is not None
+        self._reranker_problem: str | None = None
         if packages is None:
             root = Path(package_root or ".").resolve()
             packages = {root.name: root}
@@ -208,8 +210,9 @@ class KnowledgeServer:
             raise ToolError("invalid_query", "query must be a non-empty string")
         top_k = max(1, min(int(top_k), _MAX_TOP_K))
         selected = self._selected(package)
-        # Several packages are ranked together, so each contributes a wider pool.
-        pool = max(_POOL_MIN, 4 * top_k) if len(selected) > 1 else top_k
+        reranker = self._active_reranker()
+        # Several packages, or a reranker, need a wider pool to choose from.
+        pool = max(_POOL_MIN, 4 * top_k) if len(selected) > 1 or reranker is not None else top_k
         hits: list[dict[str, Any]] = []
         revisions: dict[str, str] = {}
         unavailable: list[dict[str, str]] = []
@@ -249,10 +252,18 @@ class KnowledgeServer:
                         "score": hit["score"],
                     }
                 )
-        degraded: list[str] = []
-        if len(revisions) > 1 and hits:
-            hits, degraded = self._rank_globally(query, hits, embedders)
-        else:
+        degraded: list[str] = [self._reranker_problem] if self._reranker_problem else []
+        mode: str | None = None
+        if reranker is not None and hits:
+            hits, failure = self._rerank(reranker, query, hits)
+            if failure:
+                degraded.append(failure)
+            else:
+                mode = f"rerank:{getattr(reranker, 'name', 'custom')}"
+        if mode is None and len(revisions) > 1 and hits:
+            hits, failure_list = self._rank_globally(query, hits, embedders)
+            degraded.extend(failure_list)
+        elif mode is None:
             hits.sort(key=lambda item: item["score"], reverse=True)
         hits = hits[:top_k]
         if not revisions and not unavailable:
@@ -270,9 +281,38 @@ class KnowledgeServer:
             result["index_revisions"] = revisions
         if unavailable:
             result["unavailable"] = unavailable
+        if mode:
+            result["retrieval_mode"] = mode
         if degraded:
             result["degraded"] = degraded
         return result
+
+    def _active_reranker(self) -> Any | None:
+        """The injected ranker if it orders globally, else the FAROL_RERANKER model (loaded once)."""
+
+        if self.ranker is not None:
+            return self.ranker if getattr(self.ranker, "global_order", False) else None
+        if not self._reranker_loaded:
+            self._reranker_loaded = True
+            model = configured_reranker()
+            if model:
+                self.ranker, self._reranker_problem = load_reranker(model)
+        return self.ranker
+
+    @staticmethod
+    def _rerank(ranker: Any, query: str, hits: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], str | None]:
+        try:
+            scores = [float(value) for value in ranker.rank(query, hits)]
+            if len(scores) != len(hits):
+                raise ValueError("ranker returned a score per candidate")
+        except Exception:
+            hits.sort(key=lambda item: item["score"], reverse=True)
+            return hits, "reranker_failed: falling back to the index order"
+        order = sorted(range(len(hits)), key=lambda index: (-scores[index], hits[index]["package"], index))
+        ranked = [hits[index] for index in order]
+        for position, hit in enumerate(ranked):
+            hit["score"] = round(1000.0 / (61 + position), 6)
+        return ranked, None
 
     def _rank_globally(
         self, query: str, hits: list[dict[str, Any]], embedders: list[Any]

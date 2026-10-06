@@ -254,6 +254,14 @@ def run_doctor(
         "semantic": all(find_spec(name) is not None for name in ("fastembed", "numpy")),
         "media": all(find_spec(name) is not None for name in ("yt_dlp", "faster_whisper")),
     }
+    from .ranking import RERANKER_LICENSES, configured_reranker
+
+    reranker = configured_reranker()
+    checks["retrieval"] = {
+        "ok": True,
+        "reranker": reranker,
+        "reranker_license": RERANKER_LICENSES.get(reranker or "", "unknown") if reranker else None,
+    }
     if (root / "farol.json").is_file():
         from .journey import project_health
 

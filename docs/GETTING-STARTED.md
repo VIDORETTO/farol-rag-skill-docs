@@ -107,6 +107,22 @@ Todo erro mostra um código e o próximo passo; a lista completa está na
 | `index_unreadable` | `farol doctor --fix` reconstrói o índice. |
 | Busca responde pouco em PT sobre fontes em EN | Instale o extra `semantic` e rode `farol build`. |
 
+## Opcional: reranker local
+
+Com o extra `semantic`, um cross-encoder local pode reordenar os candidatos
+antes do corte `top_k` (projeto e biblioteca). É opt-in e não exige rebuild:
+
+```bash
+export FAROL_RERANKER=BAAI/bge-reranker-base   # MIT, ~1 GB
+```
+
+O resultado de `search_knowledge` passa a informar
+`retrieval_mode: rerank:<modelo>`; se o modelo não carregar, a busca continua
+com a ordem do índice e informa `degraded`. `farol doctor --json` mostra o
+reranker ativo e a licença. Modelos não comerciais (por exemplo
+`jinaai/jina-reranker-v2-base-multilingual`, CC-BY-NC) funcionam, mas a
+licença é sua responsabilidade.
+
 ## Opcional: RAGFlow como backend
 
 O backend padrão é local. Para usar uma instância
