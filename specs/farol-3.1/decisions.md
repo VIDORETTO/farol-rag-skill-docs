@@ -2,7 +2,10 @@
 
 # Decisões Farol 3.1
 
-Estado: **propostas** em 2026-10-06, aguardando confirmação do mantenedor. As
+Estado: D-301–D-306 **aceitas** em 2026-10-06 pelo mantenedor (“sim, siga com
+tudo que estiver pendente”), adotando as recomendações abaixo. D-307
+(contração) e D-308 (tag/release) seguem **abertas**: o `AGENTS.md` exige
+autorização explícita e específica para cada uma. As
 decisões D-301, D-302 e D-305 são **regras de adoção por medição**: o ticket
 implementa a opção e a medição decide o padrão; não exigem escolha prévia de
 modelo, só a confirmação do critério.

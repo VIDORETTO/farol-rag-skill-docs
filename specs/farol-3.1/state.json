@@ -27,12 +27,6 @@
     }
   },
   "open_decisions": [
-    "D-301",
-    "D-302",
-    "D-303",
-    "D-304",
-    "D-305",
-    "D-306",
     "D-307",
     "D-308"
   ],
@@ -42,18 +36,17 @@
       "TK-207",
       "TK-210",
       "TK-214",
-      "TK-215"
-    ],
-    "blocked": [
-      "TK-204",
+      "TK-215",
       "TK-205",
       "TK-208",
       "TK-211",
       "TK-212",
+      "TK-213"
+    ],
+    "blocked": [
       "TK-218"
     ],
     "draft": [
-      "TK-213",
       "TK-217"
     ],
     "in_progress": [],
@@ -63,7 +56,8 @@
       "TK-202",
       "TK-209",
       "TK-216",
-      "TK-203"
+      "TK-203",
+      "TK-204"
     ]
   },
   "next_action": "Onda A entregue (evidências em specs/farol-3.1/evidence/). Próximo: TK-203 (ranking global; biblioteca com 40% de hits do pacote errado); confirmar D-301/D-302 para TK-204/TK-205.",

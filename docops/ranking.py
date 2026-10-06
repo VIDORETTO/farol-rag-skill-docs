@@ -138,3 +138,54 @@ def _cosines(embedder: Any, query: str, candidates: list[dict[str, Any]]) -> lis
     for owner, similarity in zip(owners, (matrix @ vector).tolist()):
         best[owner] = max(best[owner], similarity)
     return best
+
+
+# -- Optional cross-encoder reranker (TK-204, D-301) -------------------------
+
+# Licenses verified in fastembed 0.8.1's model list (specs/farol-3.1/decisions.md).
+RERANKER_LICENSES = {
+    "Xenova/ms-marco-MiniLM-L-6-v2": "apache-2.0",
+    "Xenova/ms-marco-MiniLM-L-12-v2": "apache-2.0",
+    "BAAI/bge-reranker-base": "mit",
+    "jinaai/jina-reranker-v1-tiny-en": "apache-2.0",
+    "jinaai/jina-reranker-v1-turbo-en": "apache-2.0",
+    "jinaai/jina-reranker-v2-base-multilingual": "cc-by-nc-4.0",
+}
+
+
+class CrossEncoderRanker:
+    """Local cross-encoder (fastembed, CPU): scores are comparable across packages."""
+
+    global_order = True
+
+    def __init__(self, model: str, cache_dir: str | None = None) -> None:
+        import os
+        from pathlib import Path
+
+        from .backends.semantic import _quiet_native_stderr
+
+        directory = Path(cache_dir or os.environ.get("FAROL_MODELS_DIR") or Path.home() / ".cache" / "farol" / "models")
+        with _quiet_native_stderr():
+            from fastembed.rerank.cross_encoder import TextCrossEncoder  # type: ignore[import-not-found]
+
+            self._model = TextCrossEncoder(model, cache_dir=str(directory))
+        self.name = model
+
+    def rank(self, query: str, candidates: list[dict[str, Any]]) -> list[float]:
+        texts = [_with_heading(candidate) for candidate in candidates]
+        return [float(score) for score in self._model.rerank(query, texts, batch_size=16)]
+
+
+def configured_reranker() -> str | None:
+    import os
+
+    return (os.environ.get("FAROL_RERANKER") or "").strip() or None
+
+
+def load_reranker(model: str) -> tuple[Any | None, str | None]:
+    """The configured reranker, or ``None`` and the reason it is unavailable."""
+
+    try:
+        return CrossEncoderRanker(model), None
+    except Exception:
+        return None, f"reranker_unavailable: {model} could not be loaded"
