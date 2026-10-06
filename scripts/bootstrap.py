@@ -45,7 +45,7 @@ def install_command(
     target = str(root) + (f"[{','.join(extras)}]" if extras else "")
     command = [str(python), "-m", "pip", "install", "--editable", target]
     if formats:
-        command.extend(["PyYAML==6.0.3", "pypdf==6.16.2", "python-docx==1.2.0"])
+        command.extend(["PyYAML==6.0.3", "pypdf==6.19.0", "python-docx==1.2.0"])
     if dev:
         command.extend(
             ["pytest==9.1.1", "ruff==0.12.7", "pip-audit==2.10.1", f"setuptools=={BOOTSTRAP_SETUPTOOLS_VERSION}"]

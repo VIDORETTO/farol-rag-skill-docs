@@ -3,7 +3,7 @@
 O núcleo `docops` não possui dependências de runtime além da biblioteca padrão
 do Python. Os perfis opcionais declarados em `pyproject.toml` são:
 
-- `formats`: `PyYAML==6.0.3`, `pypdf==6.16.2` e `python-docx==1.2.0`;
+- `formats`: `PyYAML==6.0.3`, `pypdf==6.19.0` e `python-docx==1.2.0`;
 - `ragflow`: `ragflow-sdk==0.27.2`, somente no interpretador Python 3.13;
 - `layout`: os mesmos pins de `docling` e `onnxruntime` do extra `ocr`, sem OCR,
   para PDFs digitais com layout e tabelas (opt-in por `FAROL_PDF_LAYOUT=1`).

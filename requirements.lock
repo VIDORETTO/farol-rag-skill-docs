@@ -2,7 +2,7 @@
 # RAGFlow is isolated in the Python 3.13 integration environment and is not a
 # product dependency of the core wheel.
 PyYAML==6.0.3
-pypdf==6.16.2
+pypdf==6.19.0
 python-docx==1.2.0
 pytest==9.1.1
 ruff==0.12.7

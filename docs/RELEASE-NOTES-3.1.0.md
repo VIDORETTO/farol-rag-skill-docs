@@ -26,6 +26,9 @@ only adds to 3.0: every command, MCP tool and package from 3.0 keeps working.
 
 ## Security
 
+- `pypdf` updated from 6.16.2 to 6.19.0 (fixes PYSEC-2026-4153 to 4160 /
+  CVE-2026-102993 to 103000); PDF extraction results are unchanged on the
+  acceptance corpus.
 - `get_document` no longer returns blocks classified as prompt-injection
   directives (3.0 returned them through this tool only).
 - `farol connect` only removes files inside the harness's skills folder, even
