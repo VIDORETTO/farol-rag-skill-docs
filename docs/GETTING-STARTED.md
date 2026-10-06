@@ -10,7 +10,7 @@ Requer Python 3.11–3.13 (Windows, Linux ou macOS). Com
 [pipx](https://pipx.pypa.io/) ou [uv](https://docs.astral.sh/uv/):
 
 ```bash
-pipx install "farol-kit[semantic] @ git+https://github.com/VIDORETTO/farol-rag-skill-docs@v3.0.0"
+pipx install "farol-kit[semantic] @ git+https://github.com/VIDORETTO/farol-rag-skill-docs@v3.1.0"
 ```
 
 ```bash

@@ -1,9 +1,11 @@
 # Changelog
 
-## Unreleased (planned 3.1.0)
+## 3.1.0 — 2026-10-06
 
-Additions only; nothing public was removed or renamed. Not tagged or published
-yet (decision D-308 in `specs/farol-3.1/decisions.md`).
+Additions only; nothing public was removed or renamed.
+
+- **Security**: `get_document` no longer returns prompt-injection blocks;
+  `farol connect` only removes files inside the harness's skills folder.
 
 - **Read around a fact**: hits carry `block_id`; new MCP tool `get_context`
   (neighbours or the whole section, within `max_tokens`); `get_document` pages

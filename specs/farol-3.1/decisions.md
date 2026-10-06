@@ -3,9 +3,14 @@
 # Decisões Farol 3.1
 
 Estado: D-301–D-306 **aceitas** em 2026-10-06 pelo mantenedor (“sim, siga com
-tudo que estiver pendente”), adotando as recomendações abaixo. D-307
-(contração) e D-308 (tag/release) seguem **abertas**: o `AGENTS.md` exige
-autorização explícita e específica para cada uma. As
+tudo que estiver pendente”), adotando as recomendações abaixo. D-308 foi
+**autorizada** em 2026-10-06 (“pode seguir até finalizar tudo e o projeto estar
+pronto para divulgação”): release 3.1.0 por PR revisada, CI verde, merge e tag
+`v3.1.0` (o workflow `release.yml` publica a GitHub Release). PyPI continua
+fora (decisão separada, como no 3.0). D-307 (contração do legado) foi
+**adiada para o ciclo 4.0**: remover superfície pública exige um minor anterior
+com depreciação e aviso (`docs/COMPATIBILITY.md`), o que contraria um
+lançamento seguro agora; o relatório do TK-216 fica como base. As
 decisões D-301, D-302 e D-305 são **regras de adoção por medição**: o ticket
 implementa a opção e a medição decide o padrão; não exigem escolha prévia de
 modelo, só a confirmação do critério.

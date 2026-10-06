@@ -26,10 +26,7 @@
       "revision": 1
     }
   },
-  "open_decisions": [
-    "D-307",
-    "D-308"
-  ],
+  "open_decisions": [],
   "tickets": {
     "ready": [],
     "blocked": [
@@ -60,7 +57,7 @@
       "TK-219"
     ]
   },
-  "next_action": "TK-201–TK-216 implementados (evidências em specs/farol-3.1/evidence/). Gate da 3.1 verde; aguardam o mantenedor: D-308 (tag/release 3.1.0) e D-307 (contração 4.0, TK-217). Medições not_run exigem rede/modelos/agente.",
+  "next_action": "Release 3.1.0: PR → CI verde → merge → tag v3.1.0 (D-308 autorizada). TK-217 adiado para 4.0 (D-307). Divulgação ampla ainda depende do beta TK-122 do 3.0.",
   "wave": "F",
   "decisions": "specs/farol-3.1/decisions.md"
 }

@@ -16,7 +16,7 @@ Both are served over **MCP** to Claude Code, Codex, Cursor, OpenCode or any MCP
 client. Everything runs locally: no API key, no server, no Docker.
 
 ```bash
-pipx install "farol-kit[semantic] @ git+https://github.com/VIDORETTO/farol-rag-skill-docs@v3.0.0"
+pipx install "farol-kit[semantic] @ git+https://github.com/VIDORETTO/farol-rag-skill-docs@v3.1.0"
 mkdir my-knowledge && cd my-knowledge
 farol add ./path/to/docs --license MIT
 farol build

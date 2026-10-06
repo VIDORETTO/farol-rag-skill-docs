@@ -11,7 +11,7 @@
 <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/VIDORETTO/farol-rag-skill-docs"></a>
 <img alt="Works with any MCP client" src="https://img.shields.io/badge/MCP-Claude%20Code%20%7C%20Codex%20%7C%20Cursor%20%7C%20OpenCode-0f766e">
 
-**Version:** `3.0.0` ([changelog](CHANGELOG.md))
+**Version:** `3.1.0` ([changelog](CHANGELOG.md))
 
 </div>
 
@@ -51,17 +51,18 @@ Claude Code, asked a question.
 Requires Python 3.11–3.13.
 
 ```bash
-pipx install "farol-kit[semantic] @ git+https://github.com/VIDORETTO/farol-rag-skill-docs@v3.0.0"
+pipx install "farol-kit[semantic] @ git+https://github.com/VIDORETTO/farol-rag-skill-docs@v3.1.0"
 
 mkdir my-knowledge && cd my-knowledge
 farol add ./path/to/docs --license MIT
 farol add arXiv:2404.16130v2
+farol add ./my-course --as course --license CC-BY-4.0
 farol build
 farol connect claude-code --target ~/my-repo
 ```
 
 `farol add` accepts a folder (including a cloned repository), file, URL,
-`arXiv:<id>` or a YouTube link; `farol connect` also supports `codex`, `cursor`, `opencode` and
+`arXiv:<id>`, a YouTube link, or a course (`--as course`: a folder of lessons or a playlist); `farol connect` also supports `codex`, `cursor`, `opencode` and
 `generic`. Then ask your agent to write the skill:
 
 > Run `farol task next` in `~/my-knowledge`, do the task, submit it with
@@ -104,10 +105,12 @@ well and prove what it says**. Each case below uses the same three steps:
 | **Onboard onto a codebase** | a local clone of the repository (docs and source) | Architecture notes, conventions and "where is X defined" answers pointing at `file:line`. |
 | **Learn from a book** | the PDF or EPUB | A book-to-skill distillation (mental models, decision rules, chapters) plus page-cited quotes when you need the exact wording. |
 | **Keep up with research** | `arXiv:<id>` papers | Method, results and limits per paper; answers cite page and section, so claims about numbers can be checked. |
-| **Use talks, courses and meetings** | YouTube links, lecture recordings, subtitles | Searchable transcripts with `(at HH:MM:SS)` citations, so you can jump to the moment something was said. |
+| **Learn from a course** | a folder of lessons or a YouTube playlist, with `--as course` | One skill for the whole course, lessons in order, citations that name the lesson and the moment `(at HH:MM:SS)`; `--slides` adds the text on the slides. |
+| **Use talks and meetings** | YouTube links, recordings, subtitles | Searchable transcripts with `(at HH:MM:SS)` citations, so you can jump to the moment something was said. |
 | **Answer from internal knowledge** (runbooks, policies, specs, wikis) | local folders, DOCX, spreadsheets, slides | A private assistant that stays on your machine — no upload, no API key — and says "not in the sources" instead of inventing. |
 | **Support and consulting** | product manuals, release notes, FAQs | Answers with a citation you can paste back to the customer; `farol sync` refreshes when a new version ships. |
 | **Build a personal library** | everything above, across projects | `farol library` serves all your packages through **one** MCP server, each source kept separate and citable. |
+| **Master a subject from many sources** | several books, courses and sites on one topic | `farol skill compose` distils **one** thematic skill citing all of them. |
 
 When it is **not** the right tool: very small texts that fit comfortably in
 the prompt (just paste them), questions that need live data or web search, and
@@ -168,7 +171,8 @@ see [performance and scale](docs/SCALE.md).
 | `farol build` | Build or refresh every source and plan its skill. |
 | `farol sync` | Refresh sources, report changes and stale skill chapters. |
 | `farol status` | Show each source's state and the next step. |
-| `farol task next` / `farol task submit` | The skill-writing loop for your AI. |
+| `farol task next` / `farol task submit` | The skill-writing loop for your AI (`farol task claim --n 4` for parallel subagents). |
+| `farol skill compose <name> --from <ids>` | One thematic skill from several sources. |
 | `farol connect <agent>` | Install skills and the MCP server for your agent. |
 | `farol mcp --project .` | Serve skills and evidence over MCP (stdio). |
 | `farol library add` / `farol mcp --library` | One MCP server for all your projects. |
@@ -180,8 +184,8 @@ Every error prints what to do next; see the [error reference](docs/ERRORS.md).
 
 ## Project status
 
-Farol 3.0 is the first release built for everyday use by anyone, with any AI
-agent. Every claim above is backed by tests or by the measured acceptance
+Farol 3.1 builds on 3.0, the first release made for everyday use by anyone,
+with any AI agent ([what's new](docs/RELEASE-NOTES-3.1.0.md)). Every claim above is backed by tests or by the measured acceptance
 corpus, and the public CLI, MCP tools and package layout follow
 [semantic versioning](docs/COMPATIBILITY.md). Known limits:
 
