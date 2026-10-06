@@ -624,6 +624,7 @@
       "task plan --package",
       "task plan --refresh",
       "task plan --source",
+      "task plan --task-tokens",
       "task status --json",
       "task status --package",
       "task status --source",

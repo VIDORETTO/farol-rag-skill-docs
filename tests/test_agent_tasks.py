@@ -486,3 +486,91 @@ def test_core_task_is_not_claimable_until_chapters_are_accepted(tmp_path: Path) 
     claimed = claim_tasks(package, count=100)
 
     assert "core" not in {task["task_id"] for task in claimed["tasks"]}
+
+
+# -- Farol 3.1 TK-207: task budget and the author's own chapters ------------
+
+
+def _native_book(tmp_path: Path, words_per_chapter: int = 7000) -> Path:
+    source = tmp_path / "book"
+    source.mkdir()
+    chapters = []
+    for number, name in enumerate(("Foundations", "Branching", "Collaboration"), 1):
+        sections = []
+        for section in range(1, 5):
+            sentences = " ".join(
+                f"In {name.lower()} part {section} sentence {index} explains idea {number}-{section}-{index}."
+                for index in range(words_per_chapter // 40)
+            )
+            sections.append(f"## {name} {section}\n\n{sentences}")
+        chapters.append(f"# Chapter {number}: {name}\n\n" + "\n\n".join(sections))
+    (source / "book.md").write_text("\n\n".join(chapters) + "\n", encoding="utf-8")
+    package = tmp_path / "package"
+    assert docops.apply(
+        docops.plan(
+            docops.OperationRequest(
+                source,
+                docops.OperationOptions(output_dir=package, source_root=source.parent, slug="book", license="MIT"),
+            )
+        )
+    ).ok
+    return package
+
+
+def test_task_tokens_option_sets_the_chapter_budget(tmp_path: Path) -> None:
+    import os
+    import subprocess
+    import sys
+
+    package = _native_book(tmp_path)
+    root = Path(__file__).resolve().parents[1]
+    completed = subprocess.run(
+        [sys.executable, "-m", "docops", "task", "plan", "--task-tokens", "12000", "--outline", "agent"]
+        + ["--package", str(package), "--json"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=root,
+        env={**os.environ, "PYTHONPATH": str(root)},
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    outline = next_task(package)
+    assert outline["budget"]["chapter_source_tokens"] == 12000
+
+
+def test_native_chapters_within_bounds_become_skill_chapters_in_heuristic_mode(tmp_path: Path) -> None:
+    package = _native_book(tmp_path)
+
+    # Each native chapter holds ~13k source tokens: inside [0.5x, 3x] of an 8k budget.
+    plan = plan_synthesis(package, language="en", outline="heuristic", task_source_tokens=8000)
+
+    titles = [task["title"] for task in plan["tasks"] if task["kind"] == "chapter"]
+    assert len(titles) == 3
+    assert [title.split(":")[0] for title in titles] == ["Chapter 1", "Chapter 2", "Chapter 3"]
+
+
+def test_outline_task_receives_the_native_table_of_contents(tmp_path: Path) -> None:
+    package = _native_book(tmp_path)
+    plan_synthesis(package, language="en", outline="agent", task_source_tokens=12000)
+
+    outline = next_task(package)
+
+    native = outline["inputs"]["native_chapters"]
+    assert [item["title"] for item in native] == [
+        "Chapter 1: Foundations",
+        "Chapter 2: Branching",
+        "Chapter 3: Collaboration",
+    ]
+    assert all(len(item["sections"]) == 4 for item in native)
+    assert "Chapter 2: Branching" in outline["instructions"]
+
+
+def test_oversized_native_chapter_is_split_along_its_sections(tmp_path: Path) -> None:
+    package = _native_book(tmp_path)
+
+    plan = plan_synthesis(package, language="en", outline="heuristic", task_source_tokens=2000)
+
+    titles = [task["title"] for task in plan["tasks"] if task["kind"] == "chapter"]
+    assert len(titles) > 3
+    assert all(title.startswith("Chapter ") for title in titles)

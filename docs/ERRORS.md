@@ -60,6 +60,7 @@ Every error printed by Farol carries one of these codes and a next step.
 | `source_id_taken` | Another source already uses that id | `farol add <source> --name <new-id>` |
 | `source_inside_packages` | Sources cannot live inside the project's packages folder | `add a folder outside packages/` |
 | `source_not_found` | The source path does not exist | `check the path, then farol add <source>` |
+| `task_tokens_invalid` | Task size out of range | `farol task plan --task-tokens 6000` |
 | `task_unknown` | Unknown task id | `farol task status` |
 | `transcript_empty` | No speech was recognized | `check the audio or provide a .vtt/.srt file` |
 | `transcript_unavailable` | The video has no captions in your languages | `download the audio and farol add the file (local ASR)` |
