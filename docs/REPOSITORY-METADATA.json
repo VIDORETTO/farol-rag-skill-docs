@@ -3,7 +3,7 @@
   "name": "farol-kit",
   "display_name": "Farol",
   "description": "Farol — turn documentation, books, papers, videos and repositories into agent skills and cited evidence for any AI (MCP), locally.",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "maturity": "stable",
   "license": "MIT",
   "repository": "https://github.com/VIDORETTO/farol-rag-skill-docs",
@@ -38,9 +38,9 @@
     "publication_automated": false,
     "human_authorization_required": true,
     "protections_and_permissions": "authenticated-admin-reviewed",
-    "tag": "v3.0.0",
+    "tag": "v3.1.0",
     "commit": null,
-    "url": "https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v3.0.0",
+    "url": "https://github.com/VIDORETTO/farol-rag-skill-docs/releases/tag/v3.1.0",
     "published_at": null
   }
 }
