@@ -13,14 +13,29 @@ Search the package's indexed sources for literal facts (defaults, versions, sign
 | `top_k` | integer | no |  |
 | `package` | string | no | Limit the search to one package (see list_skills). |
 
+## get_context
+
+Read the blocks around one search hit (by its block_id), or its whole section, in source order with citations. Prefer this over get_document to see the surrounding text of a fact.
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `block_id` | string | yes | The block_id of a search_knowledge hit. |
+| `before` | integer | no |  |
+| `after` | integer | no |  |
+| `scope` | string | no |  |
+| `max_tokens` | integer | no |  |
+| `package` | string | no |  |
+
 ## get_document
 
-Return every indexed block of one source document, in order, with locators.
+Return the indexed blocks of one source document, in order, with locators. Large documents (a whole book) are long: page with offset/limit, or use get_context.
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
 | `document_id` | string | yes |  |
 | `package` | string | no |  |
+| `offset` | integer | no |  |
+| `limit` | integer | no |  |
 
 ## list_skills
 
