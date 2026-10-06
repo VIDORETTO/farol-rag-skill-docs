@@ -38,6 +38,7 @@ Every error printed by Farol carries one of these codes and a next step.
 | `layer_invalid` | Unknown search layer | `use layer evidence, synthesis or both` |
 | `lease_unknown` | The lease does not hold this task | `farol task claim` |
 | `library_unknown` | No such project in the library | `farol library list` |
+| `license_required` | The source needs a declared license | `farol add <source> --license <license>` |
 | `mapping_empty` | The source produced no indexable text | `check the source content, then farol build` |
 | `media_unreadable` | The audio or video could not be decoded | `convert it to mp3/wav and add it again` |
 | `missing_citations` | Factual statements lack block references | `cite blocks like [b12] and resubmit` |
@@ -62,6 +63,7 @@ Every error printed by Farol carries one of these codes and a next step.
 | `skill_unknown` | No skill with that name | `call list_skills` |
 | `source_id_taken` | Another source already uses that id | `farol add <source> --name <new-id>` |
 | `source_inside_packages` | Sources cannot live inside the project's packages folder | `add a folder outside packages/` |
+| `source_kind_invalid` | Unsupported --as value or course URL | `farol add <folder|playlist URL> --as course` |
 | `source_not_found` | The source path does not exist | `check the path, then farol add <source>` |
 | `task_tokens_invalid` | Task size out of range | `farol task plan --task-tokens 6000` |
 | `task_unknown` | Unknown task id | `farol task status` |

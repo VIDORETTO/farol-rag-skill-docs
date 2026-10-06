@@ -13,6 +13,8 @@ add a source: folder, file, URL or Git repository
 | `--license` | license of the source, e.g. MIT or CC-BY-4.0 |
 | `--name` | short id for the source (default: derived from the source) |
 | `--redistribution` | how derived content may be shared (one of: private-only, internal, public) |
+| `--as` | treat a folder of lessons or a YouTube playlist as one course (one package, one skill) (one of: course) |
+| `--max-items` | playlist courses: at most this many videos (default 200) |
 | `--project` | project directory (default: current directory) |
 | `--json` | print machine-readable JSON |
 
@@ -124,16 +126,6 @@ serve your knowledge to an AI agent over MCP (stdio, read-only)
 | `--package` | serve a single package |
 | `--project` | serve every package of a project (default: current dir) |
 | `--library` | serve every project in your library |
-
-## farol eval
-
-measure how well search finds what your skills cite
-
-| Argument | Description |
-|---|---|
-| `--project` | project directory (default: current directory) |
-| `--package` | evaluate one package instead of the project |
-| `--json` | print machine-readable JSON |
 
 ## farol doctor
 

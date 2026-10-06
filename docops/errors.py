@@ -22,6 +22,10 @@ CATALOG: dict[str, ErrorInfo] = {
     "no_sources": ErrorInfo("The project has no sources", "farol add <source>"),
     "source_not_found": ErrorInfo("The source path does not exist", "check the path, then farol add <source>"),
     "source_id_taken": ErrorInfo("Another source already uses that id", "farol add <source> --name <new-id>"),
+    "source_kind_invalid": ErrorInfo(
+        "Unsupported --as value or course URL", "farol add <folder|playlist URL> --as course"
+    ),
+    "license_required": ErrorInfo("The source needs a declared license", "farol add <source> --license <license>"),
     "source_inside_packages": ErrorInfo(
         "Sources cannot live inside the project's packages folder", "add a folder outside packages/"
     ),

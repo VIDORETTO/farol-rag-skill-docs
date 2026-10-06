@@ -85,6 +85,7 @@ options, every agent and troubleshooting.
 | YouTube videos | URL — needs `[media]` | `(at HH:MM:SS)`, chapters |
 | Audio and video files | file — local speech recognition, needs `[media]` | `(at HH:MM:SS)` |
 | Scanned PDFs | file — needs `[ocr]` | page, confidence |
+| Courses (folder of lessons, YouTube playlist) | `--as course` — one package and one skill, lessons in order | lesson file, `(at HH:MM:SS)` |
 
 Optional extras: `semantic` (multilingual hybrid search, recommended),
 `media` (YouTube and speech recognition), `ocr` (scanned documents) and
