@@ -145,3 +145,21 @@ def test_connect_installs_the_composite_skill(tmp_path: Path) -> None:
     assert (target / ".claude" / "skills" / "retries" / "SKILL.md").is_file()
     router = (target / ".claude" / "skills" / "project-router" / "SKILL.md").read_text(encoding="utf-8")
     assert "`retries`" in router
+
+
+def test_synthesis_layer_reads_the_composite_lineage(tmp_path: Path) -> None:
+    from docops.mcp_server import KnowledgeServer
+
+    project = _project(tmp_path, no_skill=True)
+    _distil(project, tmp_path)
+    server = KnowledgeServer(packages=journey.project_packages(project), composites=journey.project_composites(project))
+
+    scoped = server.search_knowledge("retry budget", package="@retries", layer="synthesis")["synthesis"]
+    everywhere = server.search_knowledge("retry budget", layer="synthesis")["synthesis"]
+
+    assert scoped and scoped[0]["package"] == "@retries"
+    assert scoped[0]["supports"] and {item["package"] for item in scoped[0]["supports"]} <= {
+        "retry-book",
+        "client-docs",
+    }
+    assert any(item["package"] == "@retries" for item in everywhere)

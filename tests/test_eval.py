@@ -81,3 +81,26 @@ def test_eval_without_a_distilled_skill_is_not_run(tmp_path: Path) -> None:
 
     assert code == 1
     assert report["status"] == "not_run" and report["code"] == "skill_not_distilled"
+
+
+def test_questions_requested_before_the_outline_are_planned_after_it(tmp_path: Path) -> None:
+    from fixtures_31 import long_section_book
+
+    from docops.agent_tasks import next_task, plan_questions, plan_synthesis, submit_task
+
+    package = long_section_book(tmp_path)
+    plan_synthesis(package, language="en", outline="agent")
+
+    pending = plan_questions(package, 2)
+    outline = next_task(package)
+    sections = [item["id"] for item in outline["inputs"]["sections"]]
+    folder = tmp_path / "outline"
+    folder.mkdir()
+    (folder / "outline.json").write_text(
+        json.dumps({"chapters": [{"title": "Everything", "sections": sections}]}), encoding="utf-8"
+    )
+    assert submit_task(package, "outline", folder)["status"] == "accepted"
+
+    assert pending["pending_questions"] == 2
+    tasks = {item["task_id"] for item in json.loads((package / ".docops/synthesis/plan.json").read_text())["tasks"]}
+    assert "questions" in tasks

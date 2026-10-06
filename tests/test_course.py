@@ -152,3 +152,30 @@ def test_a_windows_drive_path_is_never_mistaken_for_a_playlist(monkeypatch) -> N
     with pytest.raises(Exception):
         journey._build_one(Project(), source)  # the folder does not exist here; only routing matters
     assert called == []
+
+
+def test_course_json_in_the_folder_sets_order_and_titles_and_is_not_a_lesson(tmp_path: Path) -> None:
+    from docops.package_index import package_documents
+
+    folder = course_folder(tmp_path)
+    (folder / "course.json").write_text(
+        json.dumps(
+            {
+                "lessons": [
+                    {"file": "Aula 10 - Projeto final.vtt", "title": "Projeto final (revisão)"},
+                    {"file": "Aula 1 - Introdução.vtt"},
+                    {"file": "não existe.vtt"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    project = tmp_path / "project"
+    journey.add_source(project, str(folder), license="CC-BY-4.0", as_kind="course")
+    assert journey.build(project)["ok"]
+
+    documents, _ = package_documents(journey.project_packages(project)["curso-python"])
+
+    titles = [document["blocks"][0]["heading_path"][0] for document in documents]
+    assert titles == ["Projeto final (revisão)", "Aula 1 - Introdução", "Aula 2 - Variáveis", "material"]
+    assert not any(document["path"].endswith("course.json") for document in documents)
