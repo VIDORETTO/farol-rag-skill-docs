@@ -204,3 +204,81 @@ def test_docling_ocr_adapter_converts_structured_items_to_page_bbox_records(monk
             "bbox": [10.0, 20.0, 80.0, 90.0],
         }
     ]
+
+
+# -- Farol 3.1 TK-212: digital PDFs with layout and tables (extra `layout`) ----
+
+
+def _layout_pdf(tmp_path: Path) -> Path:
+    from pypdf import PdfWriter
+
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    writer.add_blank_page(width=200, height=200)
+    path = tmp_path / "handbook.pdf"
+    with path.open("wb") as handle:
+        writer.write(handle)
+    return path
+
+
+def test_layout_converter_emits_headings_tables_and_pages(tmp_path: Path, monkeypatch) -> None:
+    from fixtures_31 import FakeLayoutConverter
+
+    from docops import normalizer
+
+    monkeypatch.setenv("FAROL_PDF_LAYOUT", "1")
+    monkeypatch.setattr(normalizer, "_layout_converter", lambda: FakeLayoutConverter())
+
+    markdown = normalizer._extract_pdf(_layout_pdf(tmp_path))
+
+    assert "## Page 2" in markdown and "### Defaults by client" in markdown
+    assert "| urllib3 | 3 | 0.5 s |" in markdown and "\\| urllib3" not in markdown
+    assert "Retry Handbook — draft" not in markdown
+    assert "- Extraction: layout (docling)" in markdown
+
+
+def test_without_the_layout_extra_pdf_stays_text_fallback_and_says_so(tmp_path: Path, monkeypatch) -> None:
+    from docops import normalizer
+
+    def missing() -> object:
+        raise ImportError("docling")
+
+    monkeypatch.setenv("FAROL_PDF_LAYOUT", "1")
+    monkeypatch.setattr(normalizer, "_layout_converter", missing)
+    pdf = _layout_pdf(tmp_path)
+
+    assert normalizer._extract_pdf(pdf) == normalizer._extract_pdf_text(pdf)
+    from docops.doctor import run_doctor
+
+    report = run_doctor(tmp_path, environ={})
+    assert report.checks["extras"]["layout"] in {True, False}
+
+
+def test_table_blocks_are_indexed_and_cited_by_page(tmp_path: Path, monkeypatch) -> None:
+    from fixtures_31 import FakeLayoutConverter
+
+    import docops
+    from docops import normalizer
+    from docops.mcp_server import KnowledgeServer
+    from docops.package_index import build_package_index
+
+    monkeypatch.setenv("FAROL_PDF_LAYOUT", "1")
+    monkeypatch.setattr(normalizer, "_layout_converter", lambda: FakeLayoutConverter())
+    source = tmp_path / "source"
+    source.mkdir()
+    _layout_pdf(source)
+    package = tmp_path / "package"
+    assert docops.apply(
+        docops.plan(
+            docops.OperationRequest(
+                source,
+                docops.OperationOptions(output_dir=package, source_root=source.parent, slug="hb", license="MIT"),
+            )
+        )
+    ).ok
+    build_package_index(package, embedder=None)
+
+    top = KnowledgeServer(package).search_knowledge("urllib3 attempts backoff", top_k=1)["hits"][0]
+
+    assert "| urllib3 | 3 | 0.5 s |" in top["text"]
+    assert "(page 2)" in top["citation"] or "page=2" in top["citation"]

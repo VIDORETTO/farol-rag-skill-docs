@@ -33,7 +33,7 @@
 | [TK-208](tickets/TK-208.md) | Skill `farol-distill` | TK-206, D-303 | implemented |
 | [TK-210](tickets/TK-210.md) | Curso (pasta e playlist) | TK-207 | implemented |
 | [TK-211](tickets/TK-211.md) | Skill composta multi-fonte | TK-206, TK-207, D-304 | implemented |
-| [TK-212](tickets/TK-212.md) | PDF com layout | TK-201, D-305 | blocked (D-305) |
+| [TK-212](tickets/TK-212.md) | PDF com layout | TK-201, D-305 | implemented |
 | [TK-213](tickets/TK-213.md) | Slides de videoaula | TK-210, D-306 | draft |
 | [TK-214](tickets/TK-214.md) | Camada de síntese pesquisável | TK-202 | implemented |
 | [TK-215](tickets/TK-215.md) | `farol eval` | TK-202, TK-214 | implemented |
