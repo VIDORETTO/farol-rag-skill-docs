@@ -21,10 +21,10 @@
 
 | Ticket | Entrega | Requer | Estado |
 |---|---|---|---|
-| [TK-201](tickets/TK-201.md) | Régua 3.1 | — | ready |
-| [TK-202](tickets/TK-202.md) | `block_id`, `get_context`, `get_document` paginado | — | ready |
-| [TK-209](tickets/TK-209.md) | Router enxuto e único | TK-202 | ready |
-| [TK-216](tickets/TK-216.md) | Higiene e mapa do legado | — | ready |
+| [TK-201](tickets/TK-201.md) | Régua 3.1 | — | implemented |
+| [TK-202](tickets/TK-202.md) | `block_id`, `get_context`, `get_document` paginado | — | implemented |
+| [TK-209](tickets/TK-209.md) | Router enxuto e único | TK-202 | implemented |
+| [TK-216](tickets/TK-216.md) | Higiene e mapa do legado | — | implemented |
 | [TK-203](tickets/TK-203.md) | Ranking global na biblioteca | TK-202 | ready |
 | [TK-204](tickets/TK-204.md) | Reranker local opcional | TK-201, TK-203, D-301 | blocked (D-301) |
 | [TK-205](tickets/TK-205.md) | Embedding com prefixos e troca medida | TK-201, D-302 | blocked (D-302) |
