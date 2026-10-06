@@ -660,6 +660,7 @@
       "get_document.package",
       "get_skill.chapter",
       "get_skill.name",
+      "search_knowledge.layer",
       "search_knowledge.package",
       "search_knowledge.query",
       "search_knowledge.top_k"

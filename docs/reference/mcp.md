@@ -12,6 +12,7 @@ Search the package's indexed sources for literal facts (defaults, versions, sign
 | `query` | string | yes | What to look for, in natural words. |
 | `top_k` | integer | no |  |
 | `package` | string | no | Limit the search to one package (see list_skills). |
+| `layer` | string | no | evidence: source blocks (cite these). synthesis: distilled skill statements for broad questions, each with the source blocks that support it. both: the two lists. |
 
 ## get_context
 

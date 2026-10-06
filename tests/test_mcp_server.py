@@ -311,3 +311,61 @@ def test_unknown_block_id_is_a_typed_error(tmp_path: Path) -> None:
 
     assert result["isError"] is True
     assert result["structuredContent"]["error"]["code"] == "block_unknown"
+
+
+# -- Farol 3.1 TK-214: the distilled skill as a searchable layer -------------
+
+
+def test_synthesis_layer_returns_claims_with_supporting_citations(tmp_path: Path) -> None:
+    from fixtures_31 import distilled_package
+
+    package = distilled_package(tmp_path)
+
+    result = _tool(package, "search_knowledge", query="when is repeating a call safe", layer="synthesis")
+
+    claims = result["structuredContent"]["synthesis"]
+    assert claims and claims[0]["kind"] == "synthesis"
+    assert "idempotent" in claims[0]["text"] and "[b" not in claims[0]["text"]
+    supports = claims[0]["supports"]
+    assert supports and all(item["citation"].startswith("rag/documents/guide.md") for item in supports)
+    assert any("retries 5 times" in item["text"] for item in supports)
+    assert claims[0]["stale"] is False
+    assert result["structuredContent"]["hits"] == []
+
+
+def test_default_layer_is_evidence_only(tmp_path: Path) -> None:
+    from fixtures_31 import distilled_package
+
+    package = distilled_package(tmp_path)
+
+    default = _tool(package, "search_knowledge", query="when is repeating a call safe")["structuredContent"]
+    both = _tool(package, "search_knowledge", query="retries idempotent", layer="both")["structuredContent"]
+
+    assert "synthesis" not in default
+    assert both["hits"] and both["synthesis"]
+
+
+def test_synthesis_index_follows_a_new_skill_installation(tmp_path: Path) -> None:
+    from fixtures_31 import distilled_package
+
+    from docops.agent_tasks import next_task
+
+    package = distilled_package(tmp_path, install=False)
+    before = _tool(package, "search_knowledge", query="idempotent", layer="synthesis")["structuredContent"]
+    assert before["synthesis"] == [] and next_task(package)["kind"] == "core"
+
+
+def test_stale_claims_are_flagged_in_synthesis_hits(tmp_path: Path) -> None:
+    from fixtures_31 import distilled_package
+
+    from docops.package_index import build_package_index
+
+    package = distilled_package(tmp_path)
+    document = package / "rag" / "documents" / "guide.md"
+    document.write_text(document.read_text(encoding="utf-8").replace("10 seconds", "30 seconds"), encoding="utf-8")
+    build_package_index(package, embedder=None)
+
+    claims = _tool(package, "search_knowledge", query="deadline of ten seconds", layer="synthesis")
+    flagged = {claim["text"]: claim["stale"] for claim in claims["structuredContent"]["synthesis"]}
+
+    assert flagged["Give every call a deadline of ten seconds unless told otherwise."] is True
