@@ -1,7 +1,8 @@
 # Harnesses e contrato de integração
 
 O Farol entrega a cada agente de IA (harness) duas coisas: **Agent Skills**
-(`SKILL.md` + capítulos, uma por fonte, mais o router) e o servidor **MCP**
+(`SKILL.md` + capítulos, uma por fonte, mais **um** router do projeto,
+`<projeto>-router`, que lista as skills) e o servidor **MCP**
 `farol` (stdio, somente leitura). O harness escolhe o modelo e escreve a
 resposta final; o Farol nunca chama modelo.
 
@@ -18,6 +19,9 @@ farol connect claude-code --target ~/meu-repositorio
 | `cursor` | via MCP (`get_skill`) + `.cursor/rules/farol.mdc` | `.cursor/mcp.json` | formato conforme documentação oficial |
 | `opencode` | `.opencode/skills/<fonte>/` | `opencode.json` (`type: local`) | `opencode mcp list` mostra o servidor como conectado |
 | `generic` | pastas indicadas | JSON impresso | qualquer cliente MCP stdio |
+
+Conexões feitas pelo Farol 3.0 instalavam um router por fonte; o próximo
+`farol connect` remove esses arquivos e instala o router único.
 
 `--scope user` configura o usuário (`~/.claude/skills`, `~/.codex/config.toml`…)
 em vez de um repositório; `--dry-run` mostra as mudanças; `--remove` desfaz.

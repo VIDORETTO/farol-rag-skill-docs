@@ -249,6 +249,7 @@ def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
             "ok": False,
             "errors": [{"code": error.get("code"), "message": error.get("message")} for error in result.errors],
         }
+    _refresh_router(package, source["id"])
     index = build_package_index(package)
     synthesis = synthesis_status(package)
     # Never discard accepted agent work: replan only when nothing was accepted yet.
@@ -257,6 +258,28 @@ def _build_one(project: Project, source: dict[str, Any]) -> dict[str, Any]:
     ):
         plan_synthesis(package, language=project.config.get("language"))
     return {"ok": True, "index": {key: index[key] for key in ("documents", "blocks", "index_revision")}}
+
+
+def _refresh_router(package: Path, slug: str) -> None:
+    """Bring a generated router to the current policy and keep the manifest consistent."""
+
+    from .generation import refresh_router
+    from .harness import write_harness_manifest
+    from .revisions import package_revisions
+
+    manifest_path = package / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    slug = str((manifest.get("source") or {}).get("slug") or slug)
+    if not refresh_router(package, slug):
+        return
+    declared = manifest.get("revisions") if isinstance(manifest.get("revisions"), dict) else {}
+    golden = declared.get("golden_revision")
+    manifest["revisions"] = {
+        **declared,
+        **package_revisions(package, golden_revision=golden if isinstance(golden, str) else None),
+    }
+    write_json_atomic(manifest_path, manifest)
+    write_harness_manifest(package)
 
 
 def _progress(message: str) -> None:
