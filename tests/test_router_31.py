@@ -77,7 +77,7 @@ def test_connect_installs_one_project_router_instead_of_one_per_source(tmp_path:
 
     assert code == 0, result
     installed = sorted(path.name for path in (target / ".claude" / "skills").iterdir())
-    assert installed == ["alpha-docs", "beta-docs", "gamma-docs", "project-router"]
+    assert installed == ["alpha-docs", "beta-docs", "farol-distill", "gamma-docs", "project-router"]
     router = (target / ".claude" / "skills" / "project-router" / "SKILL.md").read_text(encoding="utf-8")
     assert router.startswith("---\nname: project-router\n")
     assert all(f"`{name}`" in router for name in ("alpha-docs", "beta-docs", "gamma-docs"))

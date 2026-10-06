@@ -72,6 +72,7 @@ def main(argv: list[str] | None = None) -> int:
                 "docops/extractors/registry.py",
                 "docops/ir/core.py",
                 "docops/templates/router.md",
+                "docops/templates/farol-distill.md",
                 "docops/schemas/manifest.schema.json",
                 "docops/schemas/evaluation.schema.json",
                 f"{data_prefix}.data/data/share/docops/skills/docops-agent/SKILL.md",

@@ -53,8 +53,10 @@ declarada na página é detectada automaticamente.
 
 ## 3. Deixar a sua IA escrever as skills
 
-`farol build` deixa as fontes consultáveis e prepara tarefas de síntese. Peça ao
-seu agente (Claude Code, Codex, Cursor, OpenCode…):
+`farol build` deixa as fontes consultáveis e prepara tarefas de síntese. Depois
+de `farol connect`, o agente já tem a skill `farol-distill`, que conduz todo o
+ciclo; basta pedir “escreva as skills do Farol”. Sem ela, peça ao seu agente
+(Claude Code, Codex, Cursor, OpenCode…):
 
 > Rode `farol task next` em `~/meu-conhecimento`, faça a tarefa, envie com
 > `farol task submit` e repita até não haver mais tarefas.
