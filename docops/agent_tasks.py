@@ -117,6 +117,12 @@ def _plan_lock(root: Path) -> Iterator[None]:
         try:
             lock.mkdir()
             break
+        except PermissionError:
+            # Windows: the lock directory is being removed by its previous owner.
+            if time.monotonic() > deadline:
+                raise SynthesisTaskError("plan_busy", "another agent is updating the synthesis plan; retry")
+            time.sleep(0.02)
+            continue
         except FileExistsError:
             try:
                 if time.time() - lock.stat().st_mtime > _LOCK_STALE_SECONDS:

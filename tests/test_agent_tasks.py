@@ -419,7 +419,7 @@ def test_concurrent_submits_keep_every_accepted_task_in_the_plan(tmp_path: Path)
     processes = [_task_cli(package, "submit", task_id, str(answer)) for task_id, answer in answers.items()]
     outputs = [json.loads(process.communicate(timeout=120)[0]) for process in processes]
 
-    assert all(output["status"] == "accepted" for output in outputs), outputs
+    assert all(output.get("status") == "accepted" for output in outputs), outputs
     counts = synthesis_status(package)["counts"]
     assert counts.get("accepted") == len(chapters)
 
